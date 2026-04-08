@@ -1,0 +1,648 @@
+
+
+{% block title %}AGRINOVA – Smart Farm Management Platform{% endblock %}
+
+{% block stylesheets %}
+<style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+        --green-dark: #1a4d2e;
+        --green-mid: #2d7a45;
+        --green-light: #e8f5e0;
+        --green-accent: #3a9e5c;
+        --orange: #f59e0b;
+        --orange-dark: #d97706;
+        --text-dark: #111;
+        --text-mid: #444;
+        --text-light: #fff;
+        --bg-light: #f4f9f1;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+        font-family: 'DM Sans', sans-serif;
+        background: #fff;
+        color: var(--text-dark);
+        overflow-x: hidden;
+    }
+
+    nav {
+        position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 0 5%; height: 68px;
+        background: rgba(255,255,255,0.96);
+        border-bottom: 1px solid rgba(0,0,0,0.07);
+        backdrop-filter: blur(8px);
+    }
+
+    .nav-logo {
+        display: flex; align-items: center; gap: 10px;
+        text-decoration: none;
+    }
+.logo-img {
+    height: 100px;
+    width: auto;
+}
+    .nav-logo-icon {
+        width: 38px; height: 38px; border-radius: 10px;
+        background: var(--green-mid);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 18px;
+    }
+
+    .nav-logo span {
+        font-family: 'Fraunces', serif;
+        font-size: 1.2rem; font-weight: 700;
+        color: var(--text-dark); letter-spacing: 0.5px;
+    }
+
+    .nav-links {
+        display: flex; gap: 2.5rem; list-style: none;
+    }
+
+    .nav-links a {
+        text-decoration: none; color: var(--text-mid);
+        font-size: 0.95rem; font-weight: 500;
+        transition: color 0.2s;
+    }
+
+    .nav-links a:hover { color: var(--green-mid); }
+
+    .nav-actions { display: flex; align-items: center; gap: 1rem; }
+
+    .btn-ghost {
+        background: none; border: 1.5px solid #ccc;
+        padding: 0.5rem 1.3rem; border-radius: 8px;
+        font-family: 'DM Sans', sans-serif; font-size: 0.9rem;
+        font-weight: 500; cursor: pointer; color: var(--text-dark);
+        transition: border-color 0.2s, color 0.2s;
+        text-decoration: none;
+    }
+
+    .btn-ghost:hover { border-color: var(--green-mid); color: var(--green-mid); }
+    .btn-login {
+    padding: 0.6rem 1.4rem;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-decoration: none;
+    color: #2d7a45;
+    border: 2px solid #2d7a45;
+    transition: all 0.25s ease;
+}
+
+.btn-login:hover {
+    background-color: #2d7a45;
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+    .btn-primary {
+        background: var(--green-mid); color: #fff;
+        border: none; padding: 0.55rem 1.4rem; border-radius: 8px;
+        font-family: 'DM Sans', sans-serif; font-size: 0.9rem;
+        font-weight: 600; cursor: pointer;
+        display: flex; align-items: center; gap: 6px;
+        transition: background 0.2s, transform 0.15s;
+        text-decoration: none;
+    }
+
+    .btn-primary:hover { background: var(--green-dark); transform: translateY(-1px); }
+
+    .hero {
+        position: relative; min-height: 100vh;
+        display: flex; align-items: center;
+        padding: 68px 5% 0;
+        overflow: hidden;
+    }
+
+    .hero-bg {
+        position: absolute; inset: 0; z-index: 0;
+        background: linear-gradient(135deg, #1a4d2e 0%, #2d7a45 45%, #8a7a20 100%);
+    }
+
+    .hero-bg::before {
+        content: '';
+        position: absolute; inset: 0;
+        background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+
+    .hero-field {
+        position: absolute; bottom: 0; left: 0; right: 0; height: 55%;
+        background: repeating-linear-gradient(
+            to right,
+            rgba(0,0,0,0.1) 0px, rgba(0,0,0,0.1) 2px,
+            transparent 2px, transparent 60px
+        );
+        transform: perspective(600px) rotateX(30deg);
+        transform-origin: bottom;
+        opacity: 0.3;
+    }
+
+    .hero-icons {
+        position: absolute; right: 6%; top: 50%; transform: translateY(-50%);
+        display: flex; flex-direction: column; gap: 2rem; z-index: 2;
+    }
+
+    .hero-icon {
+        width: 52px; height: 52px; border-radius: 50%;
+        border: 2px solid rgba(255,255,255,0.5);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.4rem;
+        animation: float 3s ease-in-out infinite;
+        background: rgba(255,255,255,0.1);
+    }
+
+    .hero-icon:nth-child(2) { animation-delay: 1s; }
+    .hero-icon:nth-child(3) { animation-delay: 2s; }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-8px); }
+    }
+
+    .hero-drone {
+        position: absolute; top: 22%; left: 50%;
+        font-size: 2.2rem; z-index: 2;
+        animation: drone 8s ease-in-out infinite;
+        filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4));
+    }
+
+    @keyframes drone {
+        0%   { transform: translate(-50%, 0) rotate(0deg); }
+        25%  { transform: translate(-20%, -15px) rotate(3deg); }
+        75%  { transform: translate(-80%, 10px) rotate(-3deg); }
+        100% { transform: translate(-50%, 0) rotate(0deg); }
+    }
+
+    .hero-content {
+        position: relative; z-index: 2;
+        max-width: 600px;
+        animation: fadeUp 0.8s ease both;
+    }
+
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .hero-badge {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: rgba(255,255,255,0.15);
+        border: 1px solid rgba(255,255,255,0.3);
+        border-radius: 999px;
+        padding: 0.4rem 1rem;
+        color: #fff; font-size: 0.85rem; font-weight: 500;
+        margin-bottom: 1.5rem;
+        backdrop-filter: blur(4px);
+    }
+
+    .hero h1 {
+        font-family: 'Fraunces', serif;
+        font-size: clamp(2.8rem, 5.5vw, 4.2rem);
+        font-weight: 900; line-height: 1.1;
+        color: #fff; margin-bottom: 1.25rem;
+    }
+
+    .hero h1 em {
+        font-style: normal; color: var(--orange);
+    }
+
+    .hero p {
+        color: rgba(255,255,255,0.85);
+        font-size: 1.05rem; line-height: 1.7;
+        max-width: 480px; margin-bottom: 2rem;
+    }
+
+    .hero-cta {
+        display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;
+    }
+    .btn-secondary {
+    background: transparent;
+    color: #2d7a45;
+    padding: 0.75rem 1.6rem;
+    border-radius: 14px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-decoration: none;
+    border: 2px solid #2d7a45;
+    transition: all 0.25s ease;
+}
+
+.btn-secondary:hover {
+    background: #2d7a45;
+    color: #fff;
+    transform: translateY(-2px);
+}
+
+    .btn-hero {
+        background: var(--orange); color: #fff;
+        border: none; padding: 0.85rem 2rem; border-radius: 10px;
+        font-family: 'DM Sans', sans-serif; font-size: 1rem;
+        font-weight: 700; cursor: pointer;
+        display: inline-flex; align-items: center; gap: 8px;
+        transition: background 0.2s, transform 0.15s;
+        text-decoration: none;
+    }
+
+    .btn-hero:hover { background: var(--orange-dark); transform: translateY(-2px); }
+
+    .btn-hero-ghost {
+        background: rgba(255,255,255,0.15);
+        border: 1.5px solid rgba(255,255,255,0.5);
+        color: #fff; padding: 0.85rem 2rem; border-radius: 10px;
+        font-family: 'DM Sans', sans-serif; font-size: 1rem;
+        font-weight: 600; cursor: pointer;
+        transition: background 0.2s;
+        text-decoration: none;
+    }
+
+    .btn-hero-ghost:hover { background: rgba(255,255,255,0.25); }
+
+    .stats {
+        background: var(--green-mid);
+        padding: 3rem 5%;
+        display: grid; grid-template-columns: repeat(4, 1fr);
+        gap: 1rem; text-align: center;
+    }
+
+    .stat-item { padding: 1rem; }
+
+    .stat-number {
+        font-family: 'Fraunces', serif;
+        font-size: 2.8rem; font-weight: 900;
+        color: #fff; display: block;
+        line-height: 1;
+    }
+
+    .stat-label {
+        color: rgba(255,255,255,0.8);
+        font-size: 0.9rem; margin-top: 0.4rem;
+    }
+
+    .features {
+        background: var(--bg-light);
+        padding: 6rem 5%;
+    }
+
+    .section-tag {
+        display: inline-block;
+        color: var(--orange-dark); font-size: 0.8rem;
+        font-weight: 700; letter-spacing: 2px;
+        text-transform: uppercase; margin-bottom: 1rem;
+    }
+
+    .section-title {
+        font-family: 'Fraunces', serif;
+        font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+        font-weight: 900; line-height: 1.2;
+        margin-bottom: 1rem;
+    }
+
+    .section-sub {
+        color: var(--text-mid); font-size: 1.05rem;
+        max-width: 520px; margin: 0 auto 3.5rem; line-height: 1.7;
+        text-align: center;
+    }
+    .btn-primary {
+    background: #2d7a45;
+    color: white;
+    padding: 0.7rem 1.6rem;
+    border-radius: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: 0.2s;
+}
+
+.btn-primary:hover {
+    background: #1a4d2e;
+}
+
+    .features-header { text-align: center; }
+
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+    }
+    
+
+    .feature-card {
+        background: #fff;
+        border-radius: 16px;
+        padding: 2rem;
+        border: 1px solid rgba(0,0,0,0.06);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 32px rgba(45,122,69,0.12);
+    }
+
+    .feature-icon {
+        width: 52px; height: 52px; border-radius: 14px;
+        background: var(--green-light);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.5rem; margin-bottom: 1.25rem;
+    }
+
+    .feature-card h3 {
+        font-size: 1.05rem; font-weight: 700;
+        margin-bottom: 0.6rem;
+    }
+
+    .feature-card p {
+        color: var(--text-mid); font-size: 0.92rem; line-height: 1.6;
+    }
+
+    .about {
+        background: #fff;
+        padding: 6rem 5%;
+        display: grid; grid-template-columns: 1fr 1fr;
+        gap: 5rem; align-items: center;
+    }
+
+    .about-text .section-title { margin-bottom: 1.25rem; }
+
+    .about-text p {
+        color: var(--text-mid); font-size: 1rem;
+        line-height: 1.75; margin-bottom: 1rem;
+    }
+
+    .about-tags {
+        display: flex; flex-wrap: wrap; gap: 0.75rem;
+        margin-top: 1.75rem;
+    }
+
+    .about-tag {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: var(--green-light);
+        border-radius: 999px;
+        padding: 0.45rem 1rem;
+        font-size: 0.85rem; font-weight: 500;
+        color: var(--green-dark);
+    }
+
+    .about-grid {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
+    }
+
+    .about-mini-card {
+        background: var(--bg-light);
+        border-radius: 14px;
+        padding: 1.5rem; text-align: center;
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .about-mini-card .emoji { font-size: 2rem; margin-bottom: 0.6rem; }
+
+    .about-mini-card h4 {
+        font-size: 0.95rem; font-weight: 700; margin-bottom: 0.3rem;
+    }
+
+    .about-mini-card p {
+        font-size: 0.82rem; color: var(--text-mid);
+    }
+
+    .cta-section {
+        background: linear-gradient(135deg, #1a4d2e 0%, #2d7a45 50%, #8a7a20 100%);
+        padding: 6rem 5%;
+        text-align: center;
+    }
+
+    .cta-section h2 {
+        font-family: 'Fraunces', serif;
+        font-size: clamp(2rem, 4vw, 3rem);
+        font-weight: 900; color: #fff;
+        margin-bottom: 1rem;
+    }
+
+    .cta-section p {
+        color: rgba(255,255,255,0.8);
+        font-size: 1.05rem; margin-bottom: 2.5rem;
+        max-width: 500px; margin-left: auto; margin-right: auto;
+        line-height: 1.7;
+    }
+
+    footer {
+        background: #0d2b1a;
+        padding: 1.5rem 5%;
+        display: flex; align-items: center; justify-content: space-between;
+        flex-wrap: wrap; gap: 1rem;
+    }
+
+    .footer-logo {
+        display: flex; align-items: center; gap: 10px;
+        text-decoration: none;
+    }
+
+    .footer-logo span {
+        font-family: 'Fraunces', serif;
+        font-size: 1.1rem; font-weight: 700; color: #fff;
+    }
+
+    footer p {
+        color: rgba(255,255,255,0.5);
+        font-size: 0.85rem;
+    }
+
+    @media (max-width: 900px) {
+        .stats { grid-template-columns: repeat(2, 1fr); }
+        .features-grid { grid-template-columns: 1fr 1fr; }
+        .about { grid-template-columns: 1fr; gap: 3rem; }
+        .nav-links { display: none; }
+    }
+
+    @media (max-width: 600px) {
+        .stats { grid-template-columns: repeat(2, 1fr); }
+        .features-grid { grid-template-columns: 1fr; }
+        .hero-icons { display: none; }
+        .about-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    .reveal {
+        opacity: 0; transform: translateY(24px);
+        transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    .reveal.visible {
+        opacity: 1; transform: translateY(0);
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<nav>
+<a href="{{ path('app_home') }}" class="nav-logo">
+    <img src="{{ asset('Front/images/AgriNovaLogo.png') }}" alt="AGRINOVA Logo" class="logo-img">
+    
+</a>
+    <ul class="nav-links">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#about">About</a></li>
+        <li><a href="#impact">Impact</a></li>
+    </ul>
+    <div class="nav-actions">
+  <a href="{{ path('app_login') }}" class="btn-login">Login</a>
+<a href="{{ path('app_register') }}" class="btn-primary">Get Started</a>
+
+    </div>
+</nav>
+
+<section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-field"></div>
+
+    <div class="hero-drone">🚁</div>
+
+    <div class="hero-icons">
+        <div class="hero-icon">☀️</div>
+        <div class="hero-icon">💧</div>
+        <div class="hero-icon">📊</div>
+    </div>
+
+    <div class="hero-content">
+        <div class="hero-badge">⚡ Smart Farm Management Platform</div>
+        <h1>Grow Smarter,<br><em>Harvest Better</em></h1>
+        <p>AGRINOVA centralizes farm management, marketplace activities, and community interaction — making agriculture more organized, connected, and sustainable.</p>
+        <div class="hero-cta">
+           <a href="{{ path('app_register') }}" class="btn-secondary">
+    Start Free
+</a>
+
+            <a href="#features" class="btn-hero-ghost">Explore Features</a>
+        </div>
+    </div>
+</section>
+
+<section class="stats" id="impact">
+    <div class="stat-item reveal">
+        <span class="stat-number">1,200+</span>
+        <div class="stat-label">Active Farmers</div>
+    </div>
+    <div class="stat-item reveal" style="transition-delay:0.1s">
+        <span class="stat-number">5,000+</span>
+        <div class="stat-label">Crops Tracked</div>
+    </div>
+    <div class="stat-item reveal" style="transition-delay:0.2s">
+        <span class="stat-number">340+</span>
+        <div class="stat-label">Marketplace Listings</div>
+    </div>
+    <div class="stat-item reveal" style="transition-delay:0.3s">
+        <span class="stat-number">98%</span>
+        <div class="stat-label">User Satisfaction</div>
+    </div>
+</section>
+
+<section class="features" id="features">
+    <div class="features-header">
+        <span class="section-tag">Platform Features</span>
+        <h2 class="section-title">Everything You Need to Farm Smarter</h2>
+        <p class="section-sub">A comprehensive suite of tools designed to modernize every aspect of your agricultural operations.</p>
+    </div>
+
+    <div class="features-grid">
+        <div class="feature-card reveal">
+            <div class="feature-icon">🌱</div>
+            <h3>Crop Tracking</h3>
+            <p>Monitor growth cycles, stages, and environmental conditions in real-time for maximum yield.</p>
+        </div>
+        <div class="feature-card reveal" style="transition-delay:0.1s">
+            <div class="feature-icon">📦</div>
+            <h3>Inventory Management</h3>
+            <p>Track supplies, get low-stock alerts, and manage resources efficiently across your farm.</p>
+        </div>
+        <div class="feature-card reveal" style="transition-delay:0.2s">
+            <div class="feature-icon">🛒</div>
+            <h3>Marketplace</h3>
+            <p>Buy and sell fresh produce directly — connecting farmers to buyers without middlemen.</p>
+        </div>
+        <div class="feature-card reveal">
+            <div class="feature-icon">👥</div>
+            <h3>User Management</h3>
+            <p>Manage farmer and buyer accounts with role-based access and profile tracking.</p>
+        </div>
+        <div class="feature-card reveal" style="transition-delay:0.1s">
+            <div class="feature-icon">💬</div>
+            <h3>Community Forum</h3>
+            <p>Share knowledge, ask questions, and learn from experienced farmers in the community.</p>
+        </div>
+        <div class="feature-card reveal" style="transition-delay:0.2s">
+            <div class="feature-icon">📈</div>
+            <h3>Analytics & Reports</h3>
+            <p>Data-driven insights to optimize your farming decisions and boost productivity.</p>
+        </div>
+    </div>
+</section>
+
+<section class="about" id="about">
+    <div class="about-text reveal">
+        <span class="section-tag">About AGRINOVA</span>
+        <h2 class="section-title">Transforming Agriculture Through Technology</h2>
+        <p>AGRINOVA replaces manual farming processes with a centralized digital platform, enabling farmers to manage crops, inventory, and sales more efficiently while improving overall productivity.</p>
+        <p>Through its modular architecture, the platform integrates crop tracking, inventory management, a marketplace for direct farmer-buyer interaction, and a social community — strengthening collaboration within the agricultural ecosystem.</p>
+        <div class="about-tags">
+            <span class="about-tag">🌐 Connected Ecosystem</span>
+            <span class="about-tag">🛡️ Secure Platform</span>
+            <span class="about-tag">⚡ Real-time Data</span>
+        </div>
+    </div>
+
+    <div class="about-grid reveal" style="transition-delay:0.2s">
+        <div class="about-mini-card">
+            <div class="emoji">📊</div>
+            <h4>Smart Monitoring</h4>
+            <p>Track crops in real time</p>
+        </div>
+        <div class="about-mini-card">
+            <div class="emoji">📉</div>
+            <h4>Data Analytics</h4>
+            <p>Make informed decisions</p>
+        </div>
+        <div class="about-mini-card">
+            <div class="emoji">🤝</div>
+            <h4>Direct Trade</h4>
+            <p>No middlemen needed</p>
+        </div>
+        <div class="about-mini-card">
+            <div class="emoji">🌿</div>
+            <h4>Sustainability</h4>
+            <p>Farm for the future</p>
+        </div>
+    </div>
+</section>
+
+<section class="cta-section">
+    <h2 class="reveal">Ready to Modernize Your Farm?</h2>
+    <p class="reveal" style="transition-delay:0.1s">Join thousands of farmers already using AGRINOVA to grow smarter, sell better, and build a sustainable future.</p>
+<a href="{{ path('app_register') }}" class="btn-primary">
+    Get Started Free →
+</a>
+</section>
+
+<footer>
+    <a href="{{ path('app_home') }}" class="footer-logo">
+        <img src="{{ asset('Front/images/AgriNovaLogo.png') }}" alt="AGRINOVA Logo" class="logo-img">
+
+    </a>
+    <p>© 2026 AGRINOVA. Smart Farm Management & Marketplace Platform.</p>
+</footer>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+    const reveals = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+            }
+        });
+    }, { threshold: 0.12 });
+
+    reveals.forEach(el => observer.observe(el));
+</script>
+{% endblock %}
