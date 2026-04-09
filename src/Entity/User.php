@@ -36,6 +36,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: 'string', length: 100, nullable: true, name: 'profile_image')]
     private ?string $profileImage = null;
 
+
     #[ORM\Column(type: 'boolean', options: ['default' => 0])]
     private bool $banned = false;
 
