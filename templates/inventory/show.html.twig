@@ -1,0 +1,129 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ item.itemName }}{% endblock %}
+{% block page_title %}Inventory Details{% endblock %}
+
+{% block body %}
+    <div class="space-y-6">
+        {% for label, messages in app.flashes %}
+            {% for message in messages %}
+                <div class="rounded-2xl border px-4 py-3 text-sm font-medium {{ label == 'success' ? 'border-green-200 bg-green-50 text-green-700' : 'border-red-200 bg-red-50 text-red-700' }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endfor %}
+
+        <section class="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_14px_32px_rgba(20,83,45,0.08)]">
+            <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                    <p class="text-sm font-semibold uppercase tracking-[0.2em] text-green-700">Inventory Item</p>
+                    <h1 class="mt-2 text-3xl font-bold text-slate-900">{{ item.itemName }}</h1>
+                    <p class="mt-2 max-w-2xl text-sm text-slate-500">
+                        {{ item.description ?: 'No description was provided for this inventory item.' }}
+                    </p>
+                </div>
+                <div class="flex flex-wrap gap-3">
+                    <a href="{{ path('inventory_index') }}" class="inline-flex items-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+                        Back to list
+                    </a>
+                    {% if item.isRentable %}
+                        <a href="{{ path('rental_index', {inventory: item.id}) }}" class="inline-flex items-center rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100">
+                            View rentals
+                        </a>
+                    {% endif %}
+                    {% if item.isRentable and item.rentalStatus not in ['RENTED_OUT', 'IN_USE', 'MAINTENANCE', 'RETIRED'] %}
+                        <a href="{{ path('rental_new', {inventory: item.id}) }}" class="inline-flex items-center rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100">
+                            Create rental
+                        </a>
+                    {% endif %}
+                    <a href="{{ path('inventory_edit', {id: item.id}) }}" class="inline-flex items-center rounded-xl bg-green-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-800">
+                        Edit item
+                    </a>
+                    {{ include('inventory/_delete_form.html.twig', {item: item}) }}
+                </div>
+            </div>
+        </section>
+
+        <section class="grid gap-6 lg:grid-cols-3">
+            <article class="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_14px_32px_rgba(20,83,45,0.08)] lg:col-span-2">
+                <h2 class="text-lg font-bold text-slate-900">Core details</h2>
+                <dl class="mt-5 grid gap-5 sm:grid-cols-2">
+                    <div>
+                        <dt class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Item type</dt>
+                        <dd class="mt-2 text-sm font-semibold text-slate-900">{{ item.itemType }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Condition</dt>
+                        <dd class="mt-2 text-sm font-semibold text-slate-900">{{ item.conditionStatus }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Quantity</dt>
+                        <dd class="mt-2 text-sm font-semibold text-slate-900">{{ item.quantity }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Unit price</dt>
+                        <dd class="mt-2 text-sm font-semibold text-slate-900">{{ item.unitPrice|number_format(2, '.', ',') }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Purchase date</dt>
+                        <dd class="mt-2 text-sm font-semibold text-slate-900">{{ item.purchaseDate ? item.purchaseDate|date('d M Y') : 'Not provided' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Stock value</dt>
+                        <dd class="mt-2 text-sm font-semibold text-slate-900">{{ item.estimatedValue|number_format(2, '.', ',') }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Owner name</dt>
+                        <dd class="mt-2 text-sm font-semibold text-slate-900">{{ item.ownerName ?: 'Not provided' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Owner contact</dt>
+                        <dd class="mt-2 text-sm font-semibold text-slate-900">{{ item.ownerContact ?: 'Not provided' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Usage hours</dt>
+                        <dd class="mt-2 text-sm font-semibold text-slate-900">{{ item.totalUsageHours ?? 0 }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Image path</dt>
+                        <dd class="mt-2 break-all text-sm font-semibold text-slate-900">{{ item.imagePath ?: 'Not provided' }}</dd>
+                    </div>
+                </dl>
+            </article>
+
+            <article class="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_14px_32px_rgba(20,83,45,0.08)]">
+                <h2 class="text-lg font-bold text-slate-900">Rental & maintenance</h2>
+                <dl class="mt-5 space-y-5">
+                    <div>
+                        <dt class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Rentable</dt>
+                        <dd class="mt-2 text-sm font-semibold text-slate-900">{{ item.isRentable ? 'Yes' : 'No' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Rental status</dt>
+                        <dd class="mt-2 text-sm font-semibold text-slate-900">{{ item.rentalStatus }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Rental price / day</dt>
+                        <dd class="mt-2 text-sm font-semibold text-slate-900">{{ item.rentalPricePerDay|default(0)|number_format(2, '.', ',') }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Last maintenance</dt>
+                        <dd class="mt-2 text-sm font-semibold text-slate-900">{{ item.lastMaintenanceDate ? item.lastMaintenanceDate|date('d M Y') : 'Not provided' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Next maintenance</dt>
+                        <dd class="mt-2 text-sm font-semibold text-slate-900">{{ item.nextMaintenanceDate ? item.nextMaintenanceDate|date('d M Y') : 'Not planned' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Created at</dt>
+                        <dd class="mt-2 text-sm font-semibold text-slate-900">{{ item.createdAt ? item.createdAt|date('d M Y H:i') : 'Unknown' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Last updated</dt>
+                        <dd class="mt-2 text-sm font-semibold text-slate-900">{{ item.updatedAt ? item.updatedAt|date('d M Y H:i') : 'Unknown' }}</dd>
+                    </div>
+                </dl>
+            </article>
+        </section>
+    </div>
+{% endblock %}
