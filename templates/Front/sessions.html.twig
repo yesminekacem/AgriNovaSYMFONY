@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Sessions – AGRINOVA</title>
+    <style>
+        body{font-family:Arial,Helvetica,sans-serif;background:#f6faf3;padding:2rem}
+        .card{background:#fff;padding:1.25rem;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,.06);max-width:900px;margin:0 auto}
+        pre{background:#f7f9f7;padding:1rem;border-radius:6px;overflow:auto}
+    </style>
+</head>
+<body>
+{% extends 'base.html.twig' %}
+
+{% block page_title %}Sessions{% endblock %}
+
+{% block body %}
+<div class="card" style="max-width:900px;margin:1rem auto;padding:1.25rem;border-radius:10px;background:#fff;">
+    <h1>Session details</h1>
+
+    <p><strong>Session ID:</strong> {{ sessionId }}</p>
+
+    <h2>Session data</h2>
+    {% if sessionData is empty %}
+        <p>No session data stored (aside from security/session internals).</p>
+    {% else %}
+        <table style="width:100%;border-collapse:collapse;border:0">
+            <thead>
+                <tr><th style="text-align:left;padding:.6rem;border-bottom:1px solid #eef6ec">Key</th><th style="text-align:left;padding:.6rem;border-bottom:1px solid #eef6ec">Value</th></tr>
+            </thead>
+            <tbody>
+            {% for k,v in sessionData %}
+                <tr>
+                    <td style="padding:.5rem;border-bottom:1px solid #f0f7f0;vertical-align:top">{{ k }}</td>
+                    <td style="padding:.5rem;border-bottom:1px solid #f0f7f0"><pre>{{ v|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+
+    <p style="margin-top:1rem"><a href="{{ path('app_profile') }}">Back to profile</a></p>
+</div>
+{% endblock %}
+</body>
+</html>

@@ -1,0 +1,55 @@
+{% extends 'base.html.twig' %}
+
+{% block page_title %}Edit User{% endblock %}
+
+{% block stylesheets %}
+    <link rel="stylesheet" href="{{ asset('Front/css/admin.css') }}">
+{% endblock %}
+
+{% block body %}
+<div class="card" style="max-width:700px;margin:1rem auto;padding:1.5rem;border-radius:12px;background:#fff;">
+    <h1>Edit user {{ user.email }}</h1>
+
+    {% for flash in app.flashes('error') %}
+        <div class="alert alert-error">{{ flash }}</div>
+    {% endfor %}
+    {% for flash in app.flashes('success') %}
+        <div class="alert alert-success">{{ flash }}</div>
+    {% endfor %}
+
+    <form method="post" action="{{ path('admin_user_edit', {id: user.id}) }}">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token('edit_user_' ~ user.id) }}">
+
+        <div class="field">
+            <label for="fullName">Full name</label>
+            <input id="fullName" name="fullName" type="text" value="{{ user.fullName }}">
+        </div>
+
+        <div class="field">
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" required value="{{ user.email }}">
+        </div>
+
+        <div class="field">
+            <label for="role">Role</label>
+            <select id="role" name="role">
+                <option value="USER" {% if user.getRole() is defined and user.getRole() == 'USER' %}selected{% endif %}>USER</option>
+                <option value="ADMIN" {% if user.getRole() is defined and user.getRole() == 'ADMIN' %}selected{% endif %}>ADMIN</option>
+            </select>
+        </div>
+
+        <div class="field">
+            <label><input type="checkbox" name="isVerified" value="1" {% if user.isVerified() %}checked{% endif %}> Verified</label>
+        </div>
+
+        <div style="display:flex;gap:.6rem;align-items:center">
+            <button class="btn btn-primary" type="submit">Save changes</button>
+            <a href="{{ path('admin_users') }}" style="margin-left:auto">Back to users</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    <script src="{{ asset('Front/js/admin.js') }}"></script>
+{% endblock %}

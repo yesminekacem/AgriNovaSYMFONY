@@ -1,0 +1,26 @@
+/* Profile page styles and small animations */
+:root{
+  --accent:#2d7a45;
+  --muted:#6b7280;
+  --bg:#f7faf7;
+}
+.profile-top{display:flex;gap:1rem;align-items:center;margin-bottom:1rem}
+.avatar-wrap{width:96px;height:96px;border-radius:12px;overflow:hidden;border:1px solid #e6f0e6;display:flex;align-items:center;justify-content:center;background:#f7faf7}
+.avatar{width:96px;height:96px;object-fit:cover;display:block}
+.avatar.placeholder{width:96px;height:96px;display:flex;align-items:center;justify-content:center;background:#eef7ee;color:var(--accent);font-weight:700;font-size:28px}
+.avatar-upload{flex:1}
+.hint{font-size:.85rem;color:#666;margin-top:.35rem}
+.field{margin-bottom:1rem}
+.field label{display:block;margin-bottom:.4rem;font-weight:600}
+.field input[type="text"],.field input[type="email"],.field input[type="password"]{width:100%;padding:.7rem;border-radius:8px;border:1px solid #e6f0e6}
+.actions .btn{background:var(--accent);color:#fff;padding:.6rem .9rem;border-radius:8px;border:none}
+
+/* small image preview animation */
+@keyframes image-pop{0%{transform:scale(.98);opacity:.6}50%{transform:scale(1.04);opacity:1}100%{transform:scale(1);opacity:1}}
+.avatar.animate{animation:image-pop .36s ease}
+
+/* responsive */
+@media (max-width:600px){
+  .profile-top{flex-direction:column;align-items:flex-start}
+}
+

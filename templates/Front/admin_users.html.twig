@@ -1,0 +1,93 @@
+{% extends 'base.html.twig' %}
+
+{% block page_title %}Users - Admin{% endblock %}
+
+{% block stylesheets %}
+    <link rel="stylesheet" href="{{ asset('Front/css/admin.css') }}">
+{% endblock %}
+
+{% block body %}
+<div class="card admin-card" style="max-width:1100px;margin:1rem auto;padding:1.25rem;border-radius:10px;background:#fff;">
+    <h1>Users</h1>
+
+    {% for flash in app.flashes('error') %}
+        <div class="alert alert-error">{{ flash }}</div>
+    {% endfor %}
+    {% for flash in app.flashes('success') %}
+        <div class="alert alert-success">{{ flash }}</div>
+    {% endfor %}
+
+    <div class="table-wrap">
+    <table class="admin-table" aria-describedby="users-table-desc">
+        <caption id="users-table-desc">List of registered users. Actions: promote, demote, block, edit, delete.</caption>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Avatar</th>
+                <th>Full name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Verified</th>
+                <th>Blocked</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for u in users %}
+            <tr class="user-row {% if u.getRole() is defined and u.getRole() == 'ADMIN' %}is-admin{% endif %} {% if u.banned %}is-blocked{% endif %}" data-user-id="{{ u.id }}">
+                <td>{{ u.id }}</td>
+                <td class="avatar-cell">
+                    {% if u.profileImage %}
+                        <img class="avatar" src="{{ asset('uploads/profile_images/' ~ u.profileImage) }}" alt="{{ u.email }} avatar">
+                    {% else %}
+                        <div class="avatar placeholder">{{ u.email|first|upper }}</div>
+                    {% endif %}
+                </td>
+                <td>{{ u.fullName }}</td>
+                <td>{{ u.email }}</td>
+                <td>{{ u.getRole() is defined ? u.getRole() : 'USER' }}</td>
+                <td>{{ u.isVerified() ? 'Yes' : 'No' }}</td>
+                <td>{{ u.banned ? 'Yes' : 'No' }}</td>
+                <td class="actions">
+                    {% if app.user and app.user.id != u.id %}
+                        {% if u.getRole() is defined and u.getRole() == 'ADMIN' %}
+                            <form method="post" action="{{ path('admin_user_demote', {id: u.id}) }}" class="inline-form anim-submit" data-action="demote">
+                                <input type="hidden" name="_csrf_token" value="{{ csrf_token('demote_user_' ~ u.id) }}">
+                                <button class="btn btn-secondary" title="Demote to USER">Demote</button>
+                            </form>
+                        {% else %}
+                            <form method="post" action="{{ path('admin_user_promote', {id: u.id}) }}" class="inline-form anim-submit" data-action="promote">
+                                <input type="hidden" name="_csrf_token" value="{{ csrf_token('promote_user_' ~ u.id) }}">
+                                <button class="btn btn-primary" title="Promote to ADMIN">Promote</button>
+                            </form>
+                        {% endif %}
+
+                        <form method="post" action="{{ path('admin_user_toggle_block', {id: u.id}) }}" class="inline-form anim-submit" data-action="block">
+                            <input type="hidden" name="_csrf_token" value="{{ csrf_token('block_user_' ~ u.id) }}">
+                            <button class="btn btn-warning" title="Toggle block">{{ u.banned ? 'Unblock' : 'Block' }}</button>
+                        </form>
+
+                        <a class="btn btn-info" href="{{ path('admin_user_edit', {id: u.id}) }}" title="Edit user">Edit</a>
+
+                        <form method="post" action="{{ path('admin_user_delete', {id: u.id}) }}" class="inline-form anim-submit" data-action="delete">
+                            <input type="hidden" name="_csrf_token" value="{{ csrf_token('delete_user_' ~ u.id) }}">
+                            <button class="btn btn-danger" type="submit" onclick="return confirm('Delete this user?')">Delete</button>
+                        </form>
+                    {% else %}
+                        <span class="muted">—</span>
+                    {% endif %}
+                </td>
+            </tr>
+        {% else %}
+            <tr><td colspan="8">No users found.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    <script src="{{ asset('Front/js/admin.js') }}"></script>
+{% endblock %}
