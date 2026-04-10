@@ -79,8 +79,15 @@ final class ForumController extends AbstractController
         $post->setContent($content);
         $post->setStatus('ACTIVE');
         $post->setCreatedAt(new \DateTime());
-        $post->setAuthor('User');
-        $post->setAuthorId(0);
+        $user = $this->getUser();
+
+if (!$user) {
+    $this->addFlash('error', 'You must be logged in.');
+    return $this->redirectToRoute('app_login'); // or your login route
+}
+
+$post->setAuthor($user->getUserIdentifier()); // username/email
+$post->setAuthorId($user->getId());
         $post->setImagePath(null);
 
         if ($imageFile) {
@@ -181,8 +188,16 @@ final class ForumController extends AbstractController
         $comment = new Comment();
         $comment->setIdPost($post);
         $comment->setContent($content);
-        $comment->setAuthor('User');
-        $comment->setAuthorId(0);
+      $user = $this->getUser();
+
+if (!$user) {
+    $this->addFlash('error', 'You must be logged in.');
+    return $this->redirectToRoute('app_login');
+}
+
+$comment->setAuthor($user->getUserIdentifier());
+$comment->setAuthorId($user->getId());
+
         $comment->setLikes(0);
         $comment->setCreatedAt(new \DateTime());
 
