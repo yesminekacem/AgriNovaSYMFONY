@@ -1,0 +1,117 @@
+{% extends 'base.html.twig' %}
+
+{% block page_title %}Users - Admin{% endblock %}
+
+{% block stylesheets %}
+    <link rel="stylesheet" href="{{ asset('Front/css/admin.css') }}">
+{% endblock %}
+
+{% block body %}
+<div class="card admin-card" style="max-width:1300px;margin:1rem auto;padding:1.25rem;border-radius:10px;background:#fff;">
+    <h1>Users</h1>
+
+    {% for flash in app.flashes('error') %}
+        <div class="alert alert-error">{{ flash }}</div>
+    {% endfor %}
+    {% for flash in app.flashes('success') %}
+        <div class="alert alert-success">{{ flash }}</div>
+    {% endfor %}
+
+    <div class="table-controls" style="display:flex;gap:12px;align-items:center;justify-content:space-between;margin:0.6rem 0 1rem;">
+        <div style="display:flex;gap:8px;align-items:center;">
+            <input id="user-search" type="search" placeholder="Search users..." style="padding:8px;border-radius:8px;border:1px solid #ddd;width:260px;">
+
+            <select id="filter-role" style="padding:8px;border-radius:8px;border:1px solid #ddd;">
+                <option value="">All roles</option>
+                <option value="ADMIN">Admin</option>
+                <option value="USER">User</option>
+            </select>
+
+            <select id="filter-blocked" style="padding:8px;border-radius:8px;border:1px solid #ddd;">
+                <option value="">All status</option>
+                <option value="blocked">Blocked</option>
+                <option value="unblocked">Unblocked</option>
+            </select>
+        </div>
+
+        <div style="display:flex;gap:8px;align-items:center;">
+            <button id="export-pdf" class="btn btn-outline">Export visible to PDF</button>
+            <button id="reset-filters" class="btn btn-secondary">Reset</button>
+        </div>
+    </div>
+
+    <div class="table-wrap" style="overflow:auto;">
+    <table class="admin-table" aria-describedby="users-table-desc" style="width:100%;min-width:1000px;border-collapse:collapse;">
+        <caption id="users-table-desc" class="sr-only">Registered users</caption>
+        <thead>
+            <tr>
+                <th data-sort-key="id" class="sortable">ID</th>
+                <th>Avatar</th>
+                <th data-sort-key="fullName" class="sortable">Full name</th>
+                <th data-sort-key="email" class="sortable">Email</th>
+                <th data-sort-key="role" class="sortable">Role</th>
+                <th data-sort-key="verified" class="sortable">Verified</th>
+                <th data-sort-key="blocked" class="sortable">Blocked</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="users-tbody">
+        {% for u in users %}
+            <tr class="user-row {% if u.getRole() is defined and u.getRole() == 'ADMIN' %}is-admin{% endif %} {% if u.banned %}is-blocked{% endif %}" data-user-id="{{ u.id }}" data-role="{{ u.getRole() is defined ? u.getRole() : 'USER' }}" data-email="{{ u.email|lower }}" data-fullname="{{ u.fullName|default('')|lower }}" data-verified="{{ u.isVerified() ? '1' : '0' }}" data-blocked="{{ u.banned ? '1' : '0' }}">
+                <td style="padding:10px 12px;border-bottom:1px solid #eef;">{{ u.id }}</td>
+                <td class="avatar-cell" style="padding:10px 12px;border-bottom:1px solid #eef;">
+                    {% if u.profileImage %}
+                        <img class="avatar" src="{{ asset('uploads/profile_images/' ~ u.profileImage) }}" alt="{{ u.email }} avatar" style="width:40px;height:40px;border-radius:8px;object-fit:cover;">
+                    {% else %}
+                        <div class="avatar placeholder" style="width:40px;height:40px;border-radius:8px;background:#f3f7f3;display:inline-flex;align-items:center;justify-content:center;color:#567;">{{ u.email|first|upper }}</div>
+                    {% endif %}
+                </td>
+                <td style="padding:10px 12px;border-bottom:1px solid #eef;">{{ u.fullName }}</td>
+                <td style="padding:10px 12px;border-bottom:1px solid #eef;">{{ u.email }}</td>
+                <td style="padding:10px 12px;border-bottom:1px solid #eef;">{{ u.getRole() is defined ? u.getRole() : 'USER' }}</td>
+                <td style="padding:10px 12px;border-bottom:1px solid #eef;">{{ u.isVerified() ? 'Yes' : 'No' }}</td>
+                <td style="padding:10px 12px;border-bottom:1px solid #eef;">{{ u.banned ? 'Yes' : 'No' }}</td>
+                <td class="actions" style="padding:8px 12px;border-bottom:1px solid #eef;">
+                    {% if app.user and app.user.id != u.id %}
+                        {% if u.getRole() is defined and u.getRole() == 'ADMIN' %}
+                            <form method="post" action="{{ path('admin_user_demote', {id: u.id}) }}" class="inline-form anim-submit" data-action="demote" style="display:inline-block;margin-right:6px;">
+                                <input type="hidden" name="_csrf_token" value="{{ csrf_token('demote_user_' ~ u.id) }}">
+                                <button class="btn btn-small btn-secondary" title="Demote to USER">Demote</button>
+                            </form>
+                        {% else %}
+                            <form method="post" action="{{ path('admin_user_promote', {id: u.id}) }}" class="inline-form anim-submit" data-action="promote" style="display:inline-block;margin-right:6px;">
+                                <input type="hidden" name="_csrf_token" value="{{ csrf_token('promote_user_' ~ u.id) }}">
+                                <button class="btn btn-small btn-primary" title="Promote to ADMIN">Promote</button>
+                            </form>
+                        {% endif %}
+
+                        <form method="post" action="{{ path('admin_user_toggle_block', {id: u.id}) }}" class="inline-form anim-submit" data-action="block" style="display:inline-block;margin-right:6px;">
+                            <input type="hidden" name="_csrf_token" value="{{ csrf_token('block_user_' ~ u.id) }}">
+                            <button class="btn btn-small btn-warning" title="Toggle block">{{ u.banned ? 'Unblock' : 'Block' }}</button>
+                        </form>
+
+                        <a class="btn btn-small btn-info" href="{{ path('admin_user_edit', {id: u.id}) }}" title="Edit user" style="margin-right:6px;">Edit</a>
+
+                        <form method="post" action="{{ path('admin_user_delete', {id: u.id}) }}" class="inline-form anim-submit" data-action="delete" style="display:inline-block;">
+                            <input type="hidden" name="_csrf_token" value="{{ csrf_token('delete_user_' ~ u.id) }}">
+                            <button class="btn btn-small btn-danger" type="submit" onclick="return confirm('Delete this user?')">Delete</button>
+                        </form>
+                    {% else %}
+                        <span class="muted">—</span>
+                    {% endif %}
+                </td>
+            </tr>
+        {% else %}
+            <tr><td colspan="8">No users found.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="{{ asset('Front/js/admin-users.js') }}"></script>
+{% endblock %}

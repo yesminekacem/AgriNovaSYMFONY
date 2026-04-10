@@ -3,127 +3,192 @@
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
 
-
-#[ORM\Entity]
-class User
+#[ORM\Entity(repositoryClass: \App\Repository\UserRepository::class)]
+#[ORM\Table(name: 'user')]
+class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
-
     #[ORM\Id]
-    #[ORM\Column(type: "integer")]
-    private int $id;
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
+    private ?int $id = null;
 
-    #[ORM\Column(type: "string", length: 100)]
-    private string $full_name;
-
-    #[ORM\Column(type: "string", length: 255)]
+    #[ORM\Column(type: 'string', length: 255, unique: false)]
     private string $email;
 
-    #[ORM\Column(type: "string", length: 255)]
+    #[ORM\Column(type: 'string', length: 100, options: ['default' => 'USER'])]
+    private string $role = 'USER';
+
+    /**
+     * @var string The hashed password
+     */
+    #[ORM\Column(type: 'string')]
     private string $password;
 
-    #[ORM\Column(type: "string", length: 100)]
-    private string $role;
+    #[ORM\Column(type: 'string', length: 100, nullable: true)]
+    private ?string $fullName = null;
 
-    #[ORM\Column(type: "string", length: 255)]
-    private string $profile_image;
+    #[ORM\Column(name: 'email_verified', type: 'boolean', options: ['default' => 0])]
+    private bool $isVerified = false;
 
-    #[ORM\Column(type: "boolean")]
-    private bool $email_verified;
+    #[ORM\Column(type: 'string', length: 100, nullable: true, name: 'profile_image')]
+    private ?string $profileImage = null;
 
-    #[ORM\Column(type: "text")]
-    private string $face_data;
 
-    #[ORM\Column(type: "boolean")]
-    private bool $banned;
+    #[ORM\Column(type: 'boolean', options: ['default' => 0])]
+    private bool $banned = false;
 
-    public function getId()
+    public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function setId($value)
-    {
-        $this->id = $value;
-    }
-
-    public function getFull_name()
-    {
-        return $this->full_name;
-    }
-
-    public function setFull_name($value)
-    {
-        $this->full_name = $value;
-    }
-
-    public function getEmail()
+    public function getEmail(): string
     {
         return $this->email;
     }
 
-    public function setEmail($value)
+    public function setEmail(string $email): self
     {
-        $this->email = $value;
+        $this->email = $email;
+
+        return $this;
     }
 
-    public function getPassword()
+    public function getUserIdentifier(): string
     {
-        return $this->password;
+        return $this->email;
     }
 
-    public function setPassword($value)
+    /**
+     * @deprecated since Symfony 5.3, use getUserIdentifier instead
+     */
+    public function getUsername(): string
     {
-        $this->password = $value;
+        return $this->getUserIdentifier();
     }
 
-    public function getRole()
+    /**
+     * @return array<string>
+     */
+    public function getRoles(): array
+    {
+        // Map legacy single role string to Symfony roles array
+        $r = strtoupper($this->role ?? 'USER');
+        $roles = ['ROLE_USER'];
+        if ($r === 'ADMIN' || $r === 'ROLE_ADMIN') {
+            array_unshift($roles, 'ROLE_ADMIN');
+        }
+
+        return array_unique($roles);
+    }
+
+    public function getRole(): string
     {
         return $this->role;
     }
 
-    public function setRole($value)
+    public function setRole(string $role): self
     {
-        $this->role = $value;
+        $this->role = $role;
+
+        return $this;
     }
 
-    public function getProfile_image()
+    public function setRoles(array $roles): self
     {
-        return $this->profile_image;
+        // Keep compatibility: accept an array but store first role in legacy column
+        $first = $roles[0] ?? 'ROLE_USER';
+        // normalize
+        $this->role = str_ireplace('ROLE_', '', $first);
+
+        return $this;
     }
 
-    public function setProfile_image($value)
+    public function getPassword(): string
     {
-        $this->profile_image = $value;
+        return $this->password;
     }
 
-    public function getEmail_verified()
+    public function setPassword(string $password): self
     {
-        return $this->email_verified;
+        $this->password = $password;
+
+        return $this;
     }
 
-    public function setEmail_verified($value)
+    public function getSalt(): ?string
     {
-        $this->email_verified = $value;
+        return null;
     }
 
-    public function getFace_data()
+    public function eraseCredentials(): void
     {
-        return $this->face_data;
     }
 
-    public function setFace_data($value)
+    public function getFullName(): ?string
     {
-        $this->face_data = $value;
+        return $this->fullName;
     }
 
-    public function getBanned()
+    public function setFullName(?string $fullName): self
+    {
+        $this->fullName = $fullName;
+
+        return $this;
+    }
+
+    public function getProfileImage(): ?string
+    {
+        return $this->profileImage;
+    }
+
+    public function setProfileImage(?string $profileImage): self
+    {
+        $this->profileImage = $profileImage;
+
+        return $this;
+    }
+
+    public function isVerified(): bool
+    {
+        return $this->isVerified;
+    }
+
+    public function setIsVerified(bool $isVerified): self
+    {
+        $this->isVerified = $isVerified;
+
+        return $this;
+    }
+
+    public function isBanned(): bool
     {
         return $this->banned;
     }
 
-    public function setBanned($value)
+    public function getBanned(): bool
     {
-        $this->banned = $value;
+        return $this->banned;
+    }
+
+    public function setBanned(bool $banned): self
+    {
+        $this->banned = $banned;
+
+        return $this;
+    }
+
+    public function getVerificationToken(): ?string
+    {
+        return null;
+    }
+
+    public function setVerificationToken(?string $verificationToken): self
+    {
+        // no-op, token is stateless in this build
+        return $this;
     }
 }

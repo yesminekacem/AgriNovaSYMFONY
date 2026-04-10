@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Settings – AGRINOVA</title>
+    <style>
+        body{font-family:Arial,Helvetica,sans-serif;background:#f6faf3;padding:2rem}
+        .card{background:#fff;padding:1.25rem;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,.06);max-width:700px;margin:0 auto}
+        .field{margin-bottom:1rem}
+        label{display:block;margin-bottom:.4rem;font-weight:600}
+        input,select{width:100%;padding:.6rem;border:1px solid #eef6ec;border-radius:6px}
+        .btn{background:#2d7a45;color:#fff;padding:.6rem .9rem;border-radius:6px;border:none;cursor:pointer}
+    </style>
+</head>
+<body>
+<div class="card">
+    <h1>Settings</h1>
+
+    {% for flash in app.flashes('error') %}
+        <div style="background:#fdecea;color:#b91c1c;padding:.6rem;border-radius:8px;margin-bottom:.8rem;">{{ flash }}</div>
+    {% endfor %}
+    {% for flash in app.flashes('success') %}
+        <div style="background:#f0fdf4;color:#064e3b;padding:.6rem;border-radius:8px;margin-bottom:.8rem;">{{ flash }}</div>
+    {% endfor %}
+
+    <form method="post" action="{{ path('app_settings') }}">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token('settings_edit') }}">
+
+        <div class="field">
+            <label for="locale">Locale</label>
+            <select id="locale" name="locale">
+                <option value="en" {% if prefs.locale == 'en' %}selected{% endif %}>English</option>
+                <option value="fr" {% if prefs.locale == 'fr' %}selected{% endif %}>Français</option>
+                <option value="es" {% if prefs.locale == 'es' %}selected{% endif %}>Español</option>
+            </select>
+        </div>
+
+        <div class="field">
+            <label for="timezone">Timezone</label>
+            <select id="timezone" name="timezone">
+                <option value="UTC" {% if prefs.timezone == 'UTC' %}selected{% endif %}>UTC</option>
+                <option value="Europe/Paris" {% if prefs.timezone == 'Europe/Paris' %}selected{% endif %}>Europe/Paris</option>
+                <option value="America/New_York" {% if prefs.timezone == 'America/New_York' %}selected{% endif %}>America/New_York</option>
+            </select>
+        </div>
+
+        <div class="field">
+            <label><input type="checkbox" name="email_notifications" value="1" {% if prefs.email_notifications %}checked{% endif %}> Email notifications</label>
+        </div>
+
+        <div style="display:flex;gap:.6rem;align-items:center">
+            <button class="btn" type="submit">Save settings</button>
+            <a href="{{ path('app_profile') }}" style="margin-left:auto">Back to profile</a>
+        </div>
+    </form>
+
+</div>
+</body>
+</html>

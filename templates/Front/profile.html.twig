@@ -1,0 +1,175 @@
+{% extends 'base.html.twig' %}
+
+{% block page_title %}Profile{% endblock %}
+
+{% block stylesheets %}
+    <link rel="stylesheet" href="{{ asset('Front/css/profile.css') }}">
+    <style>
+        /* Critical fallback styles for profile page (applied inline if external CSS fails) */
+        :root{--accent:#2d7a45;--muted:#6b7280;--bg:#f3f6f7;--card:#fff;--info-bg:#f9fafb}
+        body{background:var(--bg)!important;font-family:Inter, system-ui, Arial, sans-serif}
+        .profile-page{max-width:1200px;margin:1.2rem auto;padding:0 12px}
+        .profile-header{display:flex;gap:20px;align-items:flex-start}
+        .profile-card{width:230px;background:var(--card);border-radius:12px;padding:18px;box-shadow:0 6px 22px rgba(20,60,30,0.06);display:flex;flex-direction:column;align-items:center;gap:12px}
+        .avatar-large img, .avatar-large .avatar{width:120px;height:120px;border-radius:999px;object-fit:cover;border:6px solid #fff}
+        .username{margin:0;font-weight:700;color:#123}
+        .role-badge{background:#e6f5ea;color:var(--accent);font-weight:700;padding:6px 10px;border-radius:999px;font-size:12px}
+        .change-photo{background:#fff;border:1px solid #e6f0e6;padding:8px 12px;border-radius:8px;cursor:pointer}
+        .profile-top-right{flex:1;display:flex;flex-direction:column;gap:12px}
+        .welcome-banner{background:linear-gradient(90deg,#1e6b33,#2d7a45);color:#fff;padding:18px;border-radius:12px}
+        .info-cards{display:flex;gap:12px}
+        .info-card{flex:1;background:var(--card);padding:14px;border-radius:10px}
+        .card-section{background:var(--card);border-radius:12px;padding:0;overflow:hidden;margin-top:18px}
+        .card-header{padding:16px 20px;border-bottom:1px solid #f1f5f4}
+        .card-body{padding:18px 20px}
+        .row{display:flex;gap:18px}
+        .col{flex:1}
+        .col label{display:block;font-size:13px;color:#344;margin-bottom:6px}
+        .col input{width:100%;padding:12px;border-radius:10px;border:1px solid #eef;background:var(--info-bg)}
+        .actions-row{display:flex;align-items:center}
+        .spacer{flex:1}
+        .btn{display:inline-block;padding:10px 14px;border-radius:10px;border:none;cursor:pointer}
+        .btn-primary{background:var(--accent);color:#fff}
+        .btn-secondary-blue{background:#0b5ed7;color:#fff}
+        @media (max-width:900px){.profile-header{flex-direction:column}.row{flex-direction:column}.info-cards{flex-direction:column}}
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="profile-page">
+    <style>
+        /* Emergency inline styles with high specificity to force layout if external CSS fails */
+        .profile-page, .profile-page * { box-sizing: border-box !important; }
+        .profile-page { max-width:1200px !important; margin:1.2rem auto !important; padding:0 12px !important; font-family:Inter, system-ui, Arial, sans-serif !important; background: none !important; }
+        .profile-header{display:flex !important; gap:20px !important; align-items:flex-start !important}
+        .profile-card{width:230px !important; background:#fff !important; border-radius:12px !important; padding:18px !important; box-shadow:0 6px 22px rgba(20,60,30,0.06) !important; display:flex !important; flex-direction:column !important; align-items:center !important; gap:12px !important}
+        .avatar-large img, .avatar-large .avatar{width:120px !important; height:120px !important; border-radius:999px !important; object-fit:cover !important; border:6px solid #fff !important}
+        .username{margin:0 !important; font-weight:700 !important; color:#123 !important}
+        .role-badge{background:#e6f5ea !important; color:#2d7a45 !important; font-weight:700 !important; padding:6px 10px !important; border-radius:999px !important; font-size:12px !important}
+        .change-photo{background:#fff !important; border:1px solid #e6f0e6 !important; padding:8px 12px !important; border-radius:8px !important; cursor:pointer !important}
+        .profile-top-right{flex:1 !important; display:flex !important; flex-direction:column !important; gap:12px !important}
+        .welcome-banner{background:linear-gradient(90deg,#1e6b33,#2d7a45) !important; color:#fff !important; padding:18px !important; border-radius:12px !important}
+        .info-cards{display:flex !important; gap:12px !important}
+        .info-card{flex:1 !important; background:#fff !important; padding:14px !important; border-radius:10px !important}
+        .card-section{background:#fff !important; border-radius:12px !important; padding:0 !important; overflow:hidden !important; margin-top:18px !important}
+        .card-header{padding:16px 20px !important; border-bottom:1px solid #f1f5f4 !important}
+        .card-body{padding:18px 20px !important}
+        .row{display:flex !important; gap:18px !important}
+        .col{flex:1 !important}
+        .col label{display:block !important; font-size:13px !important; color:#344 !important; margin-bottom:6px !important}
+        .col input{width:100% !important; padding:12px !important; border-radius:10px !important; border:1px solid #eef !important; background:#f9fafb !important}
+        .actions-row{display:flex !important; align-items:center !important}
+        .spacer{flex:1 !important}
+        .btn{display:inline-block !important; padding:10px 14px !important; border-radius:10px !important; border:none !important; cursor:pointer !important}
+        .btn-primary{background:#2d7a45 !important; color:#fff !important}
+        .btn-secondary-blue{background:#0b5ed7 !important; color:#fff !important}
+        @media (max-width:900px){ .profile-header{flex-direction:column !important} .row{flex-direction:column !important} .info-cards{flex-direction:column !important} }
+    </style>
+
+    <div class="profile-header">
+        <div class="profile-card">
+            <div class="avatar-large">
+                {% if user.profileImage %}
+                    <img id="avatarPreview" src="{{ asset('uploads/profile_images/' ~ user.profileImage) }}" alt="Profile image">
+                {% else %}
+                    {# Generate an SVG placeholder with the user's first initial and use it as an image data URI so preview behaves like an <img> #}
+                    {% set initial = (user.fullName ? user.fullName|first : user.email|first)|upper %}
+                    {% set svg = '<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><rect width="100%" height="100%" rx="999" fill="#2d7a45"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="DM Sans, Arial, sans-serif" font-size="54" fill="#ffffff">' ~ initial ~ '</text></svg>' %}
+                    <img id="avatarPreview" src="data:image/svg+xml;utf8,{{ svg|url_encode }}" alt="Profile image">
+                {% endif %}
+            </div>
+            <h3 class="username">{{ user.fullName ?: user.email }}</h3>
+            <div class="role-badge">{{ user.getRole() is defined ? user.getRole() : 'USER' }}</div>
+            <button class="btn btn-light change-photo" id="change-photo-btn">Change Photo</button>
+        </div>
+
+        <div class="profile-top-right">
+            <div class="welcome-banner">
+                <h2>Welcome back, {{ user.fullName ?: 'user' }}!</h2>
+                <p>Your profile is up to date.</p>
+            </div>
+
+            <div class="info-cards">
+                <div class="info-card">
+                    <div class="info-title">Email</div>
+                    <div class="info-value">{{ user.email }}</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-title">Role</div>
+                    <div class="info-value">{{ user.getRole() is defined ? user.getRole() : 'USER' }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="profile-body">
+        <div class="card-section">
+            <div class="card-header">
+                <h3>Personal Information</h3>
+            </div>
+            <form method="post" action="{{ path('app_profile') }}" enctype="multipart/form-data" id="profile-form" class="card-body">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token('profile_edit') }}">
+                <input type="hidden" name="form_type" value="profile">
+                <input id="profile_image" name="profile_image" type="file" accept="image/*" style="display:none">
+
+                <div class="row">
+                    <div class="col">
+                        <label for="fullName">Full Name</label>
+                        <input id="fullName" name="fullName" type="text" value="{{ user.fullName }}">
+                    </div>
+                    <div class="col">
+                        <label for="email">Email Address</label>
+                        <input id="email" name="email" type="email" required value="{{ user.email }}">
+                    </div>
+                </div>
+
+                <div class="row actions-row">
+                    <div class="spacer"></div>
+                    <div>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="card-section">
+            <div class="card-header">
+                <h3>Change Password</h3>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{{ path('app_profile') }}" id="security-form">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token('profile_security') }}">
+                    <input type="hidden" name="form_type" value="security">
+
+                    <div class="row">
+                        <div class="col">
+                            <label for="current_password">Current Password</label>
+                            <input id="current_password" name="current_password" type="password" placeholder="Current password" required>
+                        </div>
+                        <div class="col">
+                            <label for="new_password">New Password</label>
+                            <input id="new_password" name="new_password" type="password" placeholder="Min. 8 characters">
+                        </div>
+                        <div class="col">
+                            <label for="confirm_password">Confirm New Password</label>
+                            <input id="confirm_password" name="confirm_password" type="password" placeholder="Repeat new password">
+                        </div>
+                    </div>
+
+                    <div class="row actions-row">
+                        <div class="spacer"></div>
+                        <div>
+                            <button type="submit" class="btn btn-secondary-blue">Update Password</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    <script src="{{ asset('Front/js/profile.js') }}"></script>
+{% endblock %}
