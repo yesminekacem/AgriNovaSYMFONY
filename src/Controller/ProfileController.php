@@ -23,6 +23,47 @@ class ProfileController extends AbstractController
         }
 
         if ($request->isMethod('POST')) {
+            $formType = $request->request->get('form_type', 'profile');
+
+            // Choose token name per form
+            if ($formType === 'security') {
+                if (!$this->isCsrfTokenValid('profile_security', $request->request->get('_csrf_token'))) {
+                    $this->addFlash('error', 'Invalid CSRF token.');
+                    return $this->redirectToRoute('app_profile');
+                }
+
+                $current = (string) $request->request->get('current_password', '');
+                $new = (string) $request->request->get('new_password', '');
+                $confirm = (string) $request->request->get('confirm_password', '');
+
+                // verify current password
+                if (!$passwordHasher->isPasswordValid($user, $current)) {
+                    $this->addFlash('error', 'Current password is incorrect.');
+                    return $this->redirectToRoute('app_profile', ['_fragment' => 'security-section']);
+                }
+
+                if ($new !== $confirm) {
+                    $this->addFlash('error', 'New passwords do not match.');
+                    return $this->redirectToRoute('app_profile', ['_fragment' => 'security-section']);
+                }
+
+                // password format rules
+                $pattern = '/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/';
+                if (!preg_match($pattern, $new)) {
+                    $this->addFlash('error', 'New password must be at least 8 characters and include upper and lower case letters, a number and a special character.');
+                    return $this->redirectToRoute('app_profile', ['_fragment' => 'security-section']);
+                }
+
+                $hashed = $passwordHasher->hashPassword($user, $new);
+                $user->setPassword($hashed);
+                $em->persist($user);
+                $em->flush();
+
+                $this->addFlash('success', 'Password updated.');
+                return $this->redirectToRoute('app_profile', ['_fragment' => 'security-section']);
+            }
+
+            // profile form (default)
             if (!$this->isCsrfTokenValid('profile_edit', $request->request->get('_csrf_token'))) {
                 $this->addFlash('error', 'Invalid CSRF token.');
                 return $this->redirectToRoute('app_profile');
@@ -30,7 +71,6 @@ class ProfileController extends AbstractController
 
             $fullName = trim($request->request->get('fullName', '')) ?: null;
             $email = trim($request->request->get('email', ''));
-            $newPassword = $request->request->get('password', '');
 
             if ($email && $email !== $user->getEmail()) {
                 $existing = $userRepository->findOneBy(['email' => $email]);
@@ -42,11 +82,6 @@ class ProfileController extends AbstractController
             }
 
             $user->setFullName($fullName);
-
-            if ($newPassword) {
-                $hashed = $passwordHasher->hashPassword($user, $newPassword);
-                $user->setPassword($hashed);
-            }
 
             // Handle profile image upload
             /** @var UploadedFile|null $uploaded */

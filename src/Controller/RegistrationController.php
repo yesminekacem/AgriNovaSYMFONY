@@ -17,6 +17,10 @@ class RegistrationController extends AbstractController
     #[Route('/register', name: 'app_register', methods: ['GET','POST'])]
     public function register(Request $request, EntityManagerInterface $em, UserPasswordHasherInterface $passwordHasher, UrlGeneratorInterface $urlGenerator, UserRepository $userRepository): Response
     {
+        // If GET, just render the form (no errors / previous values)
+        $formValues = ['email' => '', 'fullName' => ''];
+        $formErrors = [];
+
         if ($request->isMethod('POST')) {
             // CSRF check
             if (!$this->isCsrfTokenValid('register', $request->request->get('_csrf_token'))) {
@@ -24,20 +28,56 @@ class RegistrationController extends AbstractController
                 return $this->redirectToRoute('app_register');
             }
 
-            $email = trim($request->request->get('email', ''));
-            $fullName = trim($request->request->get('fullName', ''));
-            $plainPassword = $request->request->get('password', '');
+            $email = trim((string) $request->request->get('email', ''));
+            $fullName = trim((string) $request->request->get('fullName', ''));
+            $plainPassword = (string) $request->request->get('password', '');
+            $confirmPassword = (string) $request->request->get('confirm_password', '');
 
-            if (!$email || !$plainPassword) {
-                $this->addFlash('error', 'Email and password are required.');
-                return $this->redirectToRoute('app_register');
+            $formValues['email'] = $email;
+            $formValues['fullName'] = $fullName;
+
+            // Basic presence checks
+            if (!$email) {
+                $formErrors['email'] = 'Email is required.';
+            } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $formErrors['email'] = 'Please provide a valid email address.';
+            }
+
+            if (!$plainPassword) {
+                $formErrors['password'] = 'Password is required.';
+            }
+
+            if (!$confirmPassword) {
+                $formErrors['confirm_password'] = 'Please confirm your password.';
+            }
+
+            // Password match
+            if ($plainPassword && $confirmPassword && $plainPassword !== $confirmPassword) {
+                $formErrors['confirm_password'] = 'Passwords do not match.';
+            }
+
+            // Password format rules: min 8 chars, 1 upper, 1 lower, 1 digit, 1 special char
+            if ($plainPassword) {
+                $pattern = '/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/';
+                if (!preg_match($pattern, $plainPassword)) {
+                    $formErrors['password'] = 'Password must be at least 8 characters and include upper and lower case letters, a number and a special character.';
+                }
             }
 
             // Prevent duplicate emails
-            $existing = $userRepository->findOneBy(['email' => $email]);
-            if ($existing) {
-                $this->addFlash('error', 'An account with this email already exists.');
-                return $this->redirectToRoute('app_register');
+            if (!isset($formErrors['email'])) {
+                $existing = $userRepository->findOneBy(['email' => $email]);
+                if ($existing) {
+                    $formErrors['email'] = 'An account with this email already exists.';
+                }
+            }
+
+            if (count($formErrors) > 0) {
+                // Render form with errors and previously entered values
+                return $this->render('Front/register.html.twig', [
+                    'formValues' => $formValues,
+                    'formErrors' => $formErrors,
+                ]);
             }
 
             $user = new User();
@@ -66,6 +106,9 @@ class RegistrationController extends AbstractController
             return $this->redirectToRoute('app_login');
         }
 
-        return $this->render('Front/register.html.twig');
+        return $this->render('Front/register.html.twig', [
+            'formValues' => $formValues,
+            'formErrors' => $formErrors,
+        ]);
     }
 }
