@@ -1,4 +1,4 @@
-{% extends 'base.html.twig' %}
+{% extends is_granted('ROLE_ADMIN') ? 'baseBack.html.twig' : 'base.html.twig' %}
 
 {% block page_title %}Profile{% endblock %}
 
