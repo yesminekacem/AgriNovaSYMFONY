@@ -1,0 +1,187 @@
+{% extends 'base.html.twig' %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('Front/css/showcrop.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+{% endblock %}
+
+{% block body %}
+
+<div class="crops-page">
+
+    <!-- Header -->
+    <header class="page-header">
+        <div class="header-left">
+            <h1><span class="leaf-icon">🌿</span> Crop Management </h1>
+            
+        </div>
+        <div class="header-actions">
+           
+            <a href="{{ path('app_task_index') }}" class="btn btn-outline">
+                Manage Tasks
+            </a>
+        </div>
+    </header>
+
+    <!-- Search + filter -->
+    <div class="toolbar">
+        <div class="search-wrap">
+            <input type="text" id="cropSearch" placeholder="Search crops (name, type, variety)...">
+        </div>
+
+        <div class="filter-chips" id="filterChips">
+            <button class="chip active" data-filter="all">All</button>
+            <button class="chip" data-filter="active">Active</button>
+            <button class="chip" data-filter="growing">Growing</button>
+            <button class="chip" data-filter="harvested">Harvested</button>
+            <button class="chip" data-filter="failed">Failed</button>
+        </div>
+        
+
+        <div class="crop-count" id="cropCount">
+            {{ crops|length }} crop{% if crops|length != 1 %}s{% endif %} registered
+        </div>
+    </div>
+
+    <!-- Crops Grid -->
+    <div class="crops-grid" id="cropsGrid">
+
+        {% for crop in crops %}
+
+            {# Stage style #}
+            {% set stageClass = 'stage-default' %}
+            {% if crop.growthStage == 'flowering' %}{% set stageClass = 'stage-flowering' %}
+            {% elseif crop.growthStage == 'maturation' %}{% set stageClass = 'stage-maturation' %}
+            {% elseif crop.growthStage == 'fruiting' %}{% set stageClass = 'stage-fruiting' %}
+            {% elseif crop.growthStage == 'vegetative' %}{% set stageClass = 'stage-vegetative' %}
+            {% elseif crop.growthStage == 'germination' %}{% set stageClass = 'stage-germination' %}
+            {% elseif crop.growthStage == 'harvesting' %}{% set stageClass = 'stage-harvesting' %}
+            {% endif %}
+
+            {# Status style #}
+            {% set statusClass = 'status-default' %}
+            {% if crop.status == 'active' %}{% set statusClass = 'status-active' %}
+            {% elseif crop.status == 'growing' %}{% set statusClass = 'status-growing' %}
+            {% elseif crop.status == 'harvested' %}{% set statusClass = 'status-harvested' %}
+            {% elseif crop.status == 'failed' %}{% set statusClass = 'status-failed' %}
+            {% endif %}
+
+            {# Progress estimation #}
+            {% set progressPct = 0 %}
+            {% if crop.growthStage == 'germination' %}{% set progressPct = 15 %}
+            {% elseif crop.growthStage == 'vegetative' %}{% set progressPct = 40 %}
+            {% elseif crop.growthStage == 'flowering' %}{% set progressPct = 65 %}
+            {% elseif crop.growthStage == 'fruiting' %}{% set progressPct = 80 %}
+            {% elseif crop.growthStage == 'maturation' %}{% set progressPct = 90 %}
+            {% elseif crop.growthStage == 'harvesting' %}{% set progressPct = 100 %}
+            {% endif %}
+
+            <article class="crop-card"
+                     data-status="{{ crop.status }}"
+                     data-name="{{ crop.name}}"
+                     data-type="{{ crop.type|lower }}"
+                     data-variety="{{ crop.variety|lower }}">
+
+                <!-- Image -->
+                <div class="card-image">
+                    {% if crop.imagePath %}
+                        <img src="{{ asset('cropsimages/' ~ crop.imagePath) }}" alt="{{ crop.name }}">
+                    {% else %}
+                        <div class="card-image-placeholder">🌱</div>
+                    {% endif %}
+                    <span class="stage-badge {{ stageClass }}">
+                        {{ crop.growthStage|capitalize }}
+                    </span>
+                </div>
+
+                <!-- Content -->
+                <div class="card-body">
+
+                    <div class="card-title-row">
+                        <h2 class="card-title">{{ crop.name }}</h2>
+                        <span class="status-dot {{ statusClass }}"></span>
+                    </div>
+
+                    <p class="card-meta">
+                        {{ crop.type }} · {{ crop.variety }}
+                    </p>
+
+                    <!-- Progress -->
+                    <div class="progress-block">
+                        <div class="progress-labels">
+                            <span>Growth Progress</span>
+                            <span>{{ progressPct }}%</span>
+                        </div>
+                        <div class="progress-track">
+                            <div class="progress-fill" style="width: {{ progressPct }}%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Info -->
+                    <div class="info-grid">
+                        <div class="info-cell">
+                            <span>📅</span>
+                            <div>
+                                <span class="info-label">Planting Date</span>
+                                <span class="info-value">
+                                    {{ crop.plantingDate ? crop.plantingDate|date('M d, Y') : 'N/A' }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="info-cell">
+                            <span>🌾</span>
+                            <div>
+                                <span class="info-label">Area Size</span>
+                                <span class="info-value">
+                                    {{ crop.areaSize ? crop.areaSize ~ ' ha' : 'N/A' }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Harvest -->
+                    {% if crop.expectedHarvestDate %}
+                        <div class="harvest-row">
+                            Expected harvest:
+                            <strong>{{ crop.expectedHarvestDate|date('M d, Y') }}</strong>
+                        </div>
+                    {% endif %}
+
+                    <!-- Actions -->
+                    <div class="card-footer">
+                        <a href="{{ path('app_task_new', {'crop': crop.cropId}) }}" class="btn-task">
+                            + Add Task
+                        </a>
+                    </div>
+
+                </div>
+            </article>
+
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">🌱</div>
+                <h3>No crops available</h3>
+                <p>Add your first crop to start monitoring your agricultural production.</p>
+                <a href="{{ path('app_crop_new') }}" class="btn btn-primary">
+                    + Add Crop
+                </a>
+            </div>
+        {% endfor %}
+
+    </div>
+
+    <!-- No results -->
+    <div class="no-results hidden" id="noResults">
+        <p>No crops found matching your search.</p>
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="{{ asset('Front/js/showcrop.js') }}"></script>
+{% endblock %}

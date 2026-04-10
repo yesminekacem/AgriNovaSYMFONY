@@ -1,0 +1,406 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,500;0,700;1,300&family=Cabinet+Grotesk:wght@400;500;600;700&display=swap');
+
+/* ── Tokens ── */
+:root {
+  --bg:          #f5f2ec;
+  --bg2:         #edeadf;
+  --surface:     #ffffff;
+  --border:      #d9d4c7;
+  --border-focus:#3d7a4f;
+  --text:        #1c1a14;
+  --text-mid:    #5a5648;
+  --text-muted:  #9a9283;
+  --green:       #3d7a4f;
+  --green-light: #eef5f0;
+  --green-dark:  #2d5c3b;
+  --amber:       #c97c2a;
+  --red:         #c94040;
+  --radius:      12px;
+  --radius-sm:   8px;
+  --shadow:      0 2px 16px rgba(60,50,30,0.08);
+  --shadow-lg:   0 8px 40px rgba(60,50,30,0.13);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Cabinet Grotesk', sans-serif;
+  font-size: 15px;
+  min-height: 100vh;
+  background-image:
+    radial-gradient(ellipse 70% 50% at 100% 0%, rgba(61,122,79,0.07) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 60% at 0% 100%, rgba(201,124,42,0.06) 0%, transparent 55%);
+}
+
+/* ── Page wrapper ── */
+.create-page {
+  display: flex;
+  min-height: 100vh;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 3rem 1.5rem 4rem;
+}
+
+/* ── Card ── */
+.form-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: var(--shadow-lg);
+  width: 100%;
+  max-width: 680px;
+  overflow: hidden;
+  animation: cardIn 0.45s cubic-bezier(0.22,1,0.36,1) both;
+}
+
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Card Header ── */
+.form-card-header {
+  background: var(--green);
+  padding: 2rem 2.25rem 1.75rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.form-card-header::before {
+  content: '';
+  position: absolute;
+  right: -40px; top: -40px;
+  width: 200px; height: 200px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.06);
+}
+
+.form-card-header::after {
+  content: '';
+  position: absolute;
+  right: 40px; bottom: -60px;
+  width: 140px; height: 140px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.04);
+}
+
+.header-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(255,255,255,0.65);
+  margin-bottom: 0.6rem;
+}
+
+.header-tag .leaf { font-size: 0.85rem; }
+
+.form-card-header h1 {
+  font-family: 'Fraunces', serif;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.15;
+  position: relative;
+  z-index: 1;
+}
+
+.form-card-header h1 em {
+  font-style: italic;
+  font-weight: 300;
+}
+
+/* ── Form Body ── */
+.form-body {
+  padding: 2rem 2.25rem 2.25rem;
+}
+
+/* ── Section divider ── */
+.form-section {
+  margin-bottom: 1.75rem;
+}
+
+.form-section-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.form-section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ── Grid layouts ── */
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 520px) { .form-grid-2 { grid-template-columns: 1fr; } }
+
+/* ── Field ── */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  animation: fieldIn 0.4s ease both;
+}
+
+@keyframes fieldIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.field:nth-child(1) { animation-delay: 0.05s; }
+.field:nth-child(2) { animation-delay: 0.10s; }
+.field:nth-child(3) { animation-delay: 0.15s; }
+.field:nth-child(4) { animation-delay: 0.20s; }
+.field:nth-child(5) { animation-delay: 0.25s; }
+.field:nth-child(6) { animation-delay: 0.30s; }
+.field:nth-child(7) { animation-delay: 0.35s; }
+
+.field label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-mid);
+  letter-spacing: 0.01em;
+}
+
+.field label .req { color: var(--amber); margin-left: 2px; }
+
+/* ── Inputs ── */
+.field input[type="text"],
+.field input[type="number"],
+.field input[type="date"],
+.field textarea,
+.field select {
+  width: 100%;
+  padding: 0.65rem 0.9rem;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: 'Cabinet Grotesk', sans-serif;
+  font-size: 0.9rem;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.field input:focus,
+.field textarea:focus,
+.field select:focus {
+  border-color: var(--border-focus);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(61,122,79,0.12);
+}
+
+.field textarea {
+  resize: vertical;
+  min-height: 90px;
+  line-height: 1.55;
+}
+
+/* custom select arrow */
+.select-wrap {
+  position: relative;
+}
+
+.select-wrap::after {
+  content: '▾';
+  position: absolute;
+  right: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+  font-size: 0.8rem;
+}
+
+.select-wrap select { padding-right: 2.2rem; cursor: pointer; }
+
+/* status badge colours inside select - cosmetic only */
+.field select option[value="pending"]     { color: var(--amber); }
+.field select option[value="in_progress"] { color: #1a6fcc; }
+.field select option[value="completed"]   { color: var(--green); }
+
+/* ── Cost field with prefix ── */
+.input-prefix {
+  position: relative;
+}
+
+.input-prefix .prefix-symbol {
+  position: absolute;
+  left: 0.9rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.input-prefix input { padding-left: 1.8rem; }
+
+/* ════════════════════════════════
+   VALIDATION STYLES
+   ════════════════════════════════ */
+
+/* ── Invalid: red border + tinted background ── */
+.field input.is-invalid,
+.field textarea.is-invalid,
+.field select.is-invalid,
+.field .select-wrap.is-invalid select {
+  border-color: #e53e3e !important;
+  background: #fff8f8 !important;
+  box-shadow: 0 0 0 3px rgba(229,62,62,0.12) !important;
+  animation: shake 0.38s cubic-bezier(0.36,0.07,0.19,0.97) both;
+}
+
+/* Symfony sometimes wraps the widget div with .is-invalid */
+.field .is-invalid input,
+.field .is-invalid select,
+.field .is-invalid textarea {
+  border-color: #e53e3e !important;
+  background: #fff8f8 !important;
+  box-shadow: 0 0 0 3px rgba(229,62,62,0.12) !important;
+}
+
+/* shake on invalid submit */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  18%       { transform: translateX(-5px); }
+  36%       { transform: translateX(5px); }
+  54%       { transform: translateX(-3px); }
+  72%       { transform: translateX(3px); }
+}
+
+/* ── Error message pill ── */
+.field ul.form-errors,
+.field ul.form-errors li,
+.field span.form-error,
+.field .form-error {
+  list-style: none;
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  font-size: 0.775rem;
+  font-weight: 500;
+  color: #9b1c1c;
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  border-left: 3px solid #ef4444;
+  border-radius: 7px;
+  padding: 8px 12px;
+  margin-top: 5px;
+  line-height: 1.45;
+  animation: errorIn 0.22s ease both;
+}
+
+/* triangle warning icon via SVG mask */
+.field ul.form-errors li::before,
+.field span.form-error::before,
+.field .form-error::before {
+  content: '';
+  display: inline-block;
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  margin-top: 1px;
+  background-color: #ef4444;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z'/%3E%3Cline x1='12' y1='9' x2='12' y2='13'/%3E%3Cline x1='12' y1='17' x2='12.01' y2='17'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z'/%3E%3Cline x1='12' y1='9' x2='12' y2='13'/%3E%3Cline x1='12' y1='17' x2='12.01' y2='17'/%3E%3C/svg%3E");
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
+@keyframes errorIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Valid state (once corrected) ── */
+.field input.is-valid,
+.field textarea.is-valid,
+.field select.is-valid {
+  border-color: var(--green) !important;
+  background: #f6fbf7 !important;
+  box-shadow: 0 0 0 3px rgba(61,122,79,0.10) !important;
+}
+
+/* ── Footer actions ── */
+.form-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem 2.25rem;
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--text-mid);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 0.55rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  transition: border-color 0.18s, color 0.18s, background 0.18s;
+}
+
+.btn-back:hover {
+  border-color: var(--text-mid);
+  color: var(--text);
+  background: var(--bg2);
+}
+
+.btn-save {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.75rem;
+  background: var(--green);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: 'Cabinet Grotesk', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.01em;
+  transition: background 0.18s, transform 0.15s, box-shadow 0.18s;
+  box-shadow: 0 3px 12px rgba(61,122,79,0.3);
+}
+
+.btn-save:hover {
+  background: var(--green-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(61,122,79,0.38);
+}
+
+.btn-save:active { transform: translateY(0); }

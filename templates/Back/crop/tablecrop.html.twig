@@ -1,0 +1,126 @@
+{% extends 'baseBack.html.twig' %}
+
+{% block title %}Crops — Table{% endblock %}
+{% block breadcrumb %}Crops / Table{% endblock %}
+{% block nav_crops %}active{% endblock %}
+
+{% block stylesheets %}
+    <link rel="stylesheet" href="{{ asset('Back/css/crop_table.css') }}">
+{% endblock %}
+
+{% block page_header %}
+<div class="ph">
+    <div class="ph-left">
+        <span class="ph-eye">Season Registry</span>
+        <h1 class="ph-title">Crop Records</h1>
+    </div>
+    <div class="ph-right">
+        <a href="{{ path('app_crop_index') }}" class="act ghost">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+            Card View
+        </a>
+        <a href="{{ path('app_crop_new') }}" class="act primary">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add Crop
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block body %}
+
+{# ── Toolbar ──────────────────────────────────────────── #}
+<div class="toolbar">
+    <div class="toolbar-left">
+        <div class="search-wrap">
+            <input type="text" id="cropSearch" placeholder="Search crops (name, type, variety)...">
+        </div>
+        <div class="chip-row" id="filterChips">
+            <button class="chip on" data-filter="all">All</button>
+            <button class="chip" data-filter="growing">Growing</button>
+            <button class="chip" data-filter="harvested">Harvested</button>
+            <button class="chip" data-filter="planted">Planted</button>
+            <button class="chip" data-filter="failed">Failed</button>
+        </div>
+    </div>
+
+   <div class="toolbar-right">
+    <a href="{{ path('app_crop_new') }}" class="act primary" style="background:#22C55E !important; border-color:#22C55E !important; color:#fff !important;">
+        + Add New Crop
+    </a>
+
+        <div class="rec-count" id="cropCount">
+            {{ crops|length }} crop{% if crops|length != 1 %}s{% endif %} registered
+        </div>
+    </div>
+</div>
+
+{# ── Table ────────────────────────────────────────────── #}
+<div class="tcard">
+    <table class="ct" id="T">
+        <thead>
+            <tr>
+                <th onclick="cropTable.sort(0, this)">#</th>
+                <th onclick="cropTable.sort(1, this)">Name</th>
+                <th onclick="cropTable.sort(2, this)">Type</th>
+                <th onclick="cropTable.sort(3, this)">Variety</th>
+                <th onclick="cropTable.sort(4, this)">Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="TB">
+        {% for crop in crops %}
+            {% set st = crop.status|lower %}
+            <tr data-st="{{ st }}">
+                <td class="td-id">{{ crop.cropId }}</td>
+                <td class="td-name">{{ crop.name }}</td>
+                <td class="td-type">{{ crop.type }}</td>
+                <td class="td-variety">{{ crop.variety }}</td>
+                <td>
+                    <span class="badge b-{% if st == 'growing' %}growing{% elseif st == 'harvested' %}harvested{% elseif st == 'planted' %}planted{% elseif st == 'dormant' %}dormant{% elseif st == 'failed' %}failed{% else %}default{% endif %}">
+                        {{ crop.status }}
+                    </span>
+                </td>
+                <td>
+                    <div class="acts">
+                        <a href="{{ path('app_crop_edit', {'crop_id': crop.cropId}) }}" class="abtn abtn-edit">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>
+                            Edit
+                        </a>
+                        <form method="post" action="{{ path('app_crop_delete', {'crop_id': crop.cropId}) }}" style="display:contents" onsubmit="return confirm('Delete this crop permanently?');">
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ crop.cropId) }}">
+                            <button type="submit" class="abtn abtn-del">
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+                                Delete
+                            </button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="6">
+                    <div class="empty-cell">
+                        <span class="empty-glyph">✦</span>
+                        <p class="empty-msg">No crops recorded yet.</p>
+                        <p class="empty-sub">Add your first crop to get started.</p>
+                    </div>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="no-res" id="NR">Nothing matches your search.</div>
+
+    <div class="tfoot-bar">
+        <div class="tfoot-info">Showing <b id="fvis">{{ crops|length }}</b> of {{ crops|length }} crops</div>
+        <div class="tfoot-hint">Click column headers to sort &nbsp;↑↓</div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block javascripts %}
+<script src="{{ asset('Back/js/crop_table.js') }}"></script>
+{% endblock %}
