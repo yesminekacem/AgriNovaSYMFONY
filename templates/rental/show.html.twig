@@ -1,0 +1,105 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Rental #{{ rental.id }}{% endblock %}
+{% block page_title %}Rental Details{% endblock %}
+
+{% block body %}
+    <div class="space-y-6">
+        {% for label, messages in app.flashes %}
+            {% for message in messages %}
+                <div class="rounded-2xl border px-4 py-3 text-sm font-medium {{ label == 'success' ? 'border-green-200 bg-green-50 text-green-700' : 'border-red-200 bg-red-50 text-red-700' }}">{{ message }}</div>
+            {% endfor %}
+        {% endfor %}
+
+        <section class="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_14px_32px_rgba(20,83,45,0.08)]">
+            <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                    <p class="text-sm font-semibold uppercase tracking-[0.2em] text-green-700">Rental Overview</p>
+                    <h1 class="mt-2 text-3xl font-bold text-slate-900">Rental #{{ rental.id }} · {{ rental.displayItemName }}</h1>
+                    <p class="mt-2 max-w-2xl text-sm text-slate-500">{{ rental.renterName }} is renting this item from {{ rental.ownerName }}.</p>
+                </div>
+                <div class="flex flex-wrap gap-3">
+                    {% if rental.inventory and rental.inventory.id %}
+                        <a href="{{ path('inventory_show', {id: rental.inventory.id}) }}" class="inline-flex items-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">Back to inventory</a>
+                        <a href="{{ path('rental_index', {inventory: rental.inventory.id}) }}" class="inline-flex items-center rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100">View rentals</a>
+                    {% else %}
+                        <a href="{{ path('inventory_index') }}" class="inline-flex items-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">Back to inventory</a>
+                    {% endif %}
+                    <a href="{{ path('rental_edit', {id: rental.id}) }}" class="inline-flex items-center rounded-xl bg-green-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-800">Edit rental</a>
+                    {{ include('rental/_delete_form.html.twig', {rental: rental}) }}
+                </div>
+            </div>
+        </section>
+
+        <section class="grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(360px,1fr)]">
+            <article class="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_14px_32px_rgba(20,83,45,0.08)]">
+                <h2 class="text-lg font-bold text-slate-900">Rental details</h2>
+                <dl class="mt-5 grid gap-5 sm:grid-cols-2">
+                    <div><dt class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Inventory item</dt><dd class="mt-2 text-sm font-semibold text-slate-900">{{ rental.displayItemName }}</dd></div>
+                    <div><dt class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Rental status</dt><dd class="mt-2 text-sm font-semibold text-slate-900">{{ rental.rentalStatus }}</dd></div>
+                    <div><dt class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Payment status</dt><dd class="mt-2 text-sm font-semibold text-slate-900">{{ rental.paymentStatus }}</dd></div>
+                    <div><dt class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Payment method</dt><dd class="mt-2 text-sm font-semibold text-slate-900">{{ rental.paymentMethod ?: 'Not provided' }}</dd></div>
+                    <div><dt class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Renter</dt><dd class="mt-2 text-sm font-semibold text-slate-900">{{ rental.renterName }}</dd></div>
+                    <div><dt class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Contact</dt><dd class="mt-2 text-sm font-semibold text-slate-900">{{ rental.renterContact }}</dd></div>
+                    <div><dt class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Start date</dt><dd class="mt-2 text-sm font-semibold text-slate-900">{{ rental.startDate ? rental.startDate|date('d M Y') : 'N/A' }}</dd></div>
+                    <div><dt class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">End date</dt><dd class="mt-2 text-sm font-semibold text-slate-900">{{ rental.endDate ? rental.endDate|date('d M Y') : 'N/A' }}</dd></div>
+                    <div><dt class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Actual return</dt><dd class="mt-2 text-sm font-semibold text-slate-900">{{ rental.actualReturnDate ? rental.actualReturnDate|date('d M Y') : 'Not returned yet' }}</dd></div>
+                    <div><dt class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Days booked</dt><dd class="mt-2 text-sm font-semibold text-slate-900">{{ rental.totalDays ?? 0 }}</dd></div>
+                    <div><dt class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Daily rate</dt><dd class="mt-2 text-sm font-semibold text-slate-900">{{ rental.dailyRate|default(0)|number_format(2, '.', ',') }}</dd></div>
+                    <div><dt class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Total cost</dt><dd class="mt-2 text-sm font-semibold text-slate-900">{{ rental.totalCost|default(0)|number_format(2, '.', ',') }}</dd></div>
+                    <div><dt class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Security deposit</dt><dd class="mt-2 text-sm font-semibold text-slate-900">{{ rental.securityDeposit|default(0)|number_format(2, '.', ',') }}</dd></div>
+                    <div><dt class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Late fee</dt><dd class="mt-2 text-sm font-semibold text-slate-900">{{ rental.lateFee|default(0)|number_format(2, '.', ',') }}</dd></div>
+                    <div><dt class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Delivery</dt><dd class="mt-2 text-sm font-semibold text-slate-900">{{ rental.requiresDelivery ? 'Yes' : 'No' }}</dd></div>
+                    <div><dt class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Delivery fee</dt><dd class="mt-2 text-sm font-semibold text-slate-900">{{ rental.deliveryFee|default(0)|number_format(2, '.', ',') }}</dd></div>
+                    <div class="sm:col-span-2"><dt class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Renter address</dt><dd class="mt-2 text-sm font-semibold text-slate-900">{{ rental.renterAddress ?: 'Not provided' }}</dd></div>
+                    <div class="sm:col-span-2"><dt class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Delivery address</dt><dd class="mt-2 text-sm font-semibold text-slate-900">{{ rental.deliveryAddress ?: 'Not provided' }}</dd></div>
+                    <div class="sm:col-span-2"><dt class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Pickup / return notes</dt><dd class="mt-2 text-sm font-semibold text-slate-900">Pickup: {{ rental.pickupCondition ?: 'N/A' }}<br>Return: {{ rental.returnCondition ?: 'N/A' }}</dd></div>
+                    <div class="sm:col-span-2"><dt class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Damage notes</dt><dd class="mt-2 text-sm font-semibold text-slate-900">{{ rental.damageNotes ?: 'No damage notes' }}</dd></div>
+                </dl>
+            </article>
+
+            <aside class="space-y-6">
+                <article class="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_14px_32px_rgba(20,83,45,0.08)]">
+                    <h2 class="text-lg font-bold text-slate-900">Quick actions</h2>
+                    <div class="mt-5 flex flex-wrap gap-3">
+                        {% if rental.rentalStatus == 'PENDING' %}
+                            {{ include('rental/_action_form.html.twig', {rental: rental, route: 'rental_approve', label: 'Approve', actionType: 'APPROVED', buttonClass: 'rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100'}) }}
+                            {{ include('rental/_action_form.html.twig', {rental: rental, route: 'rental_cancel', label: 'Cancel', actionType: 'CANCELLED', buttonClass: 'rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100'}) }}
+                        {% elseif rental.rentalStatus == 'APPROVED' %}
+                            {{ include('rental/_action_form.html.twig', {rental: rental, route: 'rental_activate', label: 'Activate', actionType: 'ACTIVATED', buttonClass: 'rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100'}) }}
+                            {{ include('rental/_action_form.html.twig', {rental: rental, route: 'rental_cancel', label: 'Cancel', actionType: 'CANCELLED', buttonClass: 'rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100'}) }}
+                        {% elseif rental.rentalStatus == 'ACTIVE' %}
+                            {{ include('rental/_action_form.html.twig', {rental: rental, route: 'rental_return', label: 'Mark Returned', actionType: 'RETURNED', buttonClass: 'rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100'}) }}
+                            {{ include('rental/_action_form.html.twig', {rental: rental, route: 'rental_complete', label: 'Complete', actionType: 'COMPLETED', buttonClass: 'rounded-xl border border-slate-200 bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-200'}) }}
+                            {{ include('rental/_action_form.html.twig', {rental: rental, route: 'rental_dispute', label: 'Dispute', actionType: 'DISPUTED', buttonClass: 'rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100'}) }}
+                        {% elseif rental.rentalStatus == 'RETURNED' %}
+                            {{ include('rental/_action_form.html.twig', {rental: rental, route: 'rental_complete', label: 'Complete', actionType: 'COMPLETED', buttonClass: 'rounded-xl border border-slate-200 bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-200'}) }}
+                        {% endif %}
+                    </div>
+                </article>
+
+                <article class="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_14px_32px_rgba(20,83,45,0.08)]">
+                    <h2 class="text-lg font-bold text-slate-900">History timeline</h2>
+                    <div class="mt-5 space-y-4">
+                        {% if historyEntries is empty %}
+                            <p class="text-sm text-slate-500">No history entries yet for this rental.</p>
+                        {% else %}
+                            {% for entry in historyEntries %}
+                                <div class="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div>
+                                            <p class="font-semibold text-slate-900">{{ entry.actionType }}</p>
+                                            <p class="mt-1 text-sm text-slate-600">{{ entry.actionDescription ?: 'No description provided.' }}</p>
+                                        </div>
+                                        <span class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ entry.actionTimestamp ? entry.actionTimestamp|date('d M H:i') : '' }}</span>
+                                    </div>
+                                    <p class="mt-2 text-xs text-slate-500">By {{ entry.performedBy ?: 'System' }}</p>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </article>
+            </aside>
+        </section>
+    </div>
+{% endblock %}
