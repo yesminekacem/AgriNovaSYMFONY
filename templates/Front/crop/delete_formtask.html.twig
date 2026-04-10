@@ -1,0 +1,4 @@
+<form method="post" action="{{ path('app_task_delete', {'id': task.taskId}) }}" onsubmit="return confirm('Delete this task?');">
+    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ task.taskId) }}">
+    <button type="submit">Delete</button>
+</form>
