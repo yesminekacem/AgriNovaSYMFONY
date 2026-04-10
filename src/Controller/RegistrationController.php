@@ -72,6 +72,17 @@ class RegistrationController extends AbstractController
                 }
             }
 
+            // Check if email already exists using DQL
+            $query = $em->createQuery(
+                'SELECT COUNT(u.id) FROM App\\Entity\\User u WHERE u.email = :email'
+            )->setParameter('email', $email);
+
+            $emailCount = $query->getSingleScalarResult();
+
+            if ($emailCount > 0) {
+                $formErrors['email'] = 'This email is already registered.';
+            }
+
             if (count($formErrors) > 0) {
                 // Render form with errors and previously entered values
                 return $this->render('Front/register.html.twig', [
