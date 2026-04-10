@@ -1,0 +1,133 @@
+<?php
+
+namespace App\Controller;
+
+use App\Repository\UserRepository;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\Routing\Annotation\Route;
+
+class ProfileController extends AbstractController
+{
+    #[Route('/profile', name: 'app_profile', methods: ['GET','POST'])]
+    public function profile(Request $request, EntityManagerInterface $em, UserPasswordHasherInterface $passwordHasher, UserRepository $userRepository): Response
+    {
+        $user = $this->getUser();
+        if (!$user) {
+            return $this->redirectToRoute('app_login');
+        }
+
+        if ($request->isMethod('POST')) {
+            if (!$this->isCsrfTokenValid('profile_edit', $request->request->get('_csrf_token'))) {
+                $this->addFlash('error', 'Invalid CSRF token.');
+                return $this->redirectToRoute('app_profile');
+            }
+
+            $fullName = trim($request->request->get('fullName', '')) ?: null;
+            $email = trim($request->request->get('email', ''));
+            $newPassword = $request->request->get('password', '');
+
+            if ($email && $email !== $user->getEmail()) {
+                $existing = $userRepository->findOneBy(['email' => $email]);
+                if ($existing && $existing->getId() !== $user->getId()) {
+                    $this->addFlash('error', 'Email already in use by another account.');
+                    return $this->redirectToRoute('app_profile');
+                }
+                $user->setEmail($email);
+            }
+
+            $user->setFullName($fullName);
+
+            if ($newPassword) {
+                $hashed = $passwordHasher->hashPassword($user, $newPassword);
+                $user->setPassword($hashed);
+            }
+
+            // Handle profile image upload
+            /** @var UploadedFile|null $uploaded */
+            $uploaded = $request->files->get('profile_image');
+            if ($uploaded instanceof UploadedFile) {
+                // Basic validation: image mime and size <= 2MB
+                // Try to get a reliable mime type. If php_fileinfo is not available
+                // fall back to the client-provided mime type.
+                try {
+                    $mime = $uploaded->getMimeType();
+                } catch (\Throwable $e) {
+                    $mime = $uploaded->getClientMimeType();
+                }
+                if (!$mime) {
+                    $mime = $uploaded->getClientMimeType();
+                }
+
+                $allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+                // If mime is not one of allowed values, try to validate by client extension as a last resort
+                if (!in_array($mime, $allowed, true)) {
+                    $clientExt = strtolower(pathinfo($uploaded->getClientOriginalName(), PATHINFO_EXTENSION));
+                    $extAllowed = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+                    if (!in_array($clientExt, $extAllowed, true)) {
+                        $this->addFlash('error', 'Invalid image type. Allowed: JPG, PNG, GIF, WEBP.');
+                        return $this->redirectToRoute('app_profile');
+                    }
+                }
+
+                if ($uploaded->getSize() > 2_000_000) {
+                    $this->addFlash('error', 'Image is too large (max 2MB).');
+                    return $this->redirectToRoute('app_profile');
+                }
+
+                $uploadsDir = $this->getParameter('profile_images_directory');
+                if (!is_dir($uploadsDir)) {
+                    @mkdir($uploadsDir, 0775, true);
+                }
+
+                // guessExtension() may rely on fileinfo; fallback to client original extension if needed
+                $ext = null;
+                try {
+                    $ext = $uploaded->guessExtension();
+                } catch (\Throwable $e) {
+                    $ext = null;
+                }
+                if (!$ext) {
+                    $ext = strtolower(pathinfo($uploaded->getClientOriginalName(), PATHINFO_EXTENSION)) ?: 'bin';
+                }
+
+                $safe = bin2hex(random_bytes(8));
+                $filename = $safe . '.' . $ext;
+
+                try {
+                    $uploaded->move($uploadsDir, $filename);
+
+                    // remove old file if present
+                    $old = $user->getProfileImage();
+                    if ($old) {
+                        $oldPath = $uploadsDir . DIRECTORY_SEPARATOR . $old;
+                        if (is_file($oldPath)) {
+                            @unlink($oldPath);
+                        }
+                    }
+
+                    $user->setProfileImage($filename);
+
+                } catch (\Exception $e) {
+                    $this->addFlash('error', 'Failed to upload image.');
+                    return $this->redirectToRoute('app_profile');
+                }
+            }
+
+            $em->persist($user);
+            $em->flush();
+
+            $this->addFlash('success', 'Profile updated.');
+            return $this->redirectToRoute('app_profile');
+        }
+
+        return $this->render('Front/profile.html.twig', [
+            'user' => $user,
+        ]);
+    }
+}

@@ -216,7 +216,8 @@
                 <div class="alert alert-success">{{ flash }}</div>
             {% endfor %}
 
-          <form method="post" action="#">
+          <form method="post" action="{{ path('app_register') }}">
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token('register') }}">
     <div class="field">
         <label for="fullName">Full Name</label>
         <input
