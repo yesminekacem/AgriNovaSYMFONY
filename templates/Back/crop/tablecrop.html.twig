@@ -33,17 +33,26 @@
 <div class="toolbar">
     <div class="toolbar-left">
         <div class="search-wrap">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-            <input type="text" id="q" placeholder="Search by name, type, variety…" oninput="cropTable.filter()">
+            <input type="text" id="cropSearch" placeholder="Search crops (name, type, variety)...">
         </div>
-        <div class="chip-row">
-            <button class="chip on"  onclick="cropTable.setFilter('all', this)">All</button>
-            <button class="chip"     onclick="cropTable.setFilter('growing', this)">Growing</button>
-            <button class="chip"     onclick="cropTable.setFilter('harvested', this)">Harvested</button>
-            <button class="chip"     onclick="cropTable.setFilter('planted', this)">Planted</button>
+        <div class="chip-row" id="filterChips">
+            <button class="chip on" data-filter="all">All</button>
+            <button class="chip" data-filter="growing">Growing</button>
+            <button class="chip" data-filter="harvested">Harvested</button>
+            <button class="chip" data-filter="planted">Planted</button>
+            <button class="chip" data-filter="failed">Failed</button>
         </div>
     </div>
-    <div class="rec-count"><b id="vis">{{ crops|length }}</b> records</div>
+
+   <div class="toolbar-right">
+    <a href="{{ path('app_crop_new') }}" class="act primary" style="background:#22C55E !important; border-color:#22C55E !important; color:#fff !important;">
+        + Add New Crop
+    </a>
+
+        <div class="rec-count" id="cropCount">
+            {{ crops|length }} crop{% if crops|length != 1 %}s{% endif %} registered
+        </div>
+    </div>
 </div>
 
 {# ── Table ────────────────────────────────────────────── #}

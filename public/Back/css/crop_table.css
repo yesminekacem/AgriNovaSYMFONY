@@ -78,14 +78,15 @@
 }
 
 .act.primary {
-    background: var(--terracotta);
+    background: #22C55E;
     color: #fff;
-    border-color: var(--terracotta);
+    border-color: #22C55E;
 }
 
 .act.primary:hover {
-    background: var(--terra-dark);
-    box-shadow: 0 4px 14px rgba(199, 91, 58, .3);
+    background: #16a34a;
+    border-color: #16a34a;
+    box-shadow: 0 4px 14px rgba(34, 197, 94, .3);
     transform: translateY(-1px);
 }
 
@@ -106,6 +107,13 @@
     flex-wrap: wrap;
 }
 
+.toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-left: auto;
+}
+
 .search-wrap {
     display: flex;
     align-items: center;
@@ -119,8 +127,8 @@
 }
 
 .search-wrap:focus-within {
-    border-color: var(--terracotta);
-    box-shadow: 0 0 0 3px rgba(199, 91, 58, .09);
+    border-color: #22C55E;
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, .09);
 }
 
 .search-wrap svg {
@@ -166,9 +174,9 @@
 }
 
 .chip.on {
-    background: var(--ink);
+    background: #22C55E;
     color: #fff;
-    border-color: var(--ink);
+    border-color: #22C55E;
 }
 
 .rec-count {
@@ -201,7 +209,7 @@ table.ct {
 
 /* Head */
 table.ct thead tr {
-    background: var(--ink);
+    background: #22C55E;
 }
 
 table.ct thead th {
@@ -466,4 +474,20 @@ table.ct td {
     font-size: 10.5px;
     color: rgba(122, 106, 87, .5);
     font-style: italic;
+}
+
+/* ── Add Crop Button — force green over any Bootstrap/base styles */
+a.act.primary,
+button.act.primary {
+    background: #22C55E !important;
+    border-color: #22C55E !important;
+    color: #fff !important;
+}
+
+a.act.primary:hover,
+button.act.primary:hover {
+    background: #16a34a !important;
+    border-color: #16a34a !important;
+    box-shadow: 0 4px 14px rgba(34, 197, 94, .3) !important;
+    transform: translateY(-1px) !important;
 }

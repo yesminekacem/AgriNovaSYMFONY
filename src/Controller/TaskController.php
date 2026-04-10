@@ -11,13 +11,13 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
-#[Route('/admin/task')]
+#[Route('/task')]
 class TaskController extends AbstractController
 {
     #[Route('/', name: 'app_task_index', methods: ['GET'])]
     public function index(TaskRepository $taskRepository): Response
     {
-        return $this->render('front/view_task.html.twig', [
+        return $this->render('front/crop/view_task.html.twig', [
             'tasks' => $taskRepository->findAll(),
         ]);
     }
@@ -37,7 +37,7 @@ class TaskController extends AbstractController
             return $this->redirectToRoute('app_task_index');
         }
 
-        return $this->render('front/newtask.html.twig', [
+        return $this->render('front/crop/newtask.html.twig', [
             'form' => $form->createView(),
         ]);
     }
@@ -46,7 +46,7 @@ class TaskController extends AbstractController
     #[Route('/{id}', name: 'app_task_show', methods: ['GET'], requirements: ['id' => '\d+'])]
     public function show(Task $task): Response
     {
-        return $this->render('front/showtask.html.twig', [
+        return $this->render('front/crop/showtask.html.twig', [
             'task' => $task,
         ]);
     }
@@ -64,7 +64,7 @@ class TaskController extends AbstractController
             return $this->redirectToRoute('app_task_index');
         }
 
-        return $this->render('front/edittask.html.twig', [
+        return $this->render('front/crop/edittask.html.twig', [
             'form' => $form->createView(),
             'task' => $task,
         ]);

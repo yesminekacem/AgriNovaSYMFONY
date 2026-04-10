@@ -17,12 +17,7 @@
             
         </div>
         <div class="header-actions">
-            <a href="{{ path('app_crop_new') }}" class="btn btn-primary">
-                + Add New Crop
-            </a>
-            <a href="{{ path('app_crop_table') }}" class="btn btn-outline">
-                Table View
-            </a>
+           
             <a href="{{ path('app_task_index') }}" class="btn btn-outline">
                 Manage Tasks
             </a>
@@ -42,6 +37,7 @@
             <button class="chip" data-filter="harvested">Harvested</button>
             <button class="chip" data-filter="failed">Failed</button>
         </div>
+        
 
         <div class="crop-count" id="cropCount">
             {{ crops|length }} crop{% if crops|length != 1 %}s{% endif %} registered
