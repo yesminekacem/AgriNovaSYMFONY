@@ -1,0 +1,224 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Community Forum – AGRINOVA{% endblock %}
+{% block page_title %}Forum{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('Front/css/forum.css') }}">
+{% endblock %}
+
+{% block body %}
+<div class="forum-page">
+
+    <!-- Header -->
+    <div class="forum-header">
+        <div class="forum-header-left">
+            <div class="forum-header-icon">💬</div>
+            <div class="forum-header-text">
+                <h1>Community Forum</h1>
+                <p>Share knowledge and connect with fellow farmers</p>
+            </div>
+        </div>
+        <button class="btn-new-post" onclick="openNewPost()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            New Post
+        </button>
+    </div>
+
+    <!-- Flash messages -->
+    {% for message in app.flashes('success') %}
+        <div class="flash-success">{{ message }}</div>
+    {% endfor %}
+    {% for message in app.flashes('error') %}
+        <div class="flash-error">{{ message }}</div>
+    {% endfor %}
+
+    <!-- Controls -->
+    <div class="forum-controls">
+        <div class="search-box">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="searchInput" placeholder="Search discussions..." oninput="applyFilters()">
+        </div>
+
+        <!-- Category pills (styled like image 2) -->
+        <div class="categories-section">
+            <div class="categories-label">Popular Categories</div>
+          <div class="filter-tabs" id="filterTabs">
+    <button class="filter-tab active" data-category="All" onclick="setFilter('All', this)">All</button>
+    <button class="filter-tab" data-category="Organic Farming" onclick="setFilter('Organic Farming', this)">Organic Farming</button>
+    <button class="filter-tab" data-category="Soil Management" onclick="setFilter('Soil Management', this)">Soil Management</button>
+    <button class="filter-tab" data-category="Water Management" onclick="setFilter('Water Management', this)">Water Management</button>
+    <button class="filter-tab" data-category="Harvesting" onclick="setFilter('Harvesting', this)">Harvesting</button>
+    <button class="filter-tab" data-category="Crop Management" onclick="setFilter('Crop Management', this)">Crop Management</button>
+</div>
+        </div>
+    </div>
+
+    <!-- Posts list -->
+    <div class="posts-list" id="postsList">
+    {% set categoryClass = {
+    'Organic Farming': 'tag-organic',
+    'Soil Management': 'tag-soil',
+    'Water Management': 'tag-water',
+    'Harvesting': 'tag-harvest',
+    'Crop Management': 'tag-crop'
+} %}
+        {% if posts is empty %}
+            <div class="empty-state">
+                <div class="ei">🌱</div>
+                <h3>No posts yet</h3>
+                <p>Be the first to start a discussion!</p>
+            </div>
+        {% else %}
+            {% for post in posts %}
+            <div class="post-card"
+                 data-category="{{ (post.category ?? 'Organic Farming')|trim }}"
+                 data-id="{{ post.idPost }}">
+
+                <div class="post-avatar" onclick="openViewModal({{ post.idPost }})">
+                    {{ post.author|slice(0, 2)|upper }}
+                </div>
+
+                <div class="post-body">
+                    <div class="post-top">
+                        <div class="post-title" onclick="openViewModal({{ post.idPost }})">
+                            {{ post.title }}
+                        </div>
+                       
+
+{% set cat = post.category|default('Organic Farming') %}
+
+<span class="post-tag {{ categoryClass[cat] ?? 'tag-organic' }}">
+    {{ post.category ?? 'Organic Farming' }}
+</span>
+                    </div>
+
+                    <div class="post-meta">
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        {{ post.author }} · {{ post.createdAt ? post.createdAt|time_ago : 'No date' }}
+                    </div>
+                    {% if post.imagePath %}
+    <img src="{{ asset('Front/images/Forum/' ~ post.imagePath) }}"
+         style="width:100%; max-height:160px; object-fit:cover; border-radius:10px; margin-bottom:10px;">
+{% endif %}
+
+                    <div class="post-excerpt" onclick="openViewModal({{ post.idPost }})">
+                        {{ post.content|length > 180 ? post.content|slice(0, 180) ~ '...' : post.content }}
+                    </div>
+
+                    <div class="post-footer">
+                        <button class="btn-like" onclick="toggleLike(this, event)" data-count="0">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                            </svg>
+                            <span class="like-count">0</span>
+                        </button>
+
+                        <button class="btn-read-more" onclick="openViewModal({{ post.idPost }})">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            Read
+                        </button>
+
+                        <form method="post"
+                              action="{{ path('app_forum_delete', { id: post.idPost }) }}"
+                              onsubmit="return confirm('Delete this post?');"
+                              style="margin-left:auto;">
+                            <button type="submit" class="btn-delete">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                                Delete
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <!-- No results -->
+    <div id="noResults">
+        <div class="ei">🔍</div>
+        <h3>No posts found</h3>
+        <p>Try a different search term or category.</p>
+    </div>
+    <!-- ── VIEW POST MODAL ── -->
+    <div class="modal-overlay" id="viewModal">
+        <div class="modal">
+            <button class="modal-close" onclick="closeModal('viewModal')">✕</button>
+            <div id="viewModalContent"></div>
+        </div>
+    </div>
+
+    <!-- ── NEW POST MODAL ── -->
+    <div class="modal-overlay" id="newPostModal">
+        <div class="modal">
+            <button class="modal-close" onclick="closeModal('newPostModal')">✕</button>
+            <h2>✏️ Create New Post</h2>
+            <form method="post" action="{{ path('app_forum_new') }}" enctype="multipart/form-data">
+
+                <div class="form-field">
+                    <label>Title</label>
+                    <input type="text" name="title" placeholder="What's your question or topic?" required>
+                </div>
+                <div class="form-field">
+                    <label>Category</label>
+                    <select name="category" required>
+                       <option value="Organic Farming">Organic Farming</option>
+                        <option value="Soil Management">Soil Management</option>
+                        <option value="Water Management">Water Management</option>
+                        <option value="Harvesting">Harvesting</option>
+                        <option value="Crop Management">Crop Management</option>
+                    </select>
+                </div>
+                <div class="form-field">
+                    <label>Content</label>
+                    <textarea name="content" placeholder="Share your knowledge, question, or experience..." required></textarea>
+                </div>
+                <div class="form-field">
+    <label>Image (optional)</label>
+    <input type="file" name="image" accept="image/*">
+</div>
+                <button type="submit" class="btn-submit-post">Publish Post</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ── EDIT POST MODAL ── -->
+    <div class="modal-overlay" id="editPostModal">
+        <div class="modal">
+            <button class="modal-close" onclick="closeModal('editPostModal')">✕</button>
+            <h2>✏️ Edit Post</h2>
+            <form method="post" id="editPostForm">
+                <div class="form-field">
+                    <label>Title</label>
+                    <input type="text" name="title" id="editTitle" required>
+                </div>
+                <div class="form-field">
+                    <label>Category</label>
+                    <select name="category" id="editCategory" required>
+                       <option value="Organic Farming">Organic Farming</option>
+<option value="Soil Management">Soil Management</option>
+<option value="Water Management">Water Management</option>
+<option value="Harvesting">Harvesting</option>
+<option value="Crop Management">Crop Management</option>
+                    </select>
+                </div>
+                <div class="form-field">
+                    <label>Content</label>
+                    <textarea name="content" id="editContent" required></textarea>
+                </div>
+                <button type="submit" class="btn-submit-post">Save Changes</button>
+            </form>
+        </div>
+    </div>
+
+</div>
+<script>
+    const POSTS_DATA = {{ postsData|json_encode|raw }};
+</script>
+{% endblock %}
+{% block javascripts %}
+    {{ parent() }}
+    <script src="{{ asset('Front/js/forum.js') }}"></script>
+{% endblock %}
