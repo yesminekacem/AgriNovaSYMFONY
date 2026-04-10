@@ -1,0 +1,171 @@
+{% extends 'base.html.twig' %}
+{% form_theme form 'form/rental_theme.html.twig' %}
+
+{% block title %}{{ pageHeading }}{% endblock %}
+{% block page_title %}Rentals{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .rental-shell { display: grid; gap: 1.5rem; }
+        .rental-toolbar,
+        .rental-card {
+            background: #fff;
+            border: 1px solid #dce9df;
+            border-radius: 1.25rem;
+            box-shadow: 0 14px 32px rgba(20, 83, 45, 0.08);
+        }
+        .rental-toolbar { padding: 1.25rem 1.5rem; }
+        .rental-card { padding: 1.5rem; }
+        .rental-grid { display: grid; gap: 1rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .rental-field,
+        .rental-checkbox-row { display: flex; flex-direction: column; gap: 0.45rem; }
+        .rental-label {
+            color: #14532d;
+            font-size: 0.88rem;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+        }
+        .rental-input {
+            width: 100%;
+            border: 1px solid #cfe0d3;
+            border-radius: 0.95rem;
+            background: #f8fcf9;
+            padding: 0.85rem 1rem;
+            color: #1f2937;
+            transition: border-color .15s, box-shadow .15s;
+        }
+        .rental-input:focus {
+            border-color: #22c55e;
+            box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.14);
+            outline: none;
+        }
+        .rental-textarea { min-height: 7rem; resize: vertical; }
+        .rental-errors {
+            margin: 0;
+            padding-left: 1rem;
+            color: #b91c1c;
+            font-size: 0.82rem;
+        }
+        .rental-summary {
+            border: 1px solid #fecaca;
+            border-radius: 1rem;
+            background: #fef2f2;
+            padding: 1rem 1.25rem;
+        }
+        .rental-checkbox-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.7rem;
+            font-weight: 600;
+            color: #14532d;
+        }
+        .rental-checkbox-label input { accent-color: #166534; }
+        @media (max-width: 900px) {
+            .rental-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="rental-shell">
+        {% for label, messages in app.flashes %}
+            {% for message in messages %}
+                <div class="rounded-2xl border px-4 py-3 text-sm font-medium {{ label == 'success' ? 'border-green-200 bg-green-50 text-green-700' : 'border-red-200 bg-red-50 text-red-700' }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endfor %}
+
+        <section class="rental-toolbar flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+                <p class="text-sm font-semibold uppercase tracking-[0.2em] text-green-700">Rental Module</p>
+                <h1 class="mt-2 text-3xl font-bold text-slate-900">{{ pageHeading }}</h1>
+                <p class="mt-2 max-w-2xl text-sm text-slate-500">
+                    This form writes directly to the shared `agrinova.rental` table and keeps totals plus history in sync.
+                </p>
+            </div>
+            <div class="flex flex-wrap gap-3">
+                {% if inventoryItem and inventoryItem.id %}
+                    <a href="{{ path('inventory_show', {id: inventoryItem.id}) }}" class="inline-flex items-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+                        Back to inventory
+                    </a>
+                    <a href="{{ path('rental_index', {inventory: inventoryItem.id}) }}" class="inline-flex items-center rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100">
+                        View rentals
+                    </a>
+                {% else %}
+                    <a href="{{ path('inventory_index') }}" class="inline-flex items-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+                        Back to inventory
+                    </a>
+                {% endif %}
+                <a href="{{ path('rental_history_index') }}" class="inline-flex items-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800">
+                    View history
+                </a>
+            </div>
+        </section>
+
+        <section class="rental-card">
+            {{ form_start(form, {attr: {novalidate: 'novalidate'}}) }}
+                {% if form.vars.submitted and not form.vars.valid %}
+                    <div class="rental-summary mb-6">
+                        <h2 class="text-base font-semibold text-red-700">Some fields still need your attention.</h2>
+                        <p class="mt-1 text-sm text-red-600">Please check the fields below before saving.</p>
+                        <ul class="mt-3 list-disc space-y-1 pl-5 text-sm text-red-700">
+                            {% for error in form.vars.errors %}
+                                <li>{{ error.message }}</li>
+                            {% endfor %}
+                            {% for child in form %}
+                                {% for error in child.vars.errors %}
+                                    <li><span class="font-semibold">{{ child.vars.label|default(child.vars.name) }}</span>: {{ error.message }}</li>
+                                {% endfor %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+
+                <div class="rental-grid">
+                    {{ form_row(form.inventory) }}
+                    {{ form_row(form.renterName) }}
+                    {{ form_row(form.renterContact) }}
+                    {{ form_row(form.dailyRate) }}
+                    {{ form_row(form.startDate) }}
+                    {{ form_row(form.endDate) }}
+                    {{ form_row(form.rentalStatus) }}
+                    {{ form_row(form.paymentStatus) }}
+                    {{ form_row(form.paymentMethod) }}
+                    {{ form_row(form.requiresDelivery) }}
+                    {{ form_row(form.deliveryFee) }}
+                    {{ form_row(form.actualReturnDate) }}
+                    <div class="md:col-span-2">{{ form_row(form.renterAddress) }}</div>
+                    <div class="md:col-span-2">{{ form_row(form.deliveryAddress) }}</div>
+                    {{ form_row(form.pickupCondition) }}
+                    {{ form_row(form.returnCondition) }}
+                    {{ form_row(form.ownerRating) }}
+                    {{ form_row(form.renterRating) }}
+                    <div class="md:col-span-2">{{ form_row(form.pickupPhotos) }}</div>
+                    <div class="md:col-span-2">{{ form_row(form.returnPhotos) }}</div>
+                    <div class="md:col-span-2">{{ form_row(form.damageNotes) }}</div>
+                    <div class="md:col-span-2">{{ form_row(form.ownerReview) }}</div>
+                    <div class="md:col-span-2">{{ form_row(form.renterReview) }}</div>
+                </div>
+
+                {{ form_rest(form) }}
+
+                <div class="mt-8 flex flex-wrap gap-3">
+                    <button class="inline-flex items-center rounded-xl bg-green-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-green-800">
+                        {{ submitLabel }}
+                    </button>
+                    {% if inventoryItem and inventoryItem.id %}
+                        <a href="{{ path('inventory_show', {id: inventoryItem.id}) }}" class="inline-flex items-center rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+                            Cancel
+                        </a>
+                    {% else %}
+                        <a href="{{ path('inventory_index') }}" class="inline-flex items-center rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+                            Cancel
+                        </a>
+                    {% endif %}
+                </div>
+            {{ form_end(form) }}
+        </section>
+    </div>
+{% endblock %}

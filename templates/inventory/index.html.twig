@@ -1,0 +1,328 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Inventory{% endblock %}
+{% block page_title %}Inventory{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .inventory-surface {
+            background: #fff;
+            border: 1px solid #dce9df;
+            border-radius: 1.25rem;
+            box-shadow: 0 14px 32px rgba(20, 83, 45, 0.08);
+        }
+        .inventory-stat {
+            background: linear-gradient(180deg, #ffffff 0%, #f7fbf8 100%);
+        }
+        .inventory-table thead th {
+            font-size: 0.75rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: #64748b;
+        }
+        .inventory-table tbody tr:hover { background: #f8fcf9; }
+        .inventory-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            border-radius: 999px;
+            padding: 0.35rem 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    {% set statusColors = {
+        'AVAILABLE': 'bg-emerald-100 text-emerald-700',
+        'RENTED_OUT': 'bg-amber-100 text-amber-700',
+        'IN_USE': 'bg-sky-100 text-sky-700',
+        'MAINTENANCE': 'bg-violet-100 text-violet-700',
+        'RETIRED': 'bg-slate-200 text-slate-700'
+    } %}
+    {% set conditionColors = {
+        'EXCELLENT': 'bg-emerald-100 text-emerald-700',
+        'GOOD': 'bg-blue-100 text-blue-700',
+        'FAIR': 'bg-yellow-100 text-yellow-700',
+        'POOR': 'bg-red-100 text-red-700'
+    } %}
+
+    <div class="space-y-6">
+        {% for label, messages in app.flashes %}
+            {% for message in messages %}
+                <div class="rounded-2xl border px-4 py-3 text-sm font-medium {{ label == 'success' ? 'border-green-200 bg-green-50 text-green-700' : 'border-red-200 bg-red-50 text-red-700' }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endfor %}
+
+        <section class="inventory-surface p-6">
+            <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                    <p class="text-sm font-semibold uppercase tracking-[0.2em] text-green-700">Inventory Workspace</p>
+                    <h1 class="mt-2 text-3xl font-bold text-slate-900">Manage shared farm assets with confidence</h1>
+                    <p class="mt-2 max-w-3xl text-sm text-slate-500">
+                        This module is connected to the live `agrinova.inventory` table and uses DQL-based search, filters, and inventory insights.
+                    </p>
+                </div>
+                <div class="flex flex-wrap gap-3">
+                    <a href="{{ path('inventory_new') }}" class="inline-flex items-center rounded-xl bg-green-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-800">
+                        Add item
+                    </a>
+                    <a href="{{ path('rental_index') }}" class="inline-flex items-center rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100">
+                        Rentals
+                    </a>
+                    <a href="{{ path('inventory_export_csv', {search: search, type: type, condition: condition, rentable: rentable, status: status}) }}" class="inline-flex items-center rounded-xl border border-green-200 bg-green-50 px-4 py-2 text-sm font-semibold text-green-700 transition hover:bg-green-100">
+                        Export CSV
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <section class="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+            <article class="inventory-surface inventory-stat p-5">
+                <p class="text-sm text-slate-500">Total items</p>
+                <p class="mt-2 text-3xl font-bold text-slate-900">{{ stats.total }}</p>
+                <p class="mt-3 text-xs text-slate-500">All rows currently stored in inventory.</p>
+            </article>
+            <article class="inventory-surface inventory-stat p-5">
+                <p class="text-sm text-slate-500">Rentable</p>
+                <p class="mt-2 text-3xl font-bold text-slate-900">{{ stats.rentable }}</p>
+                <p class="mt-3 text-xs text-slate-500">Items marked as rentable.</p>
+            </article>
+            <article class="inventory-surface inventory-stat p-5">
+                <p class="text-sm text-slate-500">Rented out</p>
+                <p class="mt-2 text-3xl font-bold text-slate-900">{{ stats.rentedOut }}</p>
+                <p class="mt-3 text-xs text-slate-500">Currently unavailable because they are out on rent.</p>
+            </article>
+            <article class="inventory-surface inventory-stat p-5">
+                <p class="text-sm text-slate-500">Maintenance due</p>
+                <p class="mt-2 text-3xl font-bold text-slate-900">{{ stats.maintenance }}</p>
+                <p class="mt-3 text-xs text-slate-500">Due within the next 7 days.</p>
+            </article>
+            <article class="inventory-surface inventory-stat p-5">
+                <p class="text-sm text-slate-500">Low stock</p>
+                <p class="mt-2 text-3xl font-bold text-slate-900">{{ stats.lowStock }}</p>
+                <p class="mt-3 text-xs text-slate-500">Quantity at or below 5 units.</p>
+            </article>
+            <article class="inventory-surface inventory-stat p-5">
+                <p class="text-sm text-slate-500">Total stock value</p>
+                <p class="mt-2 text-3xl font-bold text-slate-900">{{ stats.totalValue|number_format(2, '.', ',') }}</p>
+                <p class="mt-3 text-xs text-slate-500">Estimated `quantity x unit price` value.</p>
+            </article>
+        </section>
+
+        <section class="inventory-surface p-6">
+            <form method="get" class="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
+                <div class="xl:col-span-2">
+                    <label class="mb-2 block text-sm font-semibold text-slate-700">Search</label>
+                    <input type="text" name="search" value="{{ search }}" placeholder="Search by name, owner, contact or type"
+                           class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-green-500 focus:ring-4 focus:ring-green-100">
+                </div>
+                <div>
+                    <label class="mb-2 block text-sm font-semibold text-slate-700">Type</label>
+                    <select name="type" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-green-500 focus:ring-4 focus:ring-green-100">
+                        <option value="">All types</option>
+                        {% for value in types %}
+                            <option value="{{ value }}" {{ type == value ? 'selected' : '' }}>{{ value }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="mb-2 block text-sm font-semibold text-slate-700">Condition</label>
+                    <select name="condition" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-green-500 focus:ring-4 focus:ring-green-100">
+                        <option value="">All conditions</option>
+                        {% for value in conditions %}
+                            <option value="{{ value }}" {{ condition == value ? 'selected' : '' }}>{{ value }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="mb-2 block text-sm font-semibold text-slate-700">Rental status</label>
+                    <select name="status" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-green-500 focus:ring-4 focus:ring-green-100">
+                        <option value="">All statuses</option>
+                        {% for value in statuses %}
+                            <option value="{{ value }}" {{ status == value ? 'selected' : '' }}>{{ value }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="mb-2 block text-sm font-semibold text-slate-700">Rentable</label>
+                    <select name="rentable" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-green-500 focus:ring-4 focus:ring-green-100">
+                        <option value="">All</option>
+                        <option value="1" {{ rentable == '1' ? 'selected' : '' }}>Yes</option>
+                        <option value="0" {{ rentable == '0' ? 'selected' : '' }}>No</option>
+                    </select>
+                </div>
+                <div class="xl:col-span-6 flex flex-wrap gap-3">
+                    <button class="inline-flex items-center rounded-xl bg-green-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-800">
+                        Apply filters
+                    </button>
+                    <a href="{{ path('inventory_index') }}" class="inline-flex items-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+                        Reset
+                    </a>
+                    <span class="inline-flex items-center rounded-xl bg-slate-100 px-4 py-2 text-sm font-medium text-slate-600">
+                        {{ items|length }} result{{ items|length == 1 ? '' : 's' }}
+                    </span>
+                </div>
+            </form>
+        </section>
+
+        <section class="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(300px,1fr)]">
+            <article class="inventory-surface overflow-hidden">
+                <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900">Inventory list</h2>
+                        <p class="text-sm text-slate-500">Searchable, filterable, and connected to the shared database.</p>
+                    </div>
+                </div>
+
+                {% if items is empty %}
+                    <div class="px-6 py-14 text-center">
+                        <h3 class="text-xl font-semibold text-slate-800">No inventory items matched this filter.</h3>
+                        <p class="mt-2 text-sm text-slate-500">Try a broader search or reset the filters.</p>
+                    </div>
+                {% else %}
+                    <div class="overflow-x-auto">
+                        <table class="inventory-table min-w-full divide-y divide-slate-100">
+                            <thead class="bg-slate-50">
+                                <tr>
+                                    <th class="px-6 py-4 text-left">Item</th>
+                                    <th class="px-6 py-4 text-left">Owner</th>
+                                    <th class="px-6 py-4 text-left">Stock</th>
+                                    <th class="px-6 py-4 text-left">Rental</th>
+                                    <th class="px-6 py-4 text-left">Maintenance</th>
+                                    <th class="px-6 py-4 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 bg-white">
+                                {% for item in items %}
+                                    <tr>
+                                        <td class="px-6 py-4 align-top">
+                                            <div class="flex flex-col gap-2">
+                                                <div class="flex items-center gap-2">
+                                                    <a href="{{ path('inventory_show', {id: item.id}) }}" class="font-semibold text-slate-900 hover:text-green-700">
+                                                        {{ item.itemName }}
+                                                    </a>
+                                                    <span class="inventory-badge {{ conditionColors[item.conditionStatus]|default('bg-slate-200 text-slate-700') }}">
+                                                        {{ item.conditionStatus }}
+                                                    </span>
+                                                </div>
+                                                <div class="flex flex-wrap gap-2 text-xs text-slate-500">
+                                                    <span>{{ item.itemType }}</span>
+                                                    <span>•</span>
+                                                    <span>{{ item.unitPrice|number_format(2, '.', ',') }} / unit</span>
+                                                    {% if item.imagePath %}
+                                                        <span>•</span>
+                                                        <span>Image linked</span>
+                                                    {% endif %}
+                                                </div>
+                                                {% if item.description %}
+                                                    <p class="max-w-xl text-sm text-slate-500">{{ item.description|length > 90 ? item.description|slice(0, 90) ~ '…' : item.description }}</p>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 align-top text-sm text-slate-600">
+                                            <p class="font-medium text-slate-800">{{ item.ownerName ?: 'Not provided' }}</p>
+                                            <p class="mt-1">{{ item.ownerContact ?: 'No contact' }}</p>
+                                        </td>
+                                        <td class="px-6 py-4 align-top text-sm text-slate-600">
+                                            <p class="font-semibold text-slate-900">{{ item.quantity }}</p>
+                                            <p class="mt-1 text-xs {{ item.quantity <= 5 ? 'text-red-600' : 'text-slate-500' }}">
+                                                {{ item.quantity <= 5 ? 'Low stock alert' : 'Healthy stock' }}
+                                            </p>
+                                        </td>
+                                        <td class="px-6 py-4 align-top text-sm text-slate-600">
+                                            <span class="inventory-badge {{ statusColors[item.rentalStatus]|default('bg-slate-200 text-slate-700') }}">
+                                                {{ item.rentalStatus }}
+                                            </span>
+                                            <p class="mt-2 text-xs text-slate-500">
+                                                {{ item.isRentable ? 'Rentable at ' ~ item.rentalPricePerDay|number_format(2, '.', ',') ~ ' / day' : 'Not rentable' }}
+                                            </p>
+                                        </td>
+                                        <td class="px-6 py-4 align-top text-sm text-slate-600">
+                                            {% if item.nextMaintenanceDate %}
+                                                <p class="font-medium text-slate-800">{{ item.nextMaintenanceDate|date('d M Y') }}</p>
+                                                <p class="mt-1 text-xs {{ item.needsMaintenanceSoon ? 'text-amber-600' : 'text-slate-500' }}">
+                                                    {{ item.needsMaintenanceSoon ? 'Due soon' : 'Scheduled' }}
+                                                </p>
+                                            {% else %}
+                                                <p class="text-slate-500">No date planned</p>
+                                            {% endif %}
+                                        </td>
+                                        <td class="px-6 py-4 align-top">
+                                            <div class="flex justify-end gap-2">
+                                                {% if item.isRentable and item.rentalStatus not in ['RENTED_OUT', 'IN_USE', 'MAINTENANCE', 'RETIRED'] %}
+                                                    <a href="{{ path('rental_new', {inventory: item.id}) }}" class="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100">
+                                                        Create rental
+                                                    </a>
+                                                {% endif %}
+                                                {% if item.isRentable %}
+                                                    <a href="{{ path('rental_index', {inventory: item.id}) }}" class="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 transition hover:bg-blue-100">
+                                                        View rentals
+                                                    </a>
+                                                {% endif %}
+                                                <a href="{{ path('inventory_show', {id: item.id}) }}" class="rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">
+                                                    View
+                                                </a>
+                                                <a href="{{ path('inventory_edit', {id: item.id}) }}" class="rounded-xl bg-green-700 px-3 py-2 text-xs font-semibold text-white transition hover:bg-green-800">
+                                                    Edit
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% endif %}
+            </article>
+
+            <aside class="space-y-6">
+                <article class="inventory-surface p-6">
+                    <h2 class="text-lg font-bold text-slate-900">Maintenance radar</h2>
+                    <p class="mt-1 text-sm text-slate-500">Items that need attention in the next 7 days.</p>
+                    <div class="mt-5 space-y-4">
+                        {% if maintenanceItems is empty %}
+                            <p class="text-sm text-slate-500">Nothing urgent for maintenance right now.</p>
+                        {% else %}
+                            {% for item in maintenanceItems %}
+                                <div class="rounded-2xl border border-amber-100 bg-amber-50 p-4">
+                                    <p class="font-semibold text-slate-900">{{ item.itemName }}</p>
+                                    <p class="mt-1 text-sm text-slate-600">{{ item.itemType }} • {{ item.ownerName ?: 'No owner' }}</p>
+                                    <p class="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-amber-700">
+                                        Due {{ item.nextMaintenanceDate|date('d M Y') }}
+                                    </p>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </article>
+
+                <article class="inventory-surface p-6">
+                    <h2 class="text-lg font-bold text-slate-900">Low stock watch</h2>
+                    <p class="mt-1 text-sm text-slate-500">Fast refill priorities based on current quantity.</p>
+                    <div class="mt-5 space-y-4">
+                        {% if lowStockItems is empty %}
+                            <p class="text-sm text-slate-500">No low-stock items right now.</p>
+                        {% else %}
+                            {% for item in lowStockItems %}
+                                <div class="rounded-2xl border border-red-100 bg-red-50 p-4">
+                                    <div class="flex items-center justify-between gap-3">
+                                        <div>
+                                            <p class="font-semibold text-slate-900">{{ item.itemName }}</p>
+                                            <p class="mt-1 text-sm text-slate-600">{{ item.itemType }}</p>
+                                        </div>
+                                        <span class="rounded-full bg-white px-3 py-1 text-sm font-bold text-red-600">{{ item.quantity }}</span>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </article>
+            </aside>
+        </section>
+    </div>
+{% endblock %}

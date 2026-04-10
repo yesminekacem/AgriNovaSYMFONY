@@ -1,0 +1,73 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Rental History{% endblock %}
+{% block page_title %}Rental History{% endblock %}
+
+{% block body %}
+    <div class="space-y-6">
+        <section class="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_14px_32px_rgba(20,83,45,0.08)]">
+            <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                    <p class="text-sm font-semibold uppercase tracking-[0.2em] text-green-700">Audit Trail</p>
+                    <h1 class="mt-2 text-3xl font-bold text-slate-900">Rental history timeline</h1>
+                    <p class="mt-2 max-w-3xl text-sm text-slate-500">Every rental action from Symfony is tracked here so you can follow approvals, activations, returns, and updates.</p>
+                </div>
+                <div class="flex flex-wrap gap-3">
+                    <a href="{{ path('inventory_index') }}" class="inline-flex items-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">Back to inventory</a>
+                    <a href="{{ path('rental_index') }}" class="inline-flex items-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800">Open rentals</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+            <article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_14px_32px_rgba(20,83,45,0.08)]"><p class="text-sm text-slate-500">Total events</p><p class="mt-2 text-3xl font-bold text-slate-900">{{ stats.total }}</p></article>
+            <article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_14px_32px_rgba(20,83,45,0.08)]"><p class="text-sm text-slate-500">Today</p><p class="mt-2 text-3xl font-bold text-slate-900">{{ stats.today }}</p></article>
+            <article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_14px_32px_rgba(20,83,45,0.08)]"><p class="text-sm text-slate-500">Created</p><p class="mt-2 text-3xl font-bold text-slate-900">{{ stats.created }}</p></article>
+            <article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_14px_32px_rgba(20,83,45,0.08)]"><p class="text-sm text-slate-500">Completed</p><p class="mt-2 text-3xl font-bold text-slate-900">{{ stats.completed }}</p></article>
+            <article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_14px_32px_rgba(20,83,45,0.08)]"><p class="text-sm text-slate-500">Cancelled</p><p class="mt-2 text-3xl font-bold text-slate-900">{{ stats.cancelled }}</p></article>
+        </section>
+
+        <section class="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_14px_32px_rgba(20,83,45,0.08)]">
+            <form method="get" class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <div class="xl:col-span-3">
+                    <label class="mb-2 block text-sm font-semibold text-slate-700">Search</label>
+                    <input type="text" name="search" value="{{ search }}" placeholder="Search by item, renter, performer, or description" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-green-500 focus:ring-4 focus:ring-green-100">
+                </div>
+                <div>
+                    <label class="mb-2 block text-sm font-semibold text-slate-700">Action type</label>
+                    <select name="actionType" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-green-500 focus:ring-4 focus:ring-green-100">
+                        <option value="">All actions</option>
+                        {% for value in actionTypes %}<option value="{{ value }}" {{ actionType == value ? 'selected' : '' }}>{{ value }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="xl:col-span-4 flex flex-wrap gap-3">
+                    <button class="inline-flex items-center rounded-xl bg-green-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-800">Apply filters</button>
+                    <a href="{{ path('rental_history_index') }}" class="inline-flex items-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">Reset</a>
+                </div>
+            </form>
+        </section>
+
+        <section class="space-y-4">
+            {% if entries is empty %}
+                <div class="rounded-3xl border border-slate-200 bg-white px-6 py-12 text-center shadow-[0_14px_32px_rgba(20,83,45,0.08)]"><h2 class="text-xl font-semibold text-slate-900">No history entries matched this filter.</h2></div>
+            {% else %}
+                {% for entry in entries %}
+                    <article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_14px_32px_rgba(20,83,45,0.08)]">
+                        <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                            <div>
+                                <p class="text-sm font-semibold uppercase tracking-[0.14em] text-green-700">{{ entry.actionType }}</p>
+                                <h2 class="mt-1 text-lg font-bold text-slate-900">Rental #{{ entry.rental.id }} · {{ entry.rental.displayItemName }}</h2>
+                                <p class="mt-2 text-sm text-slate-600">{{ entry.actionDescription ?: 'No description provided.' }}</p>
+                                <p class="mt-2 text-xs text-slate-500">Renter: {{ entry.rental.renterName }} · Performed by {{ entry.performedBy ?: 'System' }}</p>
+                            </div>
+                            <div class="flex flex-col items-start gap-3 lg:items-end">
+                                <span class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ entry.actionTimestamp ? entry.actionTimestamp|date('d M Y H:i') : '' }}</span>
+                                <a href="{{ path('rental_show', {id: entry.rental.id}) }}" class="inline-flex items-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">Open rental</a>
+                            </div>
+                        </div>
+                    </article>
+                {% endfor %}
+            {% endif %}
+        </section>
+    </div>
+{% endblock %}

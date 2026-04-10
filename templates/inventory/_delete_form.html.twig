@@ -1,0 +1,6 @@
+<form method="post" action="{{ path('inventory_delete', {id: item.id}) }}" onsubmit="return confirm('Delete {{ item.itemName|e('js') }}?');">
+    <input type="hidden" name="_token" value="{{ csrf_token('delete_inventory_' ~ item.id) }}">
+    <button class="inline-flex items-center rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100">
+        Delete
+    </button>
+</form>

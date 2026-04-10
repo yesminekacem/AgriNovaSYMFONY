@@ -1,0 +1,43 @@
+{% use 'form_div_layout.html.twig' %}
+
+{% block form_row %}
+    {% set fieldClass = (attr.class|default('') ~ ' rental-input')|trim %}
+    <div class="rental-field">
+        {{ form_label(form) }}
+        {{ form_widget(form, {attr: attr|merge({class: fieldClass})}) }}
+        {{ form_errors(form) }}
+    </div>
+{% endblock %}
+
+{% block textarea_widget %}
+    {% set attr = attr|merge({class: (attr.class|default('') ~ ' rental-input rental-textarea')|trim}) %}
+    {{ parent() }}
+{% endblock %}
+
+{% block checkbox_row %}
+    <div class="rental-checkbox-row">
+        <label class="rental-checkbox-label">
+            {{ form_widget(form) }}
+            <span>{{ form.vars.label|default('') }}</span>
+        </label>
+        {{ form_errors(form) }}
+    </div>
+{% endblock %}
+
+{% block form_label %}
+    {% if label is not same as(false) %}
+        <label for="{{ id }}" class="rental-label">
+            {{ label is empty ? name|humanize : label|trans({}, translation_domain) }}
+        </label>
+    {% endif %}
+{% endblock %}
+
+{% block form_errors %}
+    {% if errors|length > 0 %}
+        <ul class="rental-errors">
+            {% for error in errors %}
+                <li>{{ error.message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endblock %}
