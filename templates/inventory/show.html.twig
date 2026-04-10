@@ -1,4 +1,4 @@
-{% extends 'base.html.twig' %}
+{% extends base_template|default('base.html.twig') %}
 
 {% block title %}{{ item.itemName }}{% endblock %}
 {% block page_title %}Inventory Details{% endblock %}
@@ -22,6 +22,7 @@
                         {{ item.description ?: 'No description was provided for this inventory item.' }}
                     </p>
                 </div>
+                {% set isInventoryOwner = is_granted('ROLE_ADMIN') or (app.user and item.ownerContact is not empty and item.ownerContact|lower == app.user.email|lower) or (app.user and item.owner and item.owner.id == app.user.id) %}
                 <div class="flex flex-wrap gap-3">
                     <a href="{{ path('inventory_index') }}" class="inline-flex items-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
                         Back to list
@@ -36,10 +37,12 @@
                             Create rental
                         </a>
                     {% endif %}
-                    <a href="{{ path('inventory_edit', {id: item.id}) }}" class="inline-flex items-center rounded-xl bg-green-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-800">
-                        Edit item
-                    </a>
-                    {{ include('inventory/_delete_form.html.twig', {item: item}) }}
+                    {% if isInventoryOwner %}
+                        <a href="{{ path('inventory_edit', {id: item.id}) }}" class="inline-flex items-center rounded-xl bg-green-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-800">
+                            Edit item
+                        </a>
+                        {{ include('inventory/_delete_form.html.twig', {item: item}) }}
+                    {% endif %}
                 </div>
             </div>
         </section>

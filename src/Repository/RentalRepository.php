@@ -37,7 +37,7 @@ class RentalRepository extends ServiceEntityRepository
         return $this->findByFilters('', $status);
     }
 
-    public function findByFilters(string $search = '', ?string $status = null, ?string $paymentStatus = null, bool $overdueOnly = false, ?int $inventoryId = null): array
+    public function findByFilters(string $search = '', ?string $status = null, ?string $paymentStatus = null, bool $overdueOnly = false, ?int $inventoryId = null, ?string $renterContact = null): array
     {
         $qb = $this->createQueryBuilder('r')
             ->leftJoin('r.inventory', 'i')
@@ -59,6 +59,11 @@ class RentalRepository extends ServiceEntityRepository
 
         if ($inventoryId !== null) {
             $qb->andWhere('i.id = :inventoryId')->setParameter('inventoryId', $inventoryId);
+        }
+
+        if ($renterContact !== null) {
+            $qb->andWhere('LOWER(r.renterContact) = LOWER(:renterContact)')
+                ->setParameter('renterContact', trim($renterContact));
         }
 
         if ($overdueOnly) {

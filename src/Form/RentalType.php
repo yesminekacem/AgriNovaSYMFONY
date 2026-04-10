@@ -44,10 +44,12 @@ class RentalType extends AbstractType
             ->add('renterName', TextType::class, [
                 'label' => 'Renter name',
                 'attr' => ['placeholder' => 'Full renter name'],
+                'disabled' => $options['lock_renter'],
             ])
             ->add('renterContact', TextType::class, [
                 'label' => 'Renter contact',
                 'attr' => ['placeholder' => 'Phone or email'],
+                'disabled' => $options['lock_renter'],
             ])
             ->add('renterAddress', TextareaType::class, [
                 'label' => 'Renter address',
@@ -155,10 +157,12 @@ class RentalType extends AbstractType
             'inventory_id' => null,
             'current_rental_id' => null,
             'lock_inventory' => false,
+            'lock_renter' => false,
         ]);
 
         $resolver->setAllowedTypes('inventory_id', ['null', 'int']);
         $resolver->setAllowedTypes('current_rental_id', ['null', 'int']);
         $resolver->setAllowedTypes('lock_inventory', 'bool');
+        $resolver->setAllowedTypes('lock_renter', 'bool');
     }
 }

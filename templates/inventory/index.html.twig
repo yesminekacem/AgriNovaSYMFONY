@@ -1,4 +1,4 @@
-{% extends 'base.html.twig' %}
+{% extends base_template|default('base.html.twig') %}
 
 {% block title %}Inventory{% endblock %}
 {% block page_title %}Inventory{% endblock %}
@@ -267,9 +267,12 @@
                                                 <a href="{{ path('inventory_show', {id: item.id}) }}" class="rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">
                                                     View
                                                 </a>
-                                                <a href="{{ path('inventory_edit', {id: item.id}) }}" class="rounded-xl bg-green-700 px-3 py-2 text-xs font-semibold text-white transition hover:bg-green-800">
-                                                    Edit
-                                                </a>
+                                                {% set isInventoryOwner = is_granted('ROLE_ADMIN') or (app.user and item.ownerContact is not empty and item.ownerContact|lower == app.user.email|lower) or (app.user and item.owner and item.owner.id == app.user.id) %}
+                                                {% if isInventoryOwner %}
+                                                    <a href="{{ path('inventory_edit', {id: item.id}) }}" class="rounded-xl bg-green-700 px-3 py-2 text-xs font-semibold text-white transition hover:bg-green-800">
+                                                        Edit
+                                                    </a>
+                                                {% endif %}
                                             </div>
                                         </td>
                                     </tr>

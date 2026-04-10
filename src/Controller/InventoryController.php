@@ -51,6 +51,7 @@ final class InventoryController extends AbstractController
             ],
             'maintenanceItems' => array_slice($inventoryRepository->findNeedingMaintenance(), 0, 5),
             'lowStockItems' => array_slice($inventoryRepository->findLowStock(), 0, 5),
+            'base_template' => $this->getBaseTemplate(),
         ]);
     }
 
@@ -88,6 +89,7 @@ final class InventoryController extends AbstractController
             'pageHeading' => 'Add Inventory Item',
             'submitLabel' => 'Save item',
             'item' => $inventory,
+            'base_template' => $this->getBaseTemplate(),
         ]);
     }
 
@@ -150,10 +152,9 @@ final class InventoryController extends AbstractController
     #[Route('/{id}', name: 'inventory_show', methods: ['GET'], requirements: ['id' => '\d+'])]
     public function show(Inventory $inventory): Response
     {
-        $this->assertInventoryOwnerOrAdmin($inventory);
-
         return $this->render('inventory/show.html.twig', [
             'item' => $inventory,
+            'base_template' => $this->getBaseTemplate(),
         ]);
     }
 
@@ -178,6 +179,7 @@ final class InventoryController extends AbstractController
             'pageHeading' => sprintf('Edit %s', $inventory->getItemName()),
             'submitLabel' => 'Update item',
             'item' => $inventory,
+            'base_template' => $this->getBaseTemplate(),
         ]);
     }
 
@@ -219,6 +221,11 @@ final class InventoryController extends AbstractController
         return $value !== '' ? $value : null;
     }
 
+    private function getBaseTemplate(): string
+    {
+        return $this->isGranted('ROLE_ADMIN') ? 'baseBack.html.twig' : 'base.html.twig';
+    }
+
     private function assertInventoryOwnerOrAdmin(Inventory $inventory): void
     {
         $user = $this->getUser();
@@ -230,7 +237,11 @@ final class InventoryController extends AbstractController
             return;
         }
 
-        if ($inventory->getOwner() === null || $inventory->getOwner()->getId() !== $user->getId()) {
+        $userEmail = strtolower(trim($user->getEmail() ?? ''));
+        $ownerContact = strtolower(trim((string) $inventory->getOwnerContact()));
+        $isOwnerUser = $inventory->getOwner() !== null && $inventory->getOwner()->getId() === $user->getId();
+
+        if (!$isOwnerUser && $ownerContact !== $userEmail) {
             throw $this->createAccessDeniedException('You do not have permission to access this inventory item.');
         }
     }

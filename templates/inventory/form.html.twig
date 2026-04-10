@@ -1,4 +1,4 @@
-{% extends 'base.html.twig' %}
+{% extends base_template|default('base.html.twig') %}
 {% form_theme form 'form/inventory_theme.html.twig' %}
 
 {% block title %}{{ pageHeading }}{% endblock %}

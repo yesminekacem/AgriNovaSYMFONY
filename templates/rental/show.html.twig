@@ -1,16 +1,18 @@
-{% extends 'base.html.twig' %}
+{% extends is_granted('ROLE_ADMIN') ? 'baseBack.html.twig' : 'base.html.twig' %}
 
 {% block title %}Rental #{{ rental.id }}{% endblock %}
 {% block page_title %}Rental Details{% endblock %}
 
 {% block body %}
     <div class="space-y-6">
+        {% set is_admin = is_granted('ROLE_ADMIN') %}
         {% for label, messages in app.flashes %}
             {% for message in messages %}
                 <div class="rounded-2xl border px-4 py-3 text-sm font-medium {{ label == 'success' ? 'border-green-200 bg-green-50 text-green-700' : 'border-red-200 bg-red-50 text-red-700' }}">{{ message }}</div>
             {% endfor %}
         {% endfor %}
 
+        {% set isRentalOwner = is_admin or (app.user and rental.renterContact is not empty and rental.renterContact|lower == app.user.email|lower) %}
         <section class="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_14px_32px_rgba(20,83,45,0.08)]">
             <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
                 <div>
@@ -25,8 +27,10 @@
                     {% else %}
                         <a href="{{ path('inventory_index') }}" class="inline-flex items-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">Back to inventory</a>
                     {% endif %}
-                    <a href="{{ path('rental_edit', {id: rental.id}) }}" class="inline-flex items-center rounded-xl bg-green-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-800">Edit rental</a>
-                    {{ include('rental/_delete_form.html.twig', {rental: rental}) }}
+                    {% if is_admin %}
+                        <a href="{{ path('rental_edit', {id: rental.id}) }}" class="inline-flex items-center rounded-xl bg-green-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-800">Edit rental</a>
+                        {{ include('rental/_delete_form.html.twig', {rental: rental}) }}
+                    {% endif %}
                 </div>
             </div>
         </section>
@@ -62,18 +66,22 @@
                 <article class="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_14px_32px_rgba(20,83,45,0.08)]">
                     <h2 class="text-lg font-bold text-slate-900">Quick actions</h2>
                     <div class="mt-5 flex flex-wrap gap-3">
-                        {% if rental.rentalStatus == 'PENDING' %}
-                            {{ include('rental/_action_form.html.twig', {rental: rental, route: 'rental_approve', label: 'Approve', actionType: 'APPROVED', buttonClass: 'rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100'}) }}
-                            {{ include('rental/_action_form.html.twig', {rental: rental, route: 'rental_cancel', label: 'Cancel', actionType: 'CANCELLED', buttonClass: 'rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100'}) }}
-                        {% elseif rental.rentalStatus == 'APPROVED' %}
-                            {{ include('rental/_action_form.html.twig', {rental: rental, route: 'rental_activate', label: 'Activate', actionType: 'ACTIVATED', buttonClass: 'rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100'}) }}
-                            {{ include('rental/_action_form.html.twig', {rental: rental, route: 'rental_cancel', label: 'Cancel', actionType: 'CANCELLED', buttonClass: 'rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100'}) }}
-                        {% elseif rental.rentalStatus == 'ACTIVE' %}
-                            {{ include('rental/_action_form.html.twig', {rental: rental, route: 'rental_return', label: 'Mark Returned', actionType: 'RETURNED', buttonClass: 'rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100'}) }}
-                            {{ include('rental/_action_form.html.twig', {rental: rental, route: 'rental_complete', label: 'Complete', actionType: 'COMPLETED', buttonClass: 'rounded-xl border border-slate-200 bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-200'}) }}
-                            {{ include('rental/_action_form.html.twig', {rental: rental, route: 'rental_dispute', label: 'Dispute', actionType: 'DISPUTED', buttonClass: 'rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100'}) }}
-                        {% elseif rental.rentalStatus == 'RETURNED' %}
-                            {{ include('rental/_action_form.html.twig', {rental: rental, route: 'rental_complete', label: 'Complete', actionType: 'COMPLETED', buttonClass: 'rounded-xl border border-slate-200 bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-200'}) }}
+                        {% if isRentalOwner %}
+                            {% if rental.rentalStatus == 'PENDING' %}
+                                {{ include('rental/_action_form.html.twig', {rental: rental, route: 'rental_approve', label: 'Approve', actionType: 'APPROVED', buttonClass: 'rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100'}) }}
+                                {{ include('rental/_action_form.html.twig', {rental: rental, route: 'rental_cancel', label: 'Cancel', actionType: 'CANCELLED', buttonClass: 'rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100'}) }}
+                            {% elseif rental.rentalStatus == 'APPROVED' %}
+                                {{ include('rental/_action_form.html.twig', {rental: rental, route: 'rental_activate', label: 'Activate', actionType: 'ACTIVATED', buttonClass: 'rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100'}) }}
+                                {{ include('rental/_action_form.html.twig', {rental: rental, route: 'rental_cancel', label: 'Cancel', actionType: 'CANCELLED', buttonClass: 'rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100'}) }}
+                            {% elseif rental.rentalStatus == 'ACTIVE' %}
+                                {{ include('rental/_action_form.html.twig', {rental: rental, route: 'rental_return', label: 'Mark Returned', actionType: 'RETURNED', buttonClass: 'rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100'}) }}
+                                {{ include('rental/_action_form.html.twig', {rental: rental, route: 'rental_complete', label: 'Complete', actionType: 'COMPLETED', buttonClass: 'rounded-xl border border-slate-200 bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-200'}) }}
+                                {{ include('rental/_action_form.html.twig', {rental: rental, route: 'rental_dispute', label: 'Dispute', actionType: 'DISPUTED', buttonClass: 'rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100'}) }}
+                            {% elseif rental.rentalStatus == 'RETURNED' %}
+                                {{ include('rental/_action_form.html.twig', {rental: rental, route: 'rental_complete', label: 'Complete', actionType: 'COMPLETED', buttonClass: 'rounded-xl border border-slate-200 bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-200'}) }}
+                            {% endif %}
+                        {% else %}
+                            <p class="text-sm text-slate-500">Only the rental owner or an admin can perform actions on this rental.</p>
                         {% endif %}
                     </div>
                 </article>
