@@ -184,6 +184,21 @@
         }
 
         .card-footer a:hover { text-decoration: underline; }
+
+        /* Additions for password strength and small UI tweaks */
+        .password-row { position: relative; }
+        .pw-toggle {
+            position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+            background: transparent; border: none; cursor: pointer; font-size: 0.95rem; color: var(--text-mid);
+        }
+
+        .pw-strength {
+            height: 8px; border-radius: 6px; overflow: hidden; background: #f1f5f1; margin-top: 8px;
+        }
+        .pw-strength > i { display: block; height: 100%; width: 0%; background: linear-gradient(90deg,#ff6b6b,#ffd66b,#4cd964); transition: width 220ms ease; }
+        .pw-meta { font-size: 0.82rem; color: var(--text-mid); margin-top: 6px; }
+
+        .field.has-error input { border-color: #fca5a5; box-shadow: 0 0 0 3px rgba(255,200,200,0.12); }
     </style>
 </head>
 <body>
@@ -216,30 +231,39 @@
                 <div class="alert alert-success">{{ flash }}</div>
             {% endfor %}
 
-          <form method="post" action="#">
-    <div class="field">
+          <form method="post" action="{{ path('app_register') }}" novalidate>
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token('register') }}">
+    <div class="field {% if formErrors.email is defined %}has-error{% endif %}">
         <label for="fullName">Full Name</label>
         <input
             type="text"
             id="fullName"
             name="fullName"
             placeholder="Juan Dela Cruz"
+            value="{{ formValues.fullName|default('') }}"
             required
         >
+        {% if formErrors.fullName is defined %}
+            <div class="field-error">{{ formErrors.fullName }}</div>
+        {% endif %}
     </div>
 
-    <div class="field">
+    <div class="field {% if formErrors.email is defined %}has-error{% endif %}">
         <label for="email">Email</label>
         <input
             type="email"
             id="email"
             name="email"
             placeholder="you@example.com"
+            value="{{ formValues.email|default('') }}"
             required
         >
+        {% if formErrors.email is defined %}
+            <div class="field-error">{{ formErrors.email }}</div>
+        {% endif %}
     </div>
 
-    <div class="field">
+    <div class="field password-row {% if formErrors.password is defined %}has-error{% endif %}">
         <label for="password">Password</label>
         <input
             type="password"
@@ -247,7 +271,30 @@
             name="password"
             placeholder="••••••••"
             required
+            aria-describedby="pw-help pw-strength-meter"
         >
+        <button type="button" class="pw-toggle" aria-label="Toggle password visibility" onclick="togglePw('password')">Show</button>
+        {% if formErrors.password is defined %}
+            <div class="field-error">{{ formErrors.password }}</div>
+        {% endif %}
+
+        <div class="pw-strength" id="pw-strength-meter"><i id="pw-strength-bar"></i></div>
+        <div class="pw-meta" id="pw-help">Use 8+ chars, mix upper/lower, number and special char.</div>
+    </div>
+
+    <div class="field password-row {% if formErrors.confirm_password is defined %}has-error{% endif %}">
+        <label for="confirm_password">Confirm Password</label>
+        <input
+            type="password"
+            id="confirm_password"
+            name="confirm_password"
+            placeholder="••••••••"
+            required
+        >
+        <button type="button" class="pw-toggle" aria-label="Toggle password visibility" onclick="togglePw('confirm_password')">Show</button>
+        {% if formErrors.confirm_password is defined %}
+            <div class="field-error">{{ formErrors.confirm_password }}</div>
+        {% endif %}
     </div>
 
     <button type="submit" class="btn-submit">Create Account</button>
@@ -260,6 +307,53 @@
         </div>
 
     </div>
+
+    <script>
+        // Simple password strength estimator
+        function scorePassword(pw) {
+            if (!pw) return 0;
+            let score = 0;
+            // length
+            if (pw.length >= 8) score += 1;
+            if (pw.length >= 12) score += 1;
+            // variety
+            if (/[a-z]/.test(pw)) score += 1;
+            if (/[A-Z]/.test(pw)) score += 1;
+            if (/\d/.test(pw)) score += 1;
+            if (/[^A-Za-z0-9]/.test(pw)) score += 1;
+            return Math.min(score, 6);
+        }
+
+        function updateStrength() {
+            const pw = document.getElementById('password').value;
+            const score = scorePassword(pw);
+            const bar = document.getElementById('pw-strength-bar');
+            const meter = document.getElementById('pw-strength-meter');
+            const help = document.getElementById('pw-help');
+            const percent = Math.round((score / 6) * 100);
+            bar.style.width = percent + '%';
+            if (score <= 2) {
+                bar.style.background = '#ff6b6b';
+                help.textContent = 'Weak — try longer and mix characters.';
+            } else if (score <= 4) {
+                bar.style.background = '#ffd66b';
+                help.textContent = 'Fair — could be stronger.';
+            } else {
+                bar.style.background = '#4cd964';
+                help.textContent = 'Strong — good password.';
+            }
+        }
+
+        function togglePw(id) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            if (el.type === 'password') { el.type = 'text'; } else { el.type = 'password'; }
+        }
+
+        document.getElementById('password').addEventListener('input', updateStrength);
+        // run once on load
+        updateStrength();
+    </script>
 
 </body>
 </html>
