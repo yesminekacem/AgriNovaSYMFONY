@@ -1,0 +1,146 @@
+{% extends 'base.html.twig' %}
+
+{% block stylesheets %}
+{{ parent() }}
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ asset('Back/css/newcrop.css') }}">
+{% endblock %}
+
+{% block body %}
+<div class="page-wrap">
+
+  <div class="form-header">
+    <div class="icon-wrap">🌱</div>
+    <div>
+      <h1>Add New Crop</h1>
+      <p>Register a crop to your farm profile</p>
+    </div>
+  </div>
+
+  <div class="card">
+    {{ form_start(form) }}
+
+      {# ── Basic Information ── #}
+      <div class="section-label">Basic Information</div>
+
+      <div class="field">
+        {{ form_label(form.name, 'Crop Name') }}
+        {{ form_widget(form.name, {'attr': {'placeholder': 'e.g. Tomato, Wheat, Maize…'}}) }}
+        {{ form_errors(form.name) }}
+      </div>
+
+      <div class="row-2">
+        <div class="field">
+          {{ form_label(form.type, 'Type') }}
+          <div class="select-wrap">{{ form_widget(form.type) }}</div>
+          {{ form_errors(form.type) }}
+        </div>
+        <div class="field">
+          {{ form_label(form.variety, 'Variety') }}
+          {{ form_widget(form.variety, {'attr': {'placeholder': 'e.g. Cherry, Heirloom…'}}) }}
+          {{ form_errors(form.variety) }}
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      {# ── Dates & Growth ── #}
+      <div class="section-label">Dates & Growth</div>
+
+      <div class="row-2">
+        <div class="field">
+          {{ form_label(form.planting_date, 'Planting Date') }}
+          {{ form_widget(form.planting_date) }}
+          {{ form_errors(form.planting_date) }}
+        </div>
+        <div class="field">
+          {{ form_label(form.expected_harvest_date, 'Expected Harvest') }}
+          {{ form_widget(form.expected_harvest_date) }}
+          {{ form_errors(form.expected_harvest_date) }}
+        </div>
+      </div>
+
+      <div class="row-2">
+        <div class="field">
+          {{ form_label(form.growth_stage, 'Growth Stage') }}
+          <div class="select-wrap">{{ form_widget(form.growth_stage) }}</div>
+          {{ form_errors(form.growth_stage) }}
+        </div>
+        <div class="field">
+          {{ form_label(form.area_size, 'Area Size') }}
+          <div class="input-icon">
+            {{ form_widget(form.area_size, {'attr': {'placeholder': '0.00'}}) }}
+            <span class="unit">ha</span>
+          </div>
+          {{ form_errors(form.area_size) }}
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      {# ── Status ── #}
+      <div class="section-label">Status</div>
+      <div class="status-grid">
+        <div class="status-option">
+          <input type="radio" name="{{ form.status.vars.full_name }}" id="s-active" value="active"
+            {{ form.status.vars.data == 'active' ? 'checked' : '' }}>
+          <label for="s-active"><span class="dot green"></span>Active</label>
+        </div>
+        <div class="status-option">
+          <input type="radio" name="{{ form.status.vars.full_name }}" id="s-growing" value="growing"
+            {{ form.status.vars.data == 'growing' ? 'checked' : '' }}>
+          <label for="s-growing"><span class="dot yellow"></span>Growing</label>
+        </div>
+        <div class="status-option">
+          <input type="radio" name="{{ form.status.vars.full_name }}" id="s-harvested" value="harvested"
+            {{ form.status.vars.data == 'harvested' ? 'checked' : '' }}>
+          <label for="s-harvested"><span class="dot blue"></span>Harvested</label>
+        </div>
+        <div class="status-option">
+          <input type="radio" name="{{ form.status.vars.full_name }}" id="s-failed" value="failed"
+            {{ form.status.vars.data == 'failed' ? 'checked' : '' }}>
+          <label for="s-failed"><span class="dot red"></span>Failed</label>
+        </div>
+        <div class="status-option">
+          <input type="radio" name="{{ form.status.vars.full_name }}" id="s-dormant" value="dormant"
+            {{ form.status.vars.data == 'dormant' ? 'checked' : '' }}>
+          <label for="s-dormant"><span class="dot gray"></span>Dormant</label>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      {# ── Image ── #}
+      <div class="section-label">Crop Image</div>
+
+      <label for="{{ form.imageFile.vars.id }}" class="upload-area" id="upload-box">
+        <div class="upload-icon">📷</div>
+        <p><span>Click to upload</span> or drag & drop</p>
+        <p style="margin-top:4px; font-size:0.75rem; color:#b0c8b6;">PNG, JPG up to 5MB</p>
+        {{ form_widget(form.imageFile, {'attr': {'id': form.imageFile.vars.id, 'accept': 'image/*'}}) }}
+      </label>
+      {{ form_errors(form.imageFile) }}
+      <div class="filename-badge" id="filename-badge"></div>
+      <img id="preview">
+
+      {# ── Footer ── #}
+      <div class="form-footer">
+        <a href="{{ path('app_crop_index') }}" class="btn-cancel">Cancel</a>
+        <button type="submit" class="btn-save">
+          <span>🌿</span> Save Crop
+        </button>
+      </div>
+
+    {{ form_end(form) }}
+  </div>
+
+</div>
+
+{# Pass the dynamic Twig variable to JS via a config object #}
+<script>
+  const cropFormConfig = {
+    imageFieldId: '{{ form.imageFile.vars.id }}'
+  };
+</script>
+<script src="{{ asset('Back/js/newcrop.js') }}"></script>
+{% endblock %}

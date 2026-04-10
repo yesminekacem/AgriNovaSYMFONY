@@ -1,0 +1,131 @@
+{% extends 'base.html.twig' %}
+
+{% block stylesheets %}
+  {{ parent() }}
+  <link rel="stylesheet" href="{{ asset('Front/css/taskform.css') }}">
+{% endblock %}
+
+{% block body %}
+
+<div class="create-page">
+  <div class="form-card">
+
+    <div class="form-card-header">
+      <div class="header-tag">
+        <span class="leaf">🌿</span> Task Management
+      </div>
+      <h1>Create <em>New</em> Task</h1>
+    </div>
+
+   {{ form_start(form, { attr: { novalidate: 'novalidate' } }) }}
+
+<div class="form-body">
+  {{ form_errors(form) }}
+
+      <div class="form-section">
+        <div class="form-section-title">Basic Info</div>
+
+        <div class="field" style="margin-bottom:1rem;">
+          {{ form_label(form.crop, 'Crop') }}
+          <div class="select-wrap">
+            {{ form_widget(form.crop) }}
+          </div>
+          {{ form_errors(form.crop) }}
+        </div>
+
+        <div class="field">
+          {{ form_label(form.task_name, 'Task Name') }}
+          {{ form_widget(form.task_name, { attr: { placeholder: 'e.g. Water the seedlings…' } }) }}
+          {{ form_errors(form.task_name) }}
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Details</div>
+
+        <div class="field" style="margin-bottom:1rem;">
+          {{ form_label(form.description, 'Description') }}
+          {{ form_widget(form.description, { attr: { placeholder: 'Describe what needs to be done…', rows: 3 } }) }}
+          {{ form_errors(form.description) }}
+        </div>
+
+        <div class="form-grid-2">
+          <div class="field">
+            {{ form_label(form.task_type, 'Task Type') }}
+            <div class="select-wrap">
+              {{ form_widget(form.task_type) }}
+            </div>
+            {{ form_errors(form.task_type) }}
+          </div>
+
+          <div class="field">
+            {{ form_label(form.status, 'Status') }}
+            <div class="select-wrap">
+              {{ form_widget(form.status) }}
+            </div>
+            {{ form_errors(form.status) }}
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Schedule</div>
+
+        <div class="form-grid-2">
+          <div class="field">
+            {{ form_label(form.scheduled_date, 'Scheduled Date') }}
+            {{ form_widget(form.scheduled_date) }}
+            {{ form_errors(form.scheduled_date) }}
+          </div>
+
+          <div class="field">
+            {{ form_label(form.completed_date, 'Completed Date') }}
+            {{ form_widget(form.completed_date) }}
+            {{ form_errors(form.completed_date) }}
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Assignment & Cost</div>
+
+        <div class="form-grid-2">
+          <div class="field">
+            {{ form_label(form.assigned_to, 'Assigned To') }}
+            {{ form_widget(form.assigned_to, { attr: { placeholder: 'Worker name or team…' } }) }}
+            {{ form_errors(form.assigned_to) }}
+          </div>
+
+          <div class="field">
+            {{ form_label(form.cost, 'Cost') }}
+            <div class="input-prefix">
+              <span class="prefix-symbol"></span>
+              {{ form_widget(form.cost, { attr: { placeholder: '0.00' } }) }}
+            </div>
+            {{ form_errors(form.cost) }}
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="form-footer">
+      <a href="{{ path('app_task_index') }}" class="btn-back">
+        ← Back to Tasks
+      </a>
+      <button type="submit" class="btn-save">
+        ✓ Save Task
+      </button>
+    </div>
+
+    {{ form_end(form) }}
+
+  </div>
+</div>
+
+{% endblock %}
+
+{% block javascripts %}
+  {{ parent() }}
+  <script src="{{ asset('Front/js/taskform.js') }}"></script>
+{% endblock %}

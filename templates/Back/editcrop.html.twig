@@ -1,0 +1,97 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+
+<div class="bg-[#EEF6F1] min-h-screen p-8">
+
+    <div class="max-w-2xl mx-auto">
+
+        <div class="mb-6">
+            <h1 class="text-3xl font-bold text-[#14532D]">✏️ Edit Crop</h1>
+            <p class="text-gray-500 mt-1">Update crop information</p>
+        </div>
+
+        <div class="bg-white rounded-2xl p-8 shadow-sm border border-green-100">
+            {{ form_start(form, {'action': path('app_crop_edit', {'crop_id': crop.cropId}), 'method': 'POST'}) }}
+
+                <div class="mb-4">
+                    {{ form_label(form.name, 'Crop Name', {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-1'}}) }}
+                    {{ form_widget(form.name, {'attr': {'class': 'w-full p-3 border border-gray-200 rounded-lg outline-none focus:border-green-400'}}) }}
+                    {{ form_errors(form.name) }}
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        {{ form_label(form.type, 'Type', {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-1'}}) }}
+                        {{ form_widget(form.type, {'attr': {'class': 'w-full p-3 border border-gray-200 rounded-lg outline-none focus:border-green-400'}}) }}
+                        {{ form_errors(form.type) }}
+                    </div>
+                    <div>
+                        {{ form_label(form.variety, 'Variety', {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-1'}}) }}
+                        {{ form_widget(form.variety, {'attr': {'class': 'w-full p-3 border border-gray-200 rounded-lg outline-none focus:border-green-400'}}) }}
+                        {{ form_errors(form.variety) }}
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        {{ form_label(form.planting_date, 'Planting Date', {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-1'}}) }}
+                        {{ form_widget(form.planting_date, {'attr': {'class': 'w-full p-3 border border-gray-200 rounded-lg outline-none focus:border-green-400'}}) }}
+                        {{ form_errors(form.planting_date) }}
+                    </div>
+                    <div>
+                        {{ form_label(form.expected_harvest_date, 'Expected Harvest', {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-1'}}) }}
+                        {{ form_widget(form.expected_harvest_date, {'attr': {'class': 'w-full p-3 border border-gray-200 rounded-lg outline-none focus:border-green-400'}}) }}
+                        {{ form_errors(form.expected_harvest_date) }}
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        {{ form_label(form.growth_stage, 'Growth Stage', {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-1'}}) }}
+                        {{ form_widget(form.growth_stage, {'attr': {'class': 'w-full p-3 border border-gray-200 rounded-lg outline-none focus:border-green-400'}}) }}
+                        {{ form_errors(form.growth_stage) }}
+                    </div>
+                    <div>
+                        {{ form_label(form.area_size, 'Area Size (ha)', {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-1'}}) }}
+                        {{ form_widget(form.area_size, {'attr': {'class': 'w-full p-3 border border-gray-200 rounded-lg outline-none focus:border-green-400'}}) }}
+                        {{ form_errors(form.area_size) }}
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    {{ form_label(form.status, 'Status', {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-1'}}) }}
+                    {{ form_widget(form.status, {'attr': {'class': 'w-full p-3 border border-gray-200 rounded-lg outline-none focus:border-green-400'}}) }}
+                    {{ form_errors(form.status) }}
+                </div>
+
+                <div class="mb-6">
+                    {{ form_label(form.imageFile, 'Update Image (optional)', {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-1'}}) }}
+                    {{ form_widget(form.imageFile, {'attr': {'class': 'w-full'}}) }}
+                    {{ form_errors(form.imageFile) }}
+                    {% if crop.imagePath %}
+                        <img src="{{ asset('cropsimages/' ~ crop.imagePath) }}"
+                             class="mt-3 h-24 rounded-lg object-cover" alt="Current image">
+                        <p class="text-xs text-gray-400 mt-1">Current image — upload a new one to replace it</p>
+                    {% endif %}
+                </div>
+
+                <div class="flex justify-between items-center">
+                    <a href="{{ path('app_crop_index') }}"
+                       class="text-gray-400 hover:text-gray-600 font-medium">
+                        ← Cancel
+                    </a>
+                    <button type="submit"
+                            class="bg-[#2d6a4f] hover:bg-[#1b4332] text-white px-8 py-3 rounded-xl font-semibold">
+                        💾 Save Changes
+                    </button>
+                </div>
+
+            {{ form_end(form) }}
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
