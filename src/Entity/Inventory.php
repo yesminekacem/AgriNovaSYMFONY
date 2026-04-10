@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Entity\User;
 use App\Repository\InventoryRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -74,6 +75,10 @@ class Inventory
     #[ORM\Column(name: 'total_usage_hours', nullable: true)]
     #[Assert\PositiveOrZero(message: 'Total usage hours cannot be negative.')]
     private ?int $totalUsageHours = 0;
+
+    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'inventories')]
+    #[ORM\JoinColumn(name: 'owner_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
+    private ?User $owner = null;
 
     #[ORM\Column(name: 'owner_name', length: 255, nullable: true)]
     #[Assert\Length(max: 255, maxMessage: 'Owner name is too long.')]
@@ -250,6 +255,18 @@ class Inventory
     public function setTotalUsageHours(?int $totalUsageHours): static
     {
         $this->totalUsageHours = $totalUsageHours;
+
+        return $this;
+    }
+
+    public function getOwner(): ?User
+    {
+        return $this->owner;
+    }
+
+    public function setOwner(?User $owner): static
+    {
+        $this->owner = $owner;
 
         return $this;
     }

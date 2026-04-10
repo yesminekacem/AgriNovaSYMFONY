@@ -36,6 +36,8 @@ security:
     # Note: Only the *first* matching rule is applied
     access_control:
         - { path: ^/admin, roles: ROLE_ADMIN }
+        - { path: ^/inventory, roles: ROLE_USER }
+        - { path: ^/rental, roles: ROLE_USER }
         - { path: ^/sessions, roles: ROLE_USER }
         - { path: ^/settings, roles: ROLE_USER }
         - { path: ^/profile, roles: ROLE_USER }

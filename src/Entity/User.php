@@ -2,6 +2,8 @@
 
 namespace App\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -39,6 +41,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(type: 'boolean', options: ['default' => 0])]
     private bool $banned = false;
+
+    #[ORM\OneToMany(mappedBy: 'owner', targetEntity: \App\Entity\Inventory::class)]
+    private Collection $inventories;
+
+    public function __construct()
+    {
+        $this->inventories = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -177,6 +187,33 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setBanned(bool $banned): self
     {
         $this->banned = $banned;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, \App\Entity\Inventory>
+     */
+    public function getInventories(): Collection
+    {
+        return $this->inventories;
+    }
+
+    public function addInventory(\App\Entity\Inventory $inventory): self
+    {
+        if (!$this->inventories->contains($inventory)) {
+            $this->inventories->add($inventory);
+            $inventory->setOwner($this);
+        }
+
+        return $this;
+    }
+
+    public function removeInventory(\App\Entity\Inventory $inventory): self
+    {
+        if ($this->inventories->removeElement($inventory) && $inventory->getOwner() === $this) {
+            $inventory->setOwner(null);
+        }
 
         return $this;
     }

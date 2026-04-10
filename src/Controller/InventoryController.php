@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Inventory;
 use App\Form\InventoryType;
+use App\Entity\User;
 use App\Repository\InventoryRepository;
 use App\Repository\RentalRepository;
 use Doctrine\DBAL\Exception\ForeignKeyConstraintViolationException;
@@ -61,6 +62,19 @@ final class InventoryController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $user = $this->getUser();
+            if (!$user instanceof User) {
+                throw $this->createAccessDeniedException('You must be logged in to add inventory.');
+            }
+
+            $inventory->setOwner($user);
+            if ($inventory->getOwnerName() === null) {
+                $inventory->setOwnerName($user->getFullName() ?? $user->getEmail());
+            }
+            if ($inventory->getOwnerContact() === null) {
+                $inventory->setOwnerContact($user->getEmail());
+            }
+
             $entityManager->persist($inventory);
             $entityManager->flush();
 
@@ -136,6 +150,8 @@ final class InventoryController extends AbstractController
     #[Route('/{id}', name: 'inventory_show', methods: ['GET'], requirements: ['id' => '\d+'])]
     public function show(Inventory $inventory): Response
     {
+        $this->assertInventoryOwnerOrAdmin($inventory);
+
         return $this->render('inventory/show.html.twig', [
             'item' => $inventory,
         ]);
@@ -144,6 +160,8 @@ final class InventoryController extends AbstractController
     #[Route('/{id}/edit', name: 'inventory_edit', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
     public function edit(Request $request, Inventory $inventory, EntityManagerInterface $entityManager): Response
     {
+        $this->assertInventoryOwnerOrAdmin($inventory);
+
         $form = $this->createForm(InventoryType::class, $inventory);
         $form->handleRequest($request);
 
@@ -166,6 +184,8 @@ final class InventoryController extends AbstractController
     #[Route('/{id}/delete', name: 'inventory_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function delete(Request $request, Inventory $inventory, EntityManagerInterface $entityManager, RentalRepository $rentalRepository): Response
     {
+        $this->assertInventoryOwnerOrAdmin($inventory);
+
         if (!$this->isCsrfTokenValid('delete_inventory_'.$inventory->getId(), $request->request->getString('_token'))) {
             $this->addFlash('error', 'The delete action was blocked. Please try again.');
 
@@ -197,5 +217,21 @@ final class InventoryController extends AbstractController
         $value = is_string($value) ? trim($value) : '';
 
         return $value !== '' ? $value : null;
+    }
+
+    private function assertInventoryOwnerOrAdmin(Inventory $inventory): void
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            throw $this->createAccessDeniedException('You must be logged in to access this inventory item.');
+        }
+
+        if ($this->isGranted('ROLE_ADMIN')) {
+            return;
+        }
+
+        if ($inventory->getOwner() === null || $inventory->getOwner()->getId() !== $user->getId()) {
+            throw $this->createAccessDeniedException('You do not have permission to access this inventory item.');
+        }
     }
 }
