@@ -11,11 +11,12 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class RegistrationController extends AbstractController
 {
     #[Route('/register', name: 'app_register', methods: ['GET','POST'])]
-    public function register(Request $request, EntityManagerInterface $em, UserPasswordHasherInterface $passwordHasher, UrlGeneratorInterface $urlGenerator, UserRepository $userRepository): Response
+    public function register(Request $request, EntityManagerInterface $em, UserPasswordHasherInterface $passwordHasher, UrlGeneratorInterface $urlGenerator, UserRepository $userRepository, ValidatorInterface $validator): Response
     {
         // If GET, just render the form (no errors / previous values)
         $formValues = ['email' => '', 'fullName' => ''];
@@ -39,8 +40,6 @@ class RegistrationController extends AbstractController
             // Basic presence checks
             if (!$email) {
                 $formErrors['email'] = 'Email is required.';
-            } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                $formErrors['email'] = 'Please provide a valid email address.';
             }
 
             if (!$plainPassword) {
@@ -64,6 +63,14 @@ class RegistrationController extends AbstractController
                 }
             }
 
+            // Validate email format using Symfony Validator on the User entity
+            if (!isset($formErrors['email'])) {
+                $violations = $validator->validatePropertyValue(\App\Entity\User::class, 'email', $email);
+                if (count($violations) > 0) {
+                    $formErrors['email'] = $violations[0]->getMessage();
+                }
+            }
+
             // Prevent duplicate emails
             if (!isset($formErrors['email'])) {
                 $existing = $userRepository->findOneBy(['email' => $email]);
@@ -72,15 +79,17 @@ class RegistrationController extends AbstractController
                 }
             }
 
-            // Check if email already exists using DQL
-            $query = $em->createQuery(
-                'SELECT COUNT(u.id) FROM App\\Entity\\User u WHERE u.email = :email'
-            )->setParameter('email', $email);
+            // Check if email already exists using DQL (keeps current behavior but is optional)
+            if (!isset($formErrors['email'])) {
+                $query = $em->createQuery(
+                    'SELECT COUNT(u.id) FROM App\\Entity\\User u WHERE u.email = :email'
+                )->setParameter('email', $email);
 
-            $emailCount = $query->getSingleScalarResult();
+                $emailCount = $query->getSingleScalarResult();
 
-            if ($emailCount > 0) {
-                $formErrors['email'] = 'This email is already registered.';
+                if ($emailCount > 0) {
+                    $formErrors['email'] = 'This email is already registered.';
+                }
             }
 
             if (count($formErrors) > 0) {
