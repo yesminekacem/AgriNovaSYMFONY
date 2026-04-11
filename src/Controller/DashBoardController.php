@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Repository\PostRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -9,9 +10,55 @@ use Symfony\Component\Routing\Attribute\Route;
 class DashBoardController extends AbstractController
 {
     #[Route('/DashBoard', name: 'app_dashboard')]
-    public function index(): Response
+    public function index(PostRepository $postRepository): Response
     {
-        // ---- Fake data (you can replace later with database) ----
+        $posts = $postRepository->findAll();
+
+        $categoryCounts = [
+            'Organic Farming' => 0,
+            'Soil Management' => 0,
+            'Water Management' => 0,
+            'Harvesting' => 0,
+            'Crop Management' => 0,
+        ];
+
+        foreach ($posts as $post) {
+            $category = $post->getCategory();
+
+            if (isset($categoryCounts[$category])) {
+                $categoryCounts[$category]++;
+            }
+        }
+
+        $categoryStats = [
+            [
+                'name' => 'Organic Farming',
+                'count' => $categoryCounts['Organic Farming'],
+                'color' => 'green'
+            ],
+            [
+                'name' => 'Soil Management',
+                'count' => $categoryCounts['Soil Management'],
+                'color' => 'orange'
+            ],
+            [
+                'name' => 'Water Management',
+                'count' => $categoryCounts['Water Management'],
+                'color' => 'green'
+            ],
+            [
+                'name' => 'Harvesting',
+                'count' => $categoryCounts['Harvesting'],
+                'color' => 'orange'
+            ],
+            [
+                'name' => 'Crop Management',
+                'count' => $categoryCounts['Crop Management'],
+                'color' => 'green'
+            ],
+        ];
+
+        $totalPosts = array_sum($categoryCounts);
 
         $stats = [
             [
@@ -33,9 +80,9 @@ class DashBoardController extends AbstractController
                 'icon' => 'box'
             ],
             [
-                'label' => 'Crops',
-                'value' => '54',
-                'change' => '+10%',
+                'label' => 'Forum Posts',
+                'value' => $totalPosts,
+                'change' => 'By category',
                 'icon' => 'leaf'
             ],
         ];
@@ -46,31 +93,11 @@ class DashBoardController extends AbstractController
             ['name' => 'Tomatoes', 'value' => 85, 'color' => 'green'],
         ];
 
-        $transactions = [
-            [
-                'customer' => 'Ali Ben Salah',
-                'product' => 'Tomatoes',
-                'amount' => '$120',
-                'time' => '2h ago'
-            ],
-            [
-                'customer' => 'Sami Trabelsi',
-                'product' => 'Wheat',
-                'amount' => '$300',
-                'time' => '5h ago'
-            ],
-            [
-                'customer' => 'Mouna Kefi',
-                'product' => 'Corn',
-                'amount' => '$210',
-                'time' => '1 day ago'
-            ],
-        ];
-
         return $this->render('Back/dashboard.html.twig', [
             'stats' => $stats,
             'cropYields' => $cropYields,
-            'transactions' => $transactions,
+            'categoryStats' => $categoryStats,
+            'totalPosts' => $totalPosts,
         ]);
     }
 }

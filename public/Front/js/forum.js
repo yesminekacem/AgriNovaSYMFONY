@@ -58,28 +58,33 @@ function toggleLike(btn, e) {
     countSpan.textContent = count;
 }
 
-/* ── View post modal ── */
+/* ── View post mfodal ── */
 function openViewModal(id) {
     const post = POSTS_DATA[id];
+    const isOwner = CURRENT_USER_ID !== null && Number(post.authorId) === Number(CURRENT_USER_ID);
     if (!post) return;
 
     let commentsHtml = '';
     if (post.comments.length > 0) {
         let items = '';
         post.comments.forEach((c, index) => {
-            items += `
-            <div class="comment-item">
-                <div class="comment-header">
-                    <span class="comment-author">${escapeHtml(c.author)}</span>
-                    <div style="position:relative;">
-                        <button class="comment-menu-btn"
-                                onclick="toggleCommentMenu(${id}, ${index})">⋯</button>
-                        <div class="comment-menu-dropdown" id="menu-${id}-${index}">
-                            <button onclick="editComment(${id}, ${index})">✏️ Edit</button>
-                            <button class="btn-menu-delete" onclick="deleteComment(${id}, ${index})">🗑 Delete</button>
-                        </div>
-                    </div>
-                </div>
+          const isCommentOwner = CURRENT_USER_ID !== null && Number(c.authorId) === Number(CURRENT_USER_ID);
+
+items += `
+<div class="comment-item">
+    <div class="comment-header">
+        <span class="comment-author">${escapeHtml(c.author)}</span>
+        ${isCommentOwner ? `
+        <div style="position:relative;">
+            <button class="comment-menu-btn"
+                    onclick="toggleCommentMenu(${id}, ${index})">⋯</button>
+            <div class="comment-menu-dropdown" id="menu-${id}-${index}">
+                <button onclick="editComment(${id}, ${index})">✏️ Edit</button>
+                <button class="btn-menu-delete" onclick="deleteComment(${id}, ${index})">🗑 Delete</button>
+            </div>
+        </div>
+        ` : ''}
+    </div>
                 <div class="comment-time">${escapeHtml(c.createdAt)}</div>
                 <div class="comment-content">${escapeHtml(c.content)}</div>
             </div>`;
@@ -131,13 +136,15 @@ function openViewModal(id) {
                 <span class="like-count">0</span>
             </button>
 
-            <button class="btn-update" onclick="openEditModal(${post.id})">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 20h9"/>
-                    <path d="M16.5 3.5a2.12 2.12 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>
-                </svg>
-                Update
-            </button>
+          ${isOwner ? `
+<button class="btn-update" onclick="openEditModal(${post.id})">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 20h9"/>
+        <path d="M16.5 3.5a2.12 2.12 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>
+    </svg>
+    Update
+</button>
+` : ''}
         </div>
 
         ${commentsHtml}
