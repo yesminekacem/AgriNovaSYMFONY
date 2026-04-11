@@ -252,6 +252,63 @@
             min-height: auto;
         }
     }
+
+    .summary-grid {
+        display: grid;
+        grid-template-columns: 1fr minmax(320px, 1.2fr);
+        gap: 1.6rem;
+        margin-top: 1.8rem;
+    }
+
+    .summary-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 0;
+        border-bottom: 1px solid var(--border);
+        gap: 1rem;
+    }
+
+    .summary-item:last-child {
+        border-bottom: none;
+    }
+
+    .summary-label {
+        color: var(--text-mid);
+        font-weight: 600;
+    }
+
+    .summary-value {
+        color: var(--text-dark);
+        font-weight: 700;
+        font-size: 1.2rem;
+    }
+
+    .chart-wrapper {
+        min-height: 360px;
+        display: grid;
+        place-items: center;
+    }
+
+    .chart-card {
+        width: 100%;
+    }
+
+    .chart-footer {
+        margin-top: 1.1rem;
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .chart-pill {
+        background: #f3f8f4;
+        border-radius: 999px;
+        padding: 0.65rem 1rem;
+        color: #2d7a45;
+        font-size: 0.94rem;
+        font-weight: 600;
+    }
 </style>
 
 <div class="dashboard-page">
@@ -350,5 +407,150 @@
         </div>
     </section>
 
+    <section class="summary-grid">
+        <div class="panel">
+            <div class="panel-title">
+                <span class="green-icon">📦</span>
+                <span>Inventory & Rental Snapshot</span>
+            </div>
+
+            <div class="summary-item">
+                <span class="summary-label">Total inventory items</span>
+                <span class="summary-value">{{ inventoryStats.total }}</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Rentable inventory</span>
+                <span class="summary-value">{{ inventoryStats.rentable }}</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Currently rented out</span>
+                <span class="summary-value">{{ inventoryStats.rentedOut }}</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Low-stock items</span>
+                <span class="summary-value">{{ inventoryStats.lowStock }}</span>
+            </div>
+
+            <div class="summary-item">
+                <span class="summary-label">Total rental agreements</span>
+                <span class="summary-value">{{ rentalStats.total }}</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Active rentals</span>
+                <span class="summary-value">{{ rentalStats.active }}</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Pending rentals</span>
+                <span class="summary-value">{{ rentalStats.pending }}</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Overdue rentals</span>
+                <span class="summary-value">{{ rentalStats.overdue }}</span>
+            </div>
+        </div>
+
+        <div class="panel chart-card">
+            <div class="panel-title">
+                <span class="orange-icon">📈</span>
+                <span>Inventory + Rental Live Chart</span>
+            </div>
+
+            <div class="chart-wrapper">
+                <canvas id="inventoryRentalChart"
+                    data-inventory-labels='{{ inventoryChartData.labels|json_encode|raw }}'
+                    data-inventory-values='{{ inventoryChartData.values|json_encode|raw }}'
+                    data-rental-labels='{{ rentalChartData.labels|json_encode|raw }}'
+                    data-rental-values='{{ rentalChartData.values|json_encode|raw }}'>
+                </canvas>
+            </div>
+
+            <div class="chart-footer">
+                <span class="chart-pill">Inventory available: {{ inventoryChartData.values[0] }}</span>
+                <span class="chart-pill">Rentable: {{ inventoryChartData.values[1] }}</span>
+                <span class="chart-pill">Rented out: {{ inventoryChartData.values[2] }}</span>
+                <span class="chart-pill">Overdue rentals: {{ rentalStats.overdue }}</span>
+            </div>
+        </div>
+    </section>
+
 </div>
+
+{% endblock %}
+
+{% block javascripts %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const chartEl = document.getElementById('inventoryRentalChart');
+            if (!chartEl) return;
+
+            const inventoryLabels = JSON.parse(chartEl.dataset.inventoryLabels);
+            const inventoryValues = JSON.parse(chartEl.dataset.inventoryValues);
+            const rentalLabels = JSON.parse(chartEl.dataset.rentalLabels);
+            const rentalValues = JSON.parse(chartEl.dataset.rentalValues);
+
+            new Chart(chartEl.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: inventoryLabels.concat(rentalLabels),
+                    datasets: [
+                        {
+                            label: 'Inventory counts',
+                            data: inventoryValues.concat(new Array(rentalLabels.length).fill(null)),
+                            backgroundColor: 'rgba(45, 122, 69, 0.78)',
+                            borderColor: 'rgba(45, 122, 69, 1)',
+                            borderWidth: 1,
+                        },
+                        {
+                            label: 'Rental status',
+                            data: new Array(inventoryLabels.length).fill(null).concat(rentalValues),
+                            backgroundColor: 'rgba(245, 158, 11, 0.78)',
+                            borderColor: 'rgba(245, 158, 11, 1)',
+                            borderWidth: 1,
+                        },
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            stacked: false,
+                            ticks: {
+                                color: '#394047',
+                                font: { weight: '600' }
+                            },
+                            grid: { display: false }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: '#4b5563'
+                            },
+                            grid: {
+                                color: 'rgba(148, 163, 184, 0.18)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                color: '#374151',
+                                boxWidth: 12,
+                                padding: 16
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
 {% endblock %}

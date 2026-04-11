@@ -2,6 +2,8 @@
 
 namespace App\Controller;
 
+use App\Repository\InventoryRepository;
+use App\Repository\RentalRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -9,9 +11,9 @@ use Symfony\Component\Routing\Attribute\Route;
 class DashBoardController extends AbstractController
 {
     #[Route('/DashBoard', name: 'app_dashboard')]
-    public function index(): Response
+    public function index(InventoryRepository $inventoryRepository, RentalRepository $rentalRepository): Response
     {
-        // ---- Fake data (you can replace later with database) ----
+        // ---- Dashboard data for crops, inventory, and rentals ----
 
         $stats = [
             [
@@ -67,10 +69,50 @@ class DashBoardController extends AbstractController
             ],
         ];
 
+        $inventoryStats = [
+            'total' => $inventoryRepository->countAllItems(),
+            'rentable' => $inventoryRepository->countRentableItems(),
+            'rentedOut' => $inventoryRepository->countByRentalStatus('RENTED_OUT'),
+            'lowStock' => $inventoryRepository->countLowStock(),
+        ];
+
+        $rentalStats = [
+            'total' => $rentalRepository->countAllRentals(),
+            'pending' => $rentalRepository->countByStatus('PENDING'),
+            'active' => $rentalRepository->countByStatus('ACTIVE'),
+            'completed' => $rentalRepository->countByStatus('COMPLETED'),
+            'overdue' => $rentalRepository->countOverdue(),
+            'revenue' => $rentalRepository->getTotalRevenue(),
+        ];
+
+        $inventoryChartData = [
+            'labels' => ['Available', 'Rentable', 'Rented Out', 'Low Stock'],
+            'values' => [
+                max(0, $inventoryStats['total'] - $inventoryStats['rentedOut']),
+                $inventoryStats['rentable'],
+                $inventoryStats['rentedOut'],
+                $inventoryStats['lowStock'],
+            ],
+        ];
+
+        $rentalChartData = [
+            'labels' => ['Pending', 'Active', 'Completed', 'Overdue'],
+            'values' => [
+                $rentalStats['pending'],
+                $rentalStats['active'],
+                $rentalStats['completed'],
+                $rentalStats['overdue'],
+            ],
+        ];
+
         return $this->render('Back/dashboard.html.twig', [
             'stats' => $stats,
             'cropYields' => $cropYields,
             'transactions' => $transactions,
+            'inventoryStats' => $inventoryStats,
+            'rentalStats' => $rentalStats,
+            'inventoryChartData' => $inventoryChartData,
+            'rentalChartData' => $rentalChartData,
         ]);
     }
 }
