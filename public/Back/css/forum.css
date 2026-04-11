@@ -1,0 +1,640 @@
+
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:wght@700;900&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+        --green-dark:  #1a4d2e;
+        --green-mid:   #2d7a45;
+        --green-light: #e8f5e0;
+        --green-pale:  #f0faf4;
+        --orange:      #f59e0b;
+        --blue:        #3b82f6;
+        --purple:      #8b5cf6;
+        --red:         #ef4444;
+        --bg:          #f4f9f1;
+        --text-dark:   #111;
+        --text-mid:    #555;
+        --border:      #e2ede8;
+        --shadow-sm:   0 1px 3px rgba(0,0,0,0.07);
+        --shadow-md:   0 4px 16px rgba(45,122,69,0.12);
+        --shadow-lg:   0 12px 40px rgba(0,0,0,0.15);
+
+        /* category pill colors */
+        --c-all:       #7c3aed;
+        --c-all-bg:    #ede9fe;
+        --c-tips:      #2d7a45;
+        --c-tips-bg:   #dcfce7;
+        --c-reviews:   #d97706;
+        --c-reviews-bg:#fef3c7;
+        --c-market:    #ea580c;
+        --c-market-bg: #ffedd5;
+        --c-help:      #2563eb;
+        --c-help-bg:   #dbeafe;
+        --c-stories:   #9333ea;
+        --c-stories-bg:#f3e8ff;
+    }
+
+    .forum-page {
+        font-family: 'DM Sans', sans-serif;
+        background: var(--bg);
+        min-height: 100vh;
+        padding: 2.5rem 3rem;
+    }
+
+    /* ── HEADER ── */
+    .forum-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        margin-bottom: 2.25rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .forum-header-left { display: flex; align-items: center; gap: 0.75rem; }
+    .forum-header-icon { font-size: 1.8rem; line-height: 1; }
+
+    .forum-header-text h1 {
+        font-family: 'Fraunces', serif;
+        font-size: 1.9rem;
+        font-weight: 900;
+        color: var(--text-dark);
+        letter-spacing: -0.02em;
+    }
+
+    .forum-header-text p { color: var(--text-mid); font-size: 0.92rem; margin-top: 0.2rem; }
+
+    .btn-new-post {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: var(--green-mid);
+        color: #fff;
+        border: none;
+        padding: 0.68rem 1.5rem;
+        border-radius: 12px;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.95rem;
+        font-weight: 700;
+        cursor: pointer;
+        text-decoration: none;
+        transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+        white-space: nowrap;
+        box-shadow: 0 2px 8px rgba(45,122,69,0.25);
+    }
+
+    .btn-new-post:hover {
+        background: var(--green-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(26,77,46,0.3);
+    }
+
+    /* ── FLASH MESSAGES ── */
+    .flash-success {
+        background: #dcfce7;
+        color: #166534;
+        padding: 12px 16px;
+        border-radius: 10px;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--green-mid);
+    }
+    .flash-error {
+        background: #fee2e2;
+        color: #991b1b;
+        padding: 12px 16px;
+        border-radius: 10px;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--red);
+    }
+
+    /* ── CONTROLS ── */
+    .forum-controls {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .search-box {
+        position: relative;
+        width: 100%;
+        max-width: 460px;
+    }
+
+    .search-box svg {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 16px; height: 16px;
+        stroke: #aaa; fill: none;
+        stroke-width: 2; stroke-linecap: round;
+    }
+
+    .search-box input {
+        width: 100%;
+        padding: 0.72rem 1rem 0.72rem 2.6rem;
+        border: 1.5px solid var(--border);
+        border-radius: 12px;
+        background: #fff;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.92rem;
+        color: var(--text-dark);
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .search-box input::placeholder { color: #b0bfb5; }
+    .search-box input:focus {
+        border-color: var(--green-mid);
+        box-shadow: 0 0 0 3px rgba(45,122,69,0.1);
+    }
+
+    /* ── CATEGORY PILLS (Image 2 style) ── */
+    .categories-section {
+        background: #fff;
+        border-radius: 16px;
+        padding: 1.1rem 1.4rem;
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .categories-label {
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: var(--text-mid);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-bottom: 0.75rem;
+    }
+
+    .filter-tabs {
+        display: flex;
+        gap: 0.55rem;
+        flex-wrap: wrap;
+    }
+
+    .filter-tab {
+        padding: 0.42rem 1.05rem;
+        border-radius: 999px;
+        border: none;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.88rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.18s;
+        letter-spacing: 0.01em;
+    }
+
+    /* default (inactive) */
+    .filter-tab { background: #f3f4f6; color: #6b7280; }
+    .filter-tab:hover { opacity: 0.85; transform: translateY(-1px); }
+
+.filter-tab[data-category="All"].active              { background: var(--c-all-bg); color: var(--c-all); }
+.filter-tab[data-category="Organic Farming"].active  { background: var(--c-tips-bg); color: var(--c-tips); }
+.filter-tab[data-category="Soil Management"].active  { background: var(--c-reviews-bg); color: var(--c-reviews); }
+.filter-tab[data-category="Water Management"].active { background: var(--c-market-bg); color: var(--c-market); }
+.filter-tab[data-category="Harvesting"].active       { background: var(--c-help-bg); color: var(--c-help); }
+.filter-tab[data-category="Crop Management"].active  { background: var(--c-stories-bg); color: var(--c-stories); }
+
+.filter-tab[data-category="All"]              { color: var(--c-all); background: var(--c-all-bg); opacity: 0.55; }
+.filter-tab[data-category="Organic Farming"]  { color: var(--c-tips); background: var(--c-tips-bg); opacity: 0.55; }
+.filter-tab[data-category="Soil Management"]  { color: var(--c-reviews); background: var(--c-reviews-bg); opacity: 0.55; }
+.filter-tab[data-category="Water Management"] { color: var(--c-market); background: var(--c-market-bg); opacity: 0.55; }
+.filter-tab[data-category="Harvesting"]       { color: var(--c-help); background: var(--c-help-bg); opacity: 0.55; }
+.filter-tab[data-category="Crop Management"]  { color: var(--c-stories); background: var(--c-stories-bg); opacity: 0.55; }
+
+    .filter-tab.active { opacity: 1 !important; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+
+    /* ── POSTS ── */
+    .posts-list { display: flex; flex-direction: column; gap: 1rem; }
+
+    .post-card {
+        background: #fff;
+        border-radius: 16px;
+        padding: 1.5rem 1.75rem;
+        border: 1.5px solid var(--border);
+        display: flex;
+        gap: 1.1rem;
+        align-items: flex-start;
+        transition: box-shadow 0.2s, transform 0.2s, border-color 0.2s;
+    }
+    .tag-organic  { background: var(--c-tips-bg); color: var(--c-tips); }
+.tag-soil     { background: var(--c-reviews-bg); color: var(--c-reviews); }
+.tag-water    { background: var(--c-market-bg); color: var(--c-market); }
+.tag-harvest  { background: var(--c-help-bg); color: var(--c-help); }
+.tag-crop     { background: var(--c-stories-bg); color: var(--c-stories); }
+
+    .post-card:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-2px);
+        border-color: #c5dfc9;
+    }
+
+    .post-avatar {
+        width: 46px; height: 46px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--green-mid), var(--green-dark));
+        color: #fff;
+        font-size: 0.85rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        letter-spacing: 0.5px;
+        cursor: pointer;
+        box-shadow: 0 2px 6px rgba(45,122,69,0.25);
+    }
+
+    .post-body { flex: 1; min-width: 0; }
+
+    .post-top {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 0.3rem;
+    }
+
+    .post-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        line-height: 1.35;
+        cursor: pointer;
+        transition: color 0.15s;
+    }
+
+    .post-card:hover .post-title { color: var(--green-mid); }
+
+    .post-tag {
+        padding: 0.22rem 0.75rem;
+        border-radius: 999px;
+        font-size: 0.77rem;
+        font-weight: 700;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+
+
+    .post-meta {
+        font-size: 0.82rem;
+        color: #999;
+        margin-bottom: 0.55rem;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .post-meta svg {
+        width: 13px; height: 13px;
+        stroke: currentColor; fill: none;
+        stroke-width: 2; stroke-linecap: round; flex-shrink: 0;
+    }
+
+    .post-excerpt {
+        font-size: 0.9rem;
+        color: var(--text-mid);
+        line-height: 1.65;
+        margin-bottom: 0.9rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        cursor: pointer;
+    }
+
+    .post-footer {
+        display: flex;
+        gap: 0.6rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    /* Like button */
+    .btn-like {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 0.38rem 0.85rem;
+        border-radius: 999px;
+        border: 1.5px solid var(--border);
+        background: #fff;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.83rem; font-weight: 600;
+        color: var(--text-mid);
+        cursor: pointer;
+        transition: all 0.18s;
+        user-select: none;
+    }
+    .btn-like svg {
+        width: 14px; height: 14px;
+        stroke: currentColor; fill: none;
+        stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+        transition: fill 0.18s, stroke 0.18s, transform 0.18s; flex-shrink: 0;
+    }
+    .btn-like:hover { border-color: #ef4444; color: #ef4444; }
+    .btn-like:hover svg { stroke: #ef4444; transform: scale(1.15); }
+    .btn-like.liked { border-color: #ef4444; color: #ef4444; background: #fef2f2; }
+    .btn-like.liked svg { fill: #ef4444; stroke: #ef4444; }
+
+    /* Read more */
+    .btn-read-more {
+        display: inline-flex; align-items: center; gap: 4px;
+        padding: 0.38rem 0.85rem;
+        border-radius: 999px;
+        border: 1.5px solid var(--border);
+        background: #fff;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.83rem; font-weight: 600;
+        color: var(--text-mid);
+        cursor: pointer;
+        transition: all 0.18s;
+    }
+    .btn-read-more:hover { border-color: var(--green-mid); color: var(--green-mid); background: var(--green-pale); }
+
+    /* Delete */
+    .btn-delete {
+        display: inline-flex; align-items: center; gap: 4px;
+        padding: 0.38rem 0.85rem;
+        border-radius: 999px;
+        border: 1.5px solid #fecaca;
+        background: #fff;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.83rem; font-weight: 600;
+        color: #dc2626;
+        cursor: pointer;
+        transition: all 0.18s;
+        margin-left: auto;
+    }
+    .btn-delete:hover { background: #fef2f2; border-color: #ef4444; }
+
+    /* ── MODALS ── */
+    .modal-overlay {
+        display: none;
+        position: fixed; inset: 0; z-index: 200;
+        background: rgba(0,0,0,0.45);
+        backdrop-filter: blur(4px);
+        align-items: center; justify-content: center;
+        padding: 1rem;
+    }
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+        background: #fff;
+        border-radius: 20px;
+        width: 100%; max-width: 620px;
+        padding: 2rem 2.25rem;
+        position: relative;
+        max-height: 90vh;
+        overflow-y: auto;
+        animation: modalIn 0.25s ease;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    }
+
+    @keyframes modalIn {
+        from { opacity: 0; transform: translateY(24px) scale(0.97); }
+        to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .modal-close {
+        position: absolute; top: 1rem; right: 1rem;
+        background: #f0f0f0; border: none; border-radius: 50%;
+        width: 34px; height: 34px;
+        cursor: pointer; font-size: 1rem;
+        display: flex; align-items: center; justify-content: center;
+        color: var(--text-mid); transition: background 0.15s; flex-shrink: 0;
+    }
+    .modal-close:hover { background: #e0e0e0; }
+
+    /* ── VIEW POST MODAL ── */
+    .view-modal-tag {
+        display: inline-block;
+        padding: 0.25rem 0.8rem;
+        border-radius: 999px;
+        font-size: 0.78rem; font-weight: 700;
+        margin-bottom: 0.9rem;
+    }
+
+    .view-modal-title {
+        font-family: 'Fraunces', serif;
+        font-size: 1.5rem; font-weight: 900;
+        color: var(--text-dark);
+        line-height: 1.3; margin-bottom: 0.5rem;
+        letter-spacing: -0.01em;
+    }
+
+    .view-modal-meta {
+        font-size: 0.83rem; color: #999;
+        display: flex; align-items: center; gap: 6px;
+        margin-bottom: 1.25rem; flex-wrap: wrap;
+    }
+    .view-modal-meta svg {
+        width: 13px; height: 13px;
+        stroke: currentColor; fill: none;
+        stroke-width: 2; stroke-linecap: round; flex-shrink: 0;
+    }
+    .view-modal-sep { opacity: 0.4; }
+
+    .view-modal-body {
+        font-size: 0.95rem; color: var(--text-mid);
+        line-height: 1.8; margin-bottom: 1.5rem;
+        white-space: pre-wrap; word-break: break-word;
+    }
+
+    /* ── Comments section inside modal ── */
+    .comments-section {
+        border-top: 1.5px solid var(--border);
+        padding-top: 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .comments-title {
+        font-size: 0.95rem; font-weight: 700;
+        color: var(--text-dark); margin-bottom: 1rem;
+        display: flex; align-items: center; gap: 6px;
+    }
+
+    .comment-item {
+        position: relative;
+        margin-bottom: 0.85rem;
+        padding: 0.85rem 1rem;
+        background: var(--bg);
+        border-radius: 10px;
+        border: 1px solid var(--border);
+    }
+
+    .comment-header {
+        display: flex; justify-content: space-between; align-items: center;
+        margin-bottom: 0.2rem;
+    }
+
+    .comment-author {
+        font-size: 0.84rem; font-weight: 700; color: var(--text-dark);
+    }
+
+    .comment-time {
+        font-size: 0.79rem; color: #aaa; margin-bottom: 0.35rem;
+    }
+
+    .comment-content {
+        font-size: 0.9rem; color: var(--text-mid); line-height: 1.55;
+    }
+
+    .comment-menu-btn {
+        background: none; border: none; cursor: pointer;
+        font-size: 1.1rem; color: #aaa; padding: 2px 6px;
+        border-radius: 6px; transition: background 0.15s, color 0.15s;
+        line-height: 1;
+    }
+    .comment-menu-btn:hover { background: #f0f0f0; color: #555; }
+
+    .comment-menu-dropdown {
+        display: none;
+        position: absolute; right: 8px; top: 36px;
+        background: #fff; border: 1.5px solid var(--border);
+        border-radius: 10px; padding: 4px;
+        min-width: 120px; z-index: 10;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    }
+
+    .comment-menu-dropdown button {
+        width: 100%; padding: 8px 10px;
+        border: none; background: none;
+        text-align: left; cursor: pointer;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.84rem; font-weight: 600;
+        border-radius: 6px;
+        transition: background 0.15s;
+        display: flex; align-items: center; gap: 6px;
+    }
+    .comment-menu-dropdown button:hover { background: #f4f4f4; }
+    .comment-menu-dropdown .btn-menu-delete { color: var(--red); }
+    .comment-menu-dropdown .btn-menu-delete:hover { background: #fef2f2; }
+
+    /* ── Add comment form ── */
+    .add-comment-section {
+        border-top: 1.5px solid var(--border);
+        padding-top: 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .add-comment-label {
+        font-size: 0.88rem; font-weight: 700;
+        color: var(--text-dark); margin-bottom: 0.55rem;
+        display: block;
+    }
+
+    .add-comment-section textarea {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 1.5px solid var(--border);
+        border-radius: 12px;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.9rem; color: var(--text-dark);
+        background: var(--bg);
+        outline: none;
+        resize: vertical; min-height: 90px;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        margin-bottom: 0.75rem;
+    }
+    .add-comment-section textarea:focus {
+        border-color: var(--green-mid);
+        box-shadow: 0 0 0 3px rgba(45,122,69,0.1);
+        background: #fff;
+    }
+
+    .btn-post-comment {
+        width: 100%; padding: 0.82rem;
+        background: var(--green-mid); color: #fff;
+        border: none; border-radius: 12px;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.95rem; font-weight: 700;
+        cursor: pointer; transition: background 0.2s;
+    }
+    .btn-post-comment:hover { background: var(--green-dark); }
+
+    /* ── Post modal footer (like + update) — always at bottom ── */
+    .view-modal-footer {
+        display: flex; align-items: center; gap: 0.75rem;
+        padding-top: 1rem;
+        border-top: 1.5px solid var(--border);
+    }
+
+    .btn-update {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 0.42rem 1rem;
+        border-radius: 999px;
+        border: 1.5px solid var(--blue);
+        background: #eff6ff;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.84rem; font-weight: 600;
+        color: var(--blue); cursor: pointer;
+        transition: all 0.18s;
+    }
+    .btn-update:hover { background: #dbeafe; }
+
+    /* ── New / Edit Post modal forms ── */
+    .modal h2 {
+        font-family: 'Fraunces', serif;
+        font-size: 1.3rem; font-weight: 900;
+        margin-bottom: 1.35rem; color: var(--text-dark);
+    }
+
+    .form-field { margin-bottom: 1.1rem; }
+
+    .form-field label {
+        display: block; font-size: 0.88rem; font-weight: 600;
+        color: var(--text-dark); margin-bottom: 0.4rem;
+    }
+
+    .form-field input,
+    .form-field textarea,
+    .form-field select {
+        width: 100%;
+        padding: 0.72rem 1rem;
+        border: 1.5px solid var(--border);
+        border-radius: 12px;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.9rem; color: var(--text-dark);
+        background: var(--bg); outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-field textarea { resize: vertical; min-height: 120px; }
+    .form-field input:focus,
+    .form-field textarea:focus,
+    .form-field select:focus {
+        border-color: var(--green-mid);
+        box-shadow: 0 0 0 3px rgba(45,122,69,0.1);
+        background: #fff;
+    }
+
+    .btn-submit-post {
+        width: 100%; padding: 0.88rem;
+        background: var(--green-mid); color: #fff;
+        border: none; border-radius: 12px;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 1rem; font-weight: 700;
+        cursor: pointer; transition: background 0.2s;
+    }
+    .btn-submit-post:hover { background: var(--green-dark); }
+
+    /* ── Empty / No results ── */
+    .empty-state, #noResults {
+        text-align: center; padding: 4rem 2rem;
+        color: var(--text-mid);
+    }
+    .empty-state .ei, #noResults .ei { font-size: 3rem; margin-bottom: 1rem; }
+    .empty-state h3, #noResults h3 {
+        font-size: 1.1rem; font-weight: 700;
+        color: var(--text-dark); margin-bottom: 0.4rem;
+    }
+    #noResults { display: none; }
+
+    @media (max-width: 600px) {
+        .forum-page { padding: 1.25rem 1rem; }
+        .post-tag { display: none; }
+        .modal { padding: 1.5rem; }
+    }

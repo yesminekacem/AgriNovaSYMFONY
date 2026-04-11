@@ -4,30 +4,53 @@ namespace App\Entity;
 
 use App\Repository\PostRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: PostRepository::class)]
 #[ORM\Table(name: 'post')]
 class Post
 {
-
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
     private ?int $idPost = null;
 
     #[ORM\Column(type: 'string', length: 200)]
+    #[Assert\NotBlank(message: 'Title is required')]
+    #[Assert\Length(
+        min: 3,
+        minMessage: 'Title must be at least {{ limit }} characters long',
+        max: 200,
+        maxMessage: 'Title cannot be longer than {{ limit }} characters'
+    )]
     private string $title;
 
     #[ORM\Column(type: 'text', length: 65535)]
+    #[Assert\NotBlank(message: 'Content is required')]
+    #[Assert\Length(
+        min: 10,
+        minMessage: 'Content must be at least {{ limit }} characters long'
+    )]
     private string $content;
 
     #[ORM\Column(type: 'string', nullable: true, length: 255)]
     private ?string $imagePath = null;
 
     #[ORM\Column(type: 'string', length: 120)]
+    #[Assert\NotBlank(message: 'Author is required')]
+    #[Assert\Length(
+        min: 2,
+        minMessage: 'Author name must be at least {{ limit }} characters long',
+        max: 120,
+        maxMessage: 'Author name cannot be longer than {{ limit }} characters'
+    )]
     private string $author;
 
     #[ORM\Column(type: 'string', nullable: true, length: 80)]
+    #[Assert\Length(
+        max: 80,
+        maxMessage: 'Category cannot be longer than {{ limit }} characters'
+    )]
     private ?string $category = null;
 
     #[ORM\Column(type: 'string', nullable: true)]
@@ -37,8 +60,9 @@ class Post
     private ?\DateTimeInterface $createdAt = null;
 
     #[ORM\Column(type: 'integer')]
+    #[Assert\NotNull(message: 'Author ID is required')]
+    #[Assert\Positive(message: 'Author ID must be a positive number')]
     private int $authorId;
-
 
     public function getIdPost(): ?int
     {
@@ -132,5 +156,4 @@ class Post
         $this->authorId = $authorId;
         return $this;
     }
-
 }

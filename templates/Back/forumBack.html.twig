@@ -3,649 +3,12 @@
 {% block title %}Community Forum – AGRINOVA{% endblock %}
 {% block page_title %}Forum{% endblock %}
 
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('Back/css/forum.css') }}">
+{% endblock %}
+
 {% block body %}
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:wght@700;900&display=swap');
-
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-        --green-dark:  #1a4d2e;
-        --green-mid:   #2d7a45;
-        --green-light: #e8f5e0;
-        --green-pale:  #f0faf4;
-        --orange:      #f59e0b;
-        --blue:        #3b82f6;
-        --purple:      #8b5cf6;
-        --red:         #ef4444;
-        --bg:          #f4f9f1;
-        --text-dark:   #111;
-        --text-mid:    #555;
-        --border:      #e2ede8;
-        --shadow-sm:   0 1px 3px rgba(0,0,0,0.07);
-        --shadow-md:   0 4px 16px rgba(45,122,69,0.12);
-        --shadow-lg:   0 12px 40px rgba(0,0,0,0.15);
-
-        /* category pill colors */
-        --c-all:       #7c3aed;
-        --c-all-bg:    #ede9fe;
-        --c-tips:      #2d7a45;
-        --c-tips-bg:   #dcfce7;
-        --c-reviews:   #d97706;
-        --c-reviews-bg:#fef3c7;
-        --c-market:    #ea580c;
-        --c-market-bg: #ffedd5;
-        --c-help:      #2563eb;
-        --c-help-bg:   #dbeafe;
-        --c-stories:   #9333ea;
-        --c-stories-bg:#f3e8ff;
-    }
-
-    .forum-page {
-        font-family: 'DM Sans', sans-serif;
-        background: var(--bg);
-        min-height: 100vh;
-        padding: 2.5rem 3rem;
-    }
-
-    /* ── HEADER ── */
-    .forum-header {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        margin-bottom: 2.25rem;
-        flex-wrap: wrap;
-        gap: 1rem;
-    }
-
-    .forum-header-left { display: flex; align-items: center; gap: 0.75rem; }
-    .forum-header-icon { font-size: 1.8rem; line-height: 1; }
-
-    .forum-header-text h1 {
-        font-family: 'Fraunces', serif;
-        font-size: 1.9rem;
-        font-weight: 900;
-        color: var(--text-dark);
-        letter-spacing: -0.02em;
-    }
-
-    .forum-header-text p { color: var(--text-mid); font-size: 0.92rem; margin-top: 0.2rem; }
-
-    .btn-new-post {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        background: var(--green-mid);
-        color: #fff;
-        border: none;
-        padding: 0.68rem 1.5rem;
-        border-radius: 12px;
-        font-family: 'DM Sans', sans-serif;
-        font-size: 0.95rem;
-        font-weight: 700;
-        cursor: pointer;
-        text-decoration: none;
-        transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
-        white-space: nowrap;
-        box-shadow: 0 2px 8px rgba(45,122,69,0.25);
-    }
-
-    .btn-new-post:hover {
-        background: var(--green-dark);
-        transform: translateY(-2px);
-        box-shadow: 0 6px 18px rgba(26,77,46,0.3);
-    }
-
-    /* ── FLASH MESSAGES ── */
-    .flash-success {
-        background: #dcfce7;
-        color: #166534;
-        padding: 12px 16px;
-        border-radius: 10px;
-        margin-bottom: 1rem;
-        border-left: 4px solid var(--green-mid);
-    }
-    .flash-error {
-        background: #fee2e2;
-        color: #991b1b;
-        padding: 12px 16px;
-        border-radius: 10px;
-        margin-bottom: 1rem;
-        border-left: 4px solid var(--red);
-    }
-
-    /* ── CONTROLS ── */
-    .forum-controls {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-        margin-bottom: 2rem;
-    }
-
-    .search-box {
-        position: relative;
-        width: 100%;
-        max-width: 460px;
-    }
-
-    .search-box svg {
-        position: absolute;
-        left: 14px;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 16px; height: 16px;
-        stroke: #aaa; fill: none;
-        stroke-width: 2; stroke-linecap: round;
-    }
-
-    .search-box input {
-        width: 100%;
-        padding: 0.72rem 1rem 0.72rem 2.6rem;
-        border: 1.5px solid var(--border);
-        border-radius: 12px;
-        background: #fff;
-        font-family: 'DM Sans', sans-serif;
-        font-size: 0.92rem;
-        color: var(--text-dark);
-        outline: none;
-        transition: border-color 0.2s, box-shadow 0.2s;
-        box-shadow: var(--shadow-sm);
-    }
-
-    .search-box input::placeholder { color: #b0bfb5; }
-    .search-box input:focus {
-        border-color: var(--green-mid);
-        box-shadow: 0 0 0 3px rgba(45,122,69,0.1);
-    }
-
-    /* ── CATEGORY PILLS (Image 2 style) ── */
-    .categories-section {
-        background: #fff;
-        border-radius: 16px;
-        padding: 1.1rem 1.4rem;
-        border: 1px solid var(--border);
-        box-shadow: var(--shadow-sm);
-    }
-
-    .categories-label {
-        font-size: 0.82rem;
-        font-weight: 700;
-        color: var(--text-mid);
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-        margin-bottom: 0.75rem;
-    }
-
-    .filter-tabs {
-        display: flex;
-        gap: 0.55rem;
-        flex-wrap: wrap;
-    }
-
-    .filter-tab {
-        padding: 0.42rem 1.05rem;
-        border-radius: 999px;
-        border: none;
-        font-family: 'DM Sans', sans-serif;
-        font-size: 0.88rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.18s;
-        letter-spacing: 0.01em;
-    }
-
-    /* default (inactive) */
-    .filter-tab { background: #f3f4f6; color: #6b7280; }
-    .filter-tab:hover { opacity: 0.85; transform: translateY(-1px); }
-
-.filter-tab[data-category="All"].active              { background: var(--c-all-bg); color: var(--c-all); }
-.filter-tab[data-category="Organic Farming"].active  { background: var(--c-tips-bg); color: var(--c-tips); }
-.filter-tab[data-category="Soil Management"].active  { background: var(--c-reviews-bg); color: var(--c-reviews); }
-.filter-tab[data-category="Water Management"].active { background: var(--c-market-bg); color: var(--c-market); }
-.filter-tab[data-category="Harvesting"].active       { background: var(--c-help-bg); color: var(--c-help); }
-.filter-tab[data-category="Crop Management"].active  { background: var(--c-stories-bg); color: var(--c-stories); }
-
-.filter-tab[data-category="All"]              { color: var(--c-all); background: var(--c-all-bg); opacity: 0.55; }
-.filter-tab[data-category="Organic Farming"]  { color: var(--c-tips); background: var(--c-tips-bg); opacity: 0.55; }
-.filter-tab[data-category="Soil Management"]  { color: var(--c-reviews); background: var(--c-reviews-bg); opacity: 0.55; }
-.filter-tab[data-category="Water Management"] { color: var(--c-market); background: var(--c-market-bg); opacity: 0.55; }
-.filter-tab[data-category="Harvesting"]       { color: var(--c-help); background: var(--c-help-bg); opacity: 0.55; }
-.filter-tab[data-category="Crop Management"]  { color: var(--c-stories); background: var(--c-stories-bg); opacity: 0.55; }
-
-    .filter-tab.active { opacity: 1 !important; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-
-    /* ── POSTS ── */
-    .posts-list { display: flex; flex-direction: column; gap: 1rem; }
-
-    .post-card {
-        background: #fff;
-        border-radius: 16px;
-        padding: 1.5rem 1.75rem;
-        border: 1.5px solid var(--border);
-        display: flex;
-        gap: 1.1rem;
-        align-items: flex-start;
-        transition: box-shadow 0.2s, transform 0.2s, border-color 0.2s;
-    }
-    .tag-organic  { background: var(--c-tips-bg); color: var(--c-tips); }
-.tag-soil     { background: var(--c-reviews-bg); color: var(--c-reviews); }
-.tag-water    { background: var(--c-market-bg); color: var(--c-market); }
-.tag-harvest  { background: var(--c-help-bg); color: var(--c-help); }
-.tag-crop     { background: var(--c-stories-bg); color: var(--c-stories); }
-
-    .post-card:hover {
-        box-shadow: var(--shadow-md);
-        transform: translateY(-2px);
-        border-color: #c5dfc9;
-    }
-
-    .post-avatar {
-        width: 46px; height: 46px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, var(--green-mid), var(--green-dark));
-        color: #fff;
-        font-size: 0.85rem;
-        font-weight: 700;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-        letter-spacing: 0.5px;
-        cursor: pointer;
-        box-shadow: 0 2px 6px rgba(45,122,69,0.25);
-    }
-
-    .post-body { flex: 1; min-width: 0; }
-
-    .post-top {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 1rem;
-        margin-bottom: 0.3rem;
-    }
-
-    .post-title {
-        font-size: 1rem;
-        font-weight: 700;
-        color: var(--text-dark);
-        line-height: 1.35;
-        cursor: pointer;
-        transition: color 0.15s;
-    }
-
-    .post-card:hover .post-title { color: var(--green-mid); }
-
-    .post-tag {
-        padding: 0.22rem 0.75rem;
-        border-radius: 999px;
-        font-size: 0.77rem;
-        font-weight: 700;
-        white-space: nowrap;
-        flex-shrink: 0;
-    }
-
-
-
-    .post-meta {
-        font-size: 0.82rem;
-        color: #999;
-        margin-bottom: 0.55rem;
-        display: flex;
-        align-items: center;
-        gap: 4px;
-    }
-
-    .post-meta svg {
-        width: 13px; height: 13px;
-        stroke: currentColor; fill: none;
-        stroke-width: 2; stroke-linecap: round; flex-shrink: 0;
-    }
-
-    .post-excerpt {
-        font-size: 0.9rem;
-        color: var(--text-mid);
-        line-height: 1.65;
-        margin-bottom: 0.9rem;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-        cursor: pointer;
-    }
-
-    .post-footer {
-        display: flex;
-        gap: 0.6rem;
-        align-items: center;
-        flex-wrap: wrap;
-    }
-
-    /* Like button */
-    .btn-like {
-        display: inline-flex; align-items: center; gap: 5px;
-        padding: 0.38rem 0.85rem;
-        border-radius: 999px;
-        border: 1.5px solid var(--border);
-        background: #fff;
-        font-family: 'DM Sans', sans-serif;
-        font-size: 0.83rem; font-weight: 600;
-        color: var(--text-mid);
-        cursor: pointer;
-        transition: all 0.18s;
-        user-select: none;
-    }
-    .btn-like svg {
-        width: 14px; height: 14px;
-        stroke: currentColor; fill: none;
-        stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
-        transition: fill 0.18s, stroke 0.18s, transform 0.18s; flex-shrink: 0;
-    }
-    .btn-like:hover { border-color: #ef4444; color: #ef4444; }
-    .btn-like:hover svg { stroke: #ef4444; transform: scale(1.15); }
-    .btn-like.liked { border-color: #ef4444; color: #ef4444; background: #fef2f2; }
-    .btn-like.liked svg { fill: #ef4444; stroke: #ef4444; }
-
-    /* Read more */
-    .btn-read-more {
-        display: inline-flex; align-items: center; gap: 4px;
-        padding: 0.38rem 0.85rem;
-        border-radius: 999px;
-        border: 1.5px solid var(--border);
-        background: #fff;
-        font-family: 'DM Sans', sans-serif;
-        font-size: 0.83rem; font-weight: 600;
-        color: var(--text-mid);
-        cursor: pointer;
-        transition: all 0.18s;
-    }
-    .btn-read-more:hover { border-color: var(--green-mid); color: var(--green-mid); background: var(--green-pale); }
-
-    /* Delete */
-    .btn-delete {
-        display: inline-flex; align-items: center; gap: 4px;
-        padding: 0.38rem 0.85rem;
-        border-radius: 999px;
-        border: 1.5px solid #fecaca;
-        background: #fff;
-        font-family: 'DM Sans', sans-serif;
-        font-size: 0.83rem; font-weight: 600;
-        color: #dc2626;
-        cursor: pointer;
-        transition: all 0.18s;
-        margin-left: auto;
-    }
-    .btn-delete:hover { background: #fef2f2; border-color: #ef4444; }
-
-    /* ── MODALS ── */
-    .modal-overlay {
-        display: none;
-        position: fixed; inset: 0; z-index: 200;
-        background: rgba(0,0,0,0.45);
-        backdrop-filter: blur(4px);
-        align-items: center; justify-content: center;
-        padding: 1rem;
-    }
-    .modal-overlay.open { display: flex; }
-
-    .modal {
-        background: #fff;
-        border-radius: 20px;
-        width: 100%; max-width: 620px;
-        padding: 2rem 2.25rem;
-        position: relative;
-        max-height: 90vh;
-        overflow-y: auto;
-        animation: modalIn 0.25s ease;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-    }
-
-    @keyframes modalIn {
-        from { opacity: 0; transform: translateY(24px) scale(0.97); }
-        to   { opacity: 1; transform: translateY(0) scale(1); }
-    }
-
-    .modal-close {
-        position: absolute; top: 1rem; right: 1rem;
-        background: #f0f0f0; border: none; border-radius: 50%;
-        width: 34px; height: 34px;
-        cursor: pointer; font-size: 1rem;
-        display: flex; align-items: center; justify-content: center;
-        color: var(--text-mid); transition: background 0.15s; flex-shrink: 0;
-    }
-    .modal-close:hover { background: #e0e0e0; }
-
-    /* ── VIEW POST MODAL ── */
-    .view-modal-tag {
-        display: inline-block;
-        padding: 0.25rem 0.8rem;
-        border-radius: 999px;
-        font-size: 0.78rem; font-weight: 700;
-        margin-bottom: 0.9rem;
-    }
-
-    .view-modal-title {
-        font-family: 'Fraunces', serif;
-        font-size: 1.5rem; font-weight: 900;
-        color: var(--text-dark);
-        line-height: 1.3; margin-bottom: 0.5rem;
-        letter-spacing: -0.01em;
-    }
-
-    .view-modal-meta {
-        font-size: 0.83rem; color: #999;
-        display: flex; align-items: center; gap: 6px;
-        margin-bottom: 1.25rem; flex-wrap: wrap;
-    }
-    .view-modal-meta svg {
-        width: 13px; height: 13px;
-        stroke: currentColor; fill: none;
-        stroke-width: 2; stroke-linecap: round; flex-shrink: 0;
-    }
-    .view-modal-sep { opacity: 0.4; }
-
-    .view-modal-body {
-        font-size: 0.95rem; color: var(--text-mid);
-        line-height: 1.8; margin-bottom: 1.5rem;
-        white-space: pre-wrap; word-break: break-word;
-    }
-
-    /* ── Comments section inside modal ── */
-    .comments-section {
-        border-top: 1.5px solid var(--border);
-        padding-top: 1.25rem;
-        margin-bottom: 1.5rem;
-    }
-
-    .comments-title {
-        font-size: 0.95rem; font-weight: 700;
-        color: var(--text-dark); margin-bottom: 1rem;
-        display: flex; align-items: center; gap: 6px;
-    }
-
-    .comment-item {
-        position: relative;
-        margin-bottom: 0.85rem;
-        padding: 0.85rem 1rem;
-        background: var(--bg);
-        border-radius: 10px;
-        border: 1px solid var(--border);
-    }
-
-    .comment-header {
-        display: flex; justify-content: space-between; align-items: center;
-        margin-bottom: 0.2rem;
-    }
-
-    .comment-author {
-        font-size: 0.84rem; font-weight: 700; color: var(--text-dark);
-    }
-
-    .comment-time {
-        font-size: 0.79rem; color: #aaa; margin-bottom: 0.35rem;
-    }
-
-    .comment-content {
-        font-size: 0.9rem; color: var(--text-mid); line-height: 1.55;
-    }
-
-    .comment-menu-btn {
-        background: none; border: none; cursor: pointer;
-        font-size: 1.1rem; color: #aaa; padding: 2px 6px;
-        border-radius: 6px; transition: background 0.15s, color 0.15s;
-        line-height: 1;
-    }
-    .comment-menu-btn:hover { background: #f0f0f0; color: #555; }
-
-    .comment-menu-dropdown {
-        display: none;
-        position: absolute; right: 8px; top: 36px;
-        background: #fff; border: 1.5px solid var(--border);
-        border-radius: 10px; padding: 4px;
-        min-width: 120px; z-index: 10;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-    }
-
-    .comment-menu-dropdown button {
-        width: 100%; padding: 8px 10px;
-        border: none; background: none;
-        text-align: left; cursor: pointer;
-        font-family: 'DM Sans', sans-serif;
-        font-size: 0.84rem; font-weight: 600;
-        border-radius: 6px;
-        transition: background 0.15s;
-        display: flex; align-items: center; gap: 6px;
-    }
-    .comment-menu-dropdown button:hover { background: #f4f4f4; }
-    .comment-menu-dropdown .btn-menu-delete { color: var(--red); }
-    .comment-menu-dropdown .btn-menu-delete:hover { background: #fef2f2; }
-
-    /* ── Add comment form ── */
-    .add-comment-section {
-        border-top: 1.5px solid var(--border);
-        padding-top: 1.25rem;
-        margin-bottom: 1.5rem;
-    }
-
-    .add-comment-label {
-        font-size: 0.88rem; font-weight: 700;
-        color: var(--text-dark); margin-bottom: 0.55rem;
-        display: block;
-    }
-
-    .add-comment-section textarea {
-        width: 100%;
-        padding: 0.75rem 1rem;
-        border: 1.5px solid var(--border);
-        border-radius: 12px;
-        font-family: 'DM Sans', sans-serif;
-        font-size: 0.9rem; color: var(--text-dark);
-        background: var(--bg);
-        outline: none;
-        resize: vertical; min-height: 90px;
-        transition: border-color 0.2s, box-shadow 0.2s;
-        margin-bottom: 0.75rem;
-    }
-    .add-comment-section textarea:focus {
-        border-color: var(--green-mid);
-        box-shadow: 0 0 0 3px rgba(45,122,69,0.1);
-        background: #fff;
-    }
-
-    .btn-post-comment {
-        width: 100%; padding: 0.82rem;
-        background: var(--green-mid); color: #fff;
-        border: none; border-radius: 12px;
-        font-family: 'DM Sans', sans-serif;
-        font-size: 0.95rem; font-weight: 700;
-        cursor: pointer; transition: background 0.2s;
-    }
-    .btn-post-comment:hover { background: var(--green-dark); }
-
-    /* ── Post modal footer (like + update) — always at bottom ── */
-    .view-modal-footer {
-        display: flex; align-items: center; gap: 0.75rem;
-        padding-top: 1rem;
-        border-top: 1.5px solid var(--border);
-    }
-
-    .btn-update {
-        display: inline-flex; align-items: center; gap: 5px;
-        padding: 0.42rem 1rem;
-        border-radius: 999px;
-        border: 1.5px solid var(--blue);
-        background: #eff6ff;
-        font-family: 'DM Sans', sans-serif;
-        font-size: 0.84rem; font-weight: 600;
-        color: var(--blue); cursor: pointer;
-        transition: all 0.18s;
-    }
-    .btn-update:hover { background: #dbeafe; }
-
-    /* ── New / Edit Post modal forms ── */
-    .modal h2 {
-        font-family: 'Fraunces', serif;
-        font-size: 1.3rem; font-weight: 900;
-        margin-bottom: 1.35rem; color: var(--text-dark);
-    }
-
-    .form-field { margin-bottom: 1.1rem; }
-
-    .form-field label {
-        display: block; font-size: 0.88rem; font-weight: 600;
-        color: var(--text-dark); margin-bottom: 0.4rem;
-    }
-
-    .form-field input,
-    .form-field textarea,
-    .form-field select {
-        width: 100%;
-        padding: 0.72rem 1rem;
-        border: 1.5px solid var(--border);
-        border-radius: 12px;
-        font-family: 'DM Sans', sans-serif;
-        font-size: 0.9rem; color: var(--text-dark);
-        background: var(--bg); outline: none;
-        transition: border-color 0.2s, box-shadow 0.2s;
-    }
-    .form-field textarea { resize: vertical; min-height: 120px; }
-    .form-field input:focus,
-    .form-field textarea:focus,
-    .form-field select:focus {
-        border-color: var(--green-mid);
-        box-shadow: 0 0 0 3px rgba(45,122,69,0.1);
-        background: #fff;
-    }
-
-    .btn-submit-post {
-        width: 100%; padding: 0.88rem;
-        background: var(--green-mid); color: #fff;
-        border: none; border-radius: 12px;
-        font-family: 'DM Sans', sans-serif;
-        font-size: 1rem; font-weight: 700;
-        cursor: pointer; transition: background 0.2s;
-    }
-    .btn-submit-post:hover { background: var(--green-dark); }
-
-    /* ── Empty / No results ── */
-    .empty-state, #noResults {
-        text-align: center; padding: 4rem 2rem;
-        color: var(--text-mid);
-    }
-    .empty-state .ei, #noResults .ei { font-size: 3rem; margin-bottom: 1rem; }
-    .empty-state h3, #noResults h3 {
-        font-size: 1.1rem; font-weight: 700;
-        color: var(--text-dark); margin-bottom: 0.4rem;
-    }
-    #noResults { display: none; }
-
-    @media (max-width: 600px) {
-        .forum-page { padding: 1.25rem 1rem; }
-        .post-tag { display: none; }
-        .modal { padding: 1.5rem; }
-    }
-</style>
-
 <div class="forum-page">
 
     <!-- Header -->
@@ -657,18 +20,18 @@
                 <p>Share knowledge and connect with fellow farmers</p>
             </div>
         </div>
-        <button class="btn-new-post" onclick="openNewPost()">
+        <button type="button" class="btn-new-post" onclick="openNewPost()">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             New Post
         </button>
     </div>
 
-    <!-- Flash messages -->
+    {# ── Flash messages: hidden so JS can read & display them in the right place ── #}
     {% for message in app.flashes('success') %}
-        <div class="flash-success">{{ message }}</div>
+        <div class="flash-success" style="display:none;">{{ message }}</div>
     {% endfor %}
     {% for message in app.flashes('error') %}
-        <div class="flash-error">{{ message }}</div>
+        <div class="flash-error" style="display:none;">{{ message }}</div>
     {% endfor %}
 
     <!-- Controls -->
@@ -678,29 +41,30 @@
             <input type="text" id="searchInput" placeholder="Search discussions..." oninput="applyFilters()">
         </div>
 
-        <!-- Category pills (styled like image 2) -->
+        <!-- Category pills -->
         <div class="categories-section">
             <div class="categories-label">Popular Categories</div>
-          <div class="filter-tabs" id="filterTabs">
-    <button class="filter-tab active" data-category="All" onclick="setFilter('All', this)">All</button>
-    <button class="filter-tab" data-category="Organic Farming" onclick="setFilter('Organic Farming', this)">Organic Farming</button>
-    <button class="filter-tab" data-category="Soil Management" onclick="setFilter('Soil Management', this)">Soil Management</button>
-    <button class="filter-tab" data-category="Water Management" onclick="setFilter('Water Management', this)">Water Management</button>
-    <button class="filter-tab" data-category="Harvesting" onclick="setFilter('Harvesting', this)">Harvesting</button>
-    <button class="filter-tab" data-category="Crop Management" onclick="setFilter('Crop Management', this)">Crop Management</button>
-</div>
+            <div class="filter-tabs" id="filterTabs">
+                <button type="button" class="filter-tab active" data-category="All" onclick="setFilter('All', this)">All</button>
+                <button type="button" class="filter-tab" data-category="Organic Farming" onclick="setFilter('Organic Farming', this)">Organic Farming</button>
+                <button type="button" class="filter-tab" data-category="Soil Management" onclick="setFilter('Soil Management', this)">Soil Management</button>
+                <button type="button" class="filter-tab" data-category="Water Management" onclick="setFilter('Water Management', this)">Water Management</button>
+                <button type="button" class="filter-tab" data-category="Harvesting" onclick="setFilter('Harvesting', this)">Harvesting</button>
+                <button type="button" class="filter-tab" data-category="Crop Management" onclick="setFilter('Crop Management', this)">Crop Management</button>
+            </div>
         </div>
     </div>
 
     <!-- Posts list -->
     <div class="posts-list" id="postsList">
-    {% set categoryClass = {
-    'Organic Farming': 'tag-organic',
-    'Soil Management': 'tag-soil',
-    'Water Management': 'tag-water',
-    'Harvesting': 'tag-harvest',
-    'Crop Management': 'tag-crop'
-} %}
+        {% set categoryClass = {
+            'Organic Farming': 'tag-organic',
+            'Soil Management': 'tag-soil',
+            'Water Management': 'tag-water',
+            'Harvesting': 'tag-harvest',
+            'Crop Management': 'tag-crop'
+        } %}
+
         {% if posts is empty %}
             <div class="empty-state">
                 <div class="ei">🌱</div>
@@ -722,47 +86,52 @@
                         <div class="post-title" onclick="openViewModal({{ post.idPost }})">
                             {{ post.title }}
                         </div>
-                       
 
-{% set cat = post.category|default('Organic Farming') %}
-
-<span class="post-tag {{ categoryClass[cat] ?? 'tag-organic' }}">
-    {{ post.category ?? 'Organic Farming' }}
-</span>
+                        {% set cat = post.category|default('Organic Farming') %}
+                        <span class="post-tag {{ categoryClass[cat] ?? 'tag-organic' }}">
+                            {{ post.category ?? 'Organic Farming' }}
+                        </span>
                     </div>
 
                     <div class="post-meta">
                         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                         {{ post.author }} · {{ post.createdAt ? post.createdAt|time_ago : 'No date' }}
                     </div>
+
                     {% if post.imagePath %}
-    <img src="{{ asset('Front/images/Forum/' ~ post.imagePath) }}"
-         style="width:100%; max-height:160px; object-fit:cover; border-radius:10px; margin-bottom:10px;">
-{% endif %}
+                        <img src="{{ asset('Front/images/Forum/' ~ post.imagePath) }}"
+                             style="width:100%; max-height:160px; object-fit:cover; border-radius:10px; margin-bottom:10px;">
+                    {% endif %}
 
                     <div class="post-excerpt" onclick="openViewModal({{ post.idPost }})">
                         {{ post.content|length > 180 ? post.content|slice(0, 180) ~ '...' : post.content }}
                     </div>
 
                     <div class="post-footer">
-                        <button class="btn-like" onclick="toggleLike(this, event)" data-count="0">
+                        <button type="button" class="btn-like" onclick="toggleLike(this, event)" data-count="0">
                             <svg viewBox="0 0 24 24">
                                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
                             </svg>
                             <span class="like-count">0</span>
                         </button>
 
-                        <button class="btn-read-more" onclick="openViewModal({{ post.idPost }})">
+                        <button type="button" class="btn-read-more" onclick="openViewModal({{ post.idPost }})">
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                             Read
                         </button>
 
                         <form method="post"
-                              action="{{ path('app_forum_delete', { id: post.idPost }) }}"
+                              action="{{ path('app_forum_back_delete', { id: post.idPost }) }}"
                               onsubmit="return confirm('Delete this post?');"
                               style="margin-left:auto;">
                             <button type="submit" class="btn-delete">
-                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="3 6 5 6 21 6"/>
+                                    <path d="M19 6l-1 14H6L5 6"/>
+                                    <path d="M10 11v6"/>
+                                    <path d="M14 11v6"/>
+                                    <path d="M9 6V4h6v2"/>
+                                </svg>
                                 Delete
                             </button>
                         </form>
@@ -779,10 +148,11 @@
         <h3>No posts found</h3>
         <p>Try a different search term or category.</p>
     </div>
+
     <!-- ── VIEW POST MODAL ── -->
     <div class="modal-overlay" id="viewModal">
         <div class="modal">
-            <button class="modal-close" onclick="closeModal('viewModal')">✕</button>
+            <button type="button" class="modal-close" onclick="closeModal('viewModal')">✕</button>
             <div id="viewModalContent"></div>
         </div>
     </div>
@@ -790,10 +160,9 @@
     <!-- ── NEW POST MODAL ── -->
     <div class="modal-overlay" id="newPostModal">
         <div class="modal">
-            <button class="modal-close" onclick="closeModal('newPostModal')">✕</button>
+            <button type="button" class="modal-close" onclick="closeModal('newPostModal')">✕</button>
             <h2>✏️ Create New Post</h2>
-            <form method="post" action="{{ path('app_forum_new') }}" enctype="multipart/form-data">
-
+            <form method="post" action="{{ path('app_forum_back_new') }}" enctype="multipart/form-data" novalidate>
                 <div class="form-field">
                     <label>Title</label>
                     <input type="text" name="title" placeholder="What's your question or topic?" required>
@@ -801,7 +170,7 @@
                 <div class="form-field">
                     <label>Category</label>
                     <select name="category" required>
-                       <option value="Organic Farming">Organic Farming</option>
+                        <option value="Organic Farming">Organic Farming</option>
                         <option value="Soil Management">Soil Management</option>
                         <option value="Water Management">Water Management</option>
                         <option value="Harvesting">Harvesting</option>
@@ -813,9 +182,9 @@
                     <textarea name="content" placeholder="Share your knowledge, question, or experience..." required></textarea>
                 </div>
                 <div class="form-field">
-    <label>Image (optional)</label>
-    <input type="file" name="image" accept="image/*">
-</div>
+                    <label>Image (optional)</label>
+                    <input type="file" name="image" accept="image/*">
+                </div>
                 <button type="submit" class="btn-submit-post">Publish Post</button>
             </form>
         </div>
@@ -824,9 +193,9 @@
     <!-- ── EDIT POST MODAL ── -->
     <div class="modal-overlay" id="editPostModal">
         <div class="modal">
-            <button class="modal-close" onclick="closeModal('editPostModal')">✕</button>
+            <button type="button" class="modal-close" onclick="closeModal('editPostModal')">✕</button>
             <h2>✏️ Edit Post</h2>
-            <form method="post" id="editPostForm">
+            <form method="post" id="editPostForm" novalidate>
                 <div class="form-field">
                     <label>Title</label>
                     <input type="text" name="title" id="editTitle" required>
@@ -834,11 +203,11 @@
                 <div class="form-field">
                     <label>Category</label>
                     <select name="category" id="editCategory" required>
-                       <option value="Organic Farming">Organic Farming</option>
-<option value="Soil Management">Soil Management</option>
-<option value="Water Management">Water Management</option>
-<option value="Harvesting">Harvesting</option>
-<option value="Crop Management">Crop Management</option>
+                        <option value="Organic Farming">Organic Farming</option>
+                        <option value="Soil Management">Soil Management</option>
+                        <option value="Water Management">Water Management</option>
+                        <option value="Harvesting">Harvesting</option>
+                        <option value="Crop Management">Crop Management</option>
                     </select>
                 </div>
                 <div class="form-field">
@@ -851,263 +220,16 @@
     </div>
 
 </div>
+{% endblock %}
 
-{# ── Embed post data for JS modal ── #}
-<script>
-const POSTS_DATA = {
-    {% if posts is not empty %}
-    {% for post in posts %}
-    {{ post.idPost }}: {
-        id:        {{ post.idPost }},
-        title:     {{ post.title|json_encode|raw }},
-        author:    {{ post.author|json_encode|raw }},
-        category:  {{ (post.category ?? 'Organic Farming')|json_encode|raw }},
-        content:   {{ post.content|json_encode|raw }},
-        createdAt: {{ (post.createdAt ? post.createdAt|time_ago : 'No date')|json_encode|raw }},
-        image: {{ post.imagePath ? ('Front/images/Forum/' ~ post.imagePath)|json_encode|raw : 'null' }},
-        comments: [
-            {% for comment in commentsByPost[post.idPost] ?? [] %}
-            {
-                id: {{ comment.idComment }},
-                author: {{ comment.author|json_encode|raw }},
-                content: {{ comment.content|json_encode|raw }},
-                createdAt: {{ (comment.createdAt ? comment.createdAt|time_ago : 'now')|json_encode|raw }}
-            }{% if not loop.last %},{% endif %}
-            {% endfor %}
-        ]
-    }{% if not loop.last %},{% endif %}
-    {% endfor %}
-    {% endif %}
-};
+{% block javascripts %}
+    {{ parent() }}
 
-/* ── Active category filter ── */
-let activeCategory = 'All';
+    {# ── IMPORTANT: define JS data variables BEFORE forum.js loads ── #}
+    <script>
+        const POSTS_DATA = {{ postsData|json_encode|raw }};
+        const CURRENT_USER_ID = {{ app.user ? app.user.id : 'null' }};
+    </script>
 
-function setFilter(category, btn) {
-    activeCategory = category;
-    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
-    btn.classList.add('active');
-    applyFilters();
-}
-
-function applyFilters() {
-    const query = document.getElementById('searchInput').value.toLowerCase().trim();
-    const cards = document.querySelectorAll('#postsList .post-card');
-    let visible = 0;
-
-    cards.forEach(card => {
-        const cardCat = (card.dataset.category || '').trim().toLowerCase();
-        const activeCat = (activeCategory || 'All').trim().toLowerCase();
-
-        const title = (card.querySelector('.post-title')?.textContent || '').toLowerCase();
-        const excerpt = (card.querySelector('.post-excerpt')?.textContent || '').toLowerCase();
-        const author = (card.querySelector('.post-meta')?.textContent || '').toLowerCase();
-
-        const matchCat = (activeCat === 'all') || (cardCat === activeCat);
-        const matchSearch = !query || title.includes(query) || excerpt.includes(query) || author.includes(query);
-
-        if (matchCat && matchSearch) {
-            card.style.display = '';
-            visible++;
-        } else {
-            card.style.display = 'none';
-        }
-    });
-
-    document.getElementById('noResults').style.display =
-        visible === 0 && cards.length > 0 ? 'block' : 'none';
-}
-
-
-/* ── Like toggle ── */
-function toggleLike(btn, e) {
-    e.stopPropagation();
-    const countSpan = btn.querySelector('.like-count');
-    let count = parseInt(btn.dataset.count, 10) || 0;
-
-    if (btn.classList.contains('liked')) {
-        btn.classList.remove('liked');
-        count = Math.max(0, count - 1);
-    } else {
-        btn.classList.add('liked');
-        count++;
-        btn.querySelector('svg').animate(
-            [{ transform: 'scale(1)' }, { transform: 'scale(1.4)' }, { transform: 'scale(1)' }],
-            { duration: 300, easing: 'ease-out' }
-        );
-    }
-    btn.dataset.count = count;
-    countSpan.textContent = count;
-}
-
-/* ── View post modal ── */
-function openViewModal(id) {
-    const post = POSTS_DATA[id];
-    if (!post) return;
-
-    let commentsHtml = '';
-    if (post.comments.length > 0) {
-        let items = '';
-        post.comments.forEach((c, index) => {
-            items += `
-            <div class="comment-item">
-                <div class="comment-header">
-                    <span class="comment-author">${escapeHtml(c.author)}</span>
-                    <div style="position:relative;">
-                        <button class="comment-menu-btn"
-                                onclick="toggleCommentMenu(${id}, ${index})">⋯</button>
-                        <div class="comment-menu-dropdown" id="menu-${id}-${index}">
-                            <button onclick="editComment(${id}, ${index})">✏️ Edit</button>
-                            <button class="btn-menu-delete" onclick="deleteComment(${id}, ${index})">🗑 Delete</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="comment-time">${escapeHtml(c.createdAt)}</div>
-                <div class="comment-content">${escapeHtml(c.content)}</div>
-            </div>`;
-        });
-
-        commentsHtml = `
-        <div class="comments-section">
-            <div class="comments-title">💬 Comments (${post.comments.length})</div>
-            ${items}
-        </div>`;
-    } else {
-        commentsHtml = `
-        <div class="comments-section">
-            <div class="comments-title">💬 Comments</div>
-            <p style="color:#aaa;font-size:0.9rem;">No comments yet. Be the first!</p>
-        </div>`;
-    }
-
-    const tagClassMap = {
-        'Organic Farming': 'tag-organic',
-        'Soil Management': 'tag-soil',
-        'Water Management': 'tag-water',
-        'Harvesting': 'tag-harvest',
-        'Crop Management': 'tag-crop'
-    };
-
-    const tagClass = tagClassMap[post.category] || 'tag-organic';
-
-    document.getElementById('viewModalContent').innerHTML = `
-        <span class="view-modal-tag ${tagClass}">${escapeHtml(post.category)}</span>
-        <div class="view-modal-title">${escapeHtml(post.title)}</div>
-
-        <div class="view-modal-meta">
-            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            <span>${escapeHtml(post.author)}</span>
-            <span class="view-modal-sep">·</span>
-            <span>${escapeHtml(post.createdAt)}</span>
-        </div>
-
-        ${post.image ? `<img src="/${post.image}" style="width:100%; max-height:250px; object-fit:cover; border-radius:12px; margin-bottom:1rem;">` : ''}
-
-        <div class="view-modal-body">${escapeHtml(post.content)}</div>
-
-        <div class="view-modal-footer">
-            <button class="btn-like" onclick="toggleLike(this, event)" data-count="0">
-                <svg viewBox="0 0 24 24">
-                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                </svg>
-                <span class="like-count">0</span>
-            </button>
-
-            <button class="btn-update" onclick="openEditModal(${post.id})">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 20h9"/>
-                    <path d="M16.5 3.5a2.12 2.12 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>
-                </svg>
-                Update
-            </button>
-        </div>
-
-        ${commentsHtml}
-
-        <div class="add-comment-section">
-            <label class="add-comment-label">Add a comment</label>
-            <form method="post" action="/forum/comment/${post.id}">
-                <textarea name="content" placeholder="Write your comment..." required></textarea>
-                <button type="submit" class="btn-post-comment">Post Comment</button>
-            </form>
-        </div>
-    `;
-
-    document.getElementById('viewModal').classList.add('open');
-}
-
-  
-/* ── Helpers ── */
-function escapeHtml(str) {
-    return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
-}
-
-function openNewPost()       { document.getElementById('newPostModal').classList.add('open'); }
-function closeModal(id)      { document.getElementById(id).classList.remove('open'); }
-
-function openEditModal(id) {
-    const post = POSTS_DATA[id];
-    if (!post) return;
-    document.getElementById('editTitle').value    = post.title;
-    document.getElementById('editCategory').value = post.category;
-    document.getElementById('editContent').value  = post.content;
-    document.getElementById('editPostForm').action = `/forum/update/${id}`;
-    closeModal('viewModal');
-    document.getElementById('editPostModal').classList.add('open');
-}
-
-function toggleCommentMenu(postId, index) {
-    const menu = document.getElementById(`menu-${postId}-${index}`);
-    if (!menu) return;
-    menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
-}
-
-function deleteComment(postId, index) {
-    const comment = POSTS_DATA[postId].comments[index];
-    if (!confirm("Delete this comment?")) return;
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = `/forum/comment/delete/${comment.id}`;
-    document.body.appendChild(form);
-    form.submit();
-}
-
-function editComment(postId, index) {
-    const comment = POSTS_DATA[postId].comments[index];
-    const newContent = prompt("Edit your comment:", comment.content);
-    if (!newContent) return;
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = `/forum/comment/update/${comment.id}`;
-    const input = document.createElement('input');
-    input.name = 'content'; input.value = newContent;
-    form.appendChild(input);
-    document.body.appendChild(form);
-    form.submit();
-}
-
-/* Close on overlay click */
-document.querySelectorAll('.modal-overlay').forEach(overlay => {
-    overlay.addEventListener('click', e => {
-        if (e.target === overlay) overlay.classList.remove('open');
-    });
-});
-
-/* Close on ESC */
-document.addEventListener('keydown', e => {
-    if (e.key === 'Escape')
-        document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
-});
-
-/* Close comment dropdowns on outside click */
-document.addEventListener('click', function(e) {
-    if (!e.target.classList.contains('comment-menu-btn')) {
-        document.querySelectorAll('.comment-menu-dropdown').forEach(m => m.style.display = 'none');
-    }
-});
-</script>
+    <script src="{{ asset('Back/js/forum.js') }}"></script>
 {% endblock %}

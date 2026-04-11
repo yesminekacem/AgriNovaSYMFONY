@@ -383,28 +383,25 @@
                 </div>
             {% endfor %}
         </div>
+<div class="panel">
+    <div class="panel-title">
+        <span class="orange-icon">📊</span>
+        <span>Forum Category Statistics</span>
+    </div>
 
-        <div class="panel">
-            <div class="panel-title">
-                <span class="orange-icon">$</span>
-                <span>Recent Transactions</span>
+    {% for category in categoryStats %}
+        <div class="yield-item">
+            <div class="yield-row">
+                <span class="yield-name">{{ category.name }}</span>
+                <span class="yield-value">{{ category.count }} posts</span>
             </div>
-
-            <div class="transaction-list">
-                {% for transaction in transactions %}
-                    <div class="transaction-item">
-                        <div>
-                            <div class="transaction-name">{{ transaction.customer }}</div>
-                            <div class="transaction-desc">{{ transaction.product }}</div>
-                        </div>
-                        <div>
-                            <div class="transaction-price">{{ transaction.amount }}</div>
-                            <div class="transaction-time">{{ transaction.time }}</div>
-                        </div>
-                    </div>
-                {% endfor %}
+            <div class="progress-track">
+                <div class="progress-fill {{ category.color }}"
+                     style="width: {{ totalPosts > 0 ? (category.count / totalPosts * 100) : 0 }}%;"></div>
             </div>
         </div>
+    {% endfor %}
+</div>
     </section>
 
     <section class="summary-grid">
