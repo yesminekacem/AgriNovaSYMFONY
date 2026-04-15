@@ -237,17 +237,6 @@ body {
     border: 2px solid var(--green-light);
 }
 
-/* Logout button (red) */
-.btn-logout {
-    background: #ef4444; /* red-500 */
-    color: #fff;
-    padding: 8px 12px;
-    border-radius: 8px;
-    border: 1px solid rgba(0,0,0,0.06);
-    cursor: pointer;
-}
-.btn-logout:hover { background: #dc2626; }
-
 /* ───────── PAGE CONTENT ───────── */
 .page-content {
     flex: 1;

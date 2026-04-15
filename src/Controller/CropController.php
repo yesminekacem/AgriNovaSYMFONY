@@ -124,11 +124,30 @@ final class CropController extends AbstractController
 
         return $this->redirectToRoute('app_crop_table', [], Response::HTTP_SEE_OTHER);
     }
-    #[Route('/table', name: 'app_crop_table')]
-public function table(CropRepository $cropRepository): Response
+
+
+#[Route('/table', name: 'app_crop_table')]
+public function table(Request $request, CropRepository $cropRepository): Response
 {
+    $search = $request->query->get('search');
+    $status = $request->query->get('status');
+
+    $query = $cropRepository->createQueryBuilder('c');
+
+    // 🔍 Search
+    if ($search) {
+        $query->andWhere('c.name LIKE :search OR c.type LIKE :search OR c.variety LIKE :search')
+              ->setParameter('search', '%' . $search . '%');
+    }
+
+    // 🎯 Filter by status
+    if ($status && $status !== 'All') {
+        $query->andWhere('c.status = :status')
+              ->setParameter('status', strtoupper($status));
+    }
+
     return $this->render('Back/crop/tablecrop.html.twig', [
-        'crops' => $cropRepository->findAll(),
+        'crops' => $query->getQuery()->getResult(),
     ]);
 }
 }

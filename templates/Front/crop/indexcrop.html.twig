@@ -42,6 +42,11 @@
         <div class="crop-count" id="cropCount">
             {{ crops|length }} crop{% if crops|length != 1 %}s{% endif %} registered
         </div>
+        <div class="diagnose-wrap" style="margin-left:12px;">
+            <button id="diagnoseBtn" class="btn btn-primary">Diagnose Photo</button>
+            <input type="file" id="diagnoseInput" accept="image/*" style="display:none">
+            <div id="diagnoseResult" class="diagnose-result" style="display:none; margin-top:8px;"></div>
+        </div>
     </div>
 
     <!-- Crops Grid -->
@@ -184,4 +189,5 @@
 {% block javascripts %}
     {{ parent() }}
     <script src="{{ asset('Front/js/showcrop.js') }}"></script>
+    <script src="{{ asset('Front/js/diagnose.js') }}"></script>
 {% endblock %}
