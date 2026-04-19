@@ -100,14 +100,7 @@
             {% elseif crop.status == 'failed' %}{% set statusClass = 'status-failed' %}
             {% endif %}
 
-            {% set progressPct = 0 %}
-            {% if crop.growthStage == 'germination' %}{% set progressPct = 15 %}
-            {% elseif crop.growthStage == 'vegetative' %}{% set progressPct = 40 %}
-            {% elseif crop.growthStage == 'flowering' %}{% set progressPct = 65 %}
-            {% elseif crop.growthStage == 'fruiting' %}{% set progressPct = 80 %}
-            {% elseif crop.growthStage == 'maturation' %}{% set progressPct = 90 %}
-            {% elseif crop.growthStage == 'harvesting' %}{% set progressPct = 100 %}
-            {% endif %}
+            {% set progressPct = crop.growthProgressPercent %}
 
             <article class="crop-card"
                      data-id="{{ crop.cropId }}"
