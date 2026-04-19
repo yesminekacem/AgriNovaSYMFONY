@@ -32,6 +32,8 @@ services:
         public: true
         autowire: true
         autoconfigure: true
-
+    App\Service\DiagnosisService:
+        arguments:
+            $apiUrl: '%env(string:DIAGNOSIS_API_URL)%'
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

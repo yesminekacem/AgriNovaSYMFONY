@@ -1,0 +1,15 @@
+.ccb-button{position:fixed;right:20px;bottom:20px;background:#1D9E75;color:#fff;border:none;border-radius:999px;padding:12px 14px;font-weight:600;cursor:pointer;box-shadow:0 6px 18px rgba(13,55,45,0.18);z-index:2200}
+.ccb-panel{position:fixed;right:20px;bottom:80px;width:360px;max-width:92vw;max-height:64vh;background:#fff;border-radius:12px;box-shadow:0 20px 60px rgba(2,6,23,0.3);display:flex;flex-direction:column;overflow:hidden;z-index:2200}
+.ccb-header{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid #eef2f6;background:linear-gradient(180deg,#fff,#fcffff)}
+.ccb-close{background:transparent;border:none;font-size:16px;cursor:pointer;color:#6b7280}
+.ccb-convo{padding:12px;overflow:auto;flex:1;display:flex;flex-direction:column;gap:10px;background:#f8fafc}
+.ccb-msg{max-width:86%;display:flex}
+.ccb-msg-inner{padding:8px 12px;border-radius:10px;font-size:14px;line-height:1.38}
+.ccb-user{justify-content:flex-end}
+.ccb-user .ccb-msg-inner{background:#dcfce7;color:#052e1f;border-bottom-right-radius:6px}
+.ccb-bot{justify-content:flex-start}
+.ccb-bot .ccb-msg-inner{background:#fff;color:#0f172a;border:1px solid #eef2f6}
+.ccb-form{display:flex;padding:10px;border-top:1px solid #eef2f6;background:#fff}
+.ccb-input{flex:1;padding:10px 12px;border-radius:10px;border:1px solid #e6eef2;font-size:14px;margin-right:8px}
+.ccb-send{background:#1D9E75;color:#fff;border:none;padding:8px 12px;border-radius:8px;cursor:pointer;font-weight:600}
+@media (max-width:520px){.ccb-panel{right:8px;left:8px;bottom:72px;width:auto;max-height:70vh}}

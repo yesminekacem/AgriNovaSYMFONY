@@ -116,5 +116,105 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* ── Initial apply (in case of browser back-nav) ──────── */
   applyFilters();
+  
 
 });
+let currentCropSaveUrl = '';
+
+async function generateTasksForCrop(btn) {
+    const generateUrl = btn.dataset.generateUrl;
+    const saveUrl     = btn.dataset.saveUrl;
+    const original    = btn.innerHTML;
+
+    currentCropSaveUrl = saveUrl;
+
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Generating...';
+
+    try {
+        const res = await fetch(generateUrl, { method: 'POST' });
+
+        const contentType = res.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await res.text();
+            console.error('Non-JSON response:', text);
+            throw new Error('Server did not return JSON');
+        }
+
+        const data = await res.json();
+
+        if (data.success && data.tasks) {
+            showAiModal(data.tasks);
+        } else {
+            console.error(data.error);
+            alert('Failed to generate tasks.');
+        }
+
+    } catch (e) {
+        console.error(e);
+        alert('Error: ' + e.message);
+    } finally {
+        btn.innerHTML = original;
+        btn.disabled = false;
+    }
+}
+
+function showAiModal(tasks) {
+    const list = document.getElementById('aiTaskList');
+    list.innerHTML = '';
+
+    tasks.forEach((task, i) => {
+        const label = document.createElement('label');
+        label.style.cssText = 'display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:14px;padding:8px;border:1px solid #eee;border-radius:8px;';
+       label.innerHTML = `
+    <input type="checkbox" value="${task.replace(/"/g, '&quot;')}" checked
+        style="margin-top:3px;accent-color:#2e7d32;width:16px;height:16px;flex-shrink:0;">
+    <span>${task}</span>
+`;
+        list.appendChild(label);
+    });
+
+    const modal = document.getElementById('aiTaskModal');
+    modal.style.display = 'flex';
+}
+
+function closeAiModal() {
+    document.getElementById('aiTaskModal').style.display = 'none';
+}
+
+async function saveSelectedTasks() {
+    const checkboxes = document.querySelectorAll('#aiTaskList input[type="checkbox"]:checked');
+    const selected   = Array.from(checkboxes).map(cb => cb.value);
+
+    if (selected.length === 0) {
+        alert('Please select at least one task.');
+        return;
+    }
+
+    const saveBtn = document.getElementById('aiSaveBtn');
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '⏳ Saving...';
+
+    try {
+        const res = await fetch(currentCropSaveUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tasks: selected })
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+            closeAiModal();
+            alert('✅ Tasks added successfully!');
+        } else {
+            alert('Error: ' + data.error);
+        }
+    } catch (e) {
+        console.error(e);
+        alert('Failed to save tasks.');
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = 'Add Selected';
+    }
+  }

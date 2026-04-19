@@ -2,7 +2,18 @@
 
 {% block stylesheets %}
     {{ parent() }}
-    <link rel="stylesheet" href="{{ asset('Front/css/showcrop.css') }}">
+        <link rel="stylesheet" href="{{ asset('Front/css/showcrop.css') }}">
+        <style>
+            .btn-calendar{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:12px;border:1px solid rgba(16,185,129,0.12);background:linear-gradient(180deg,#1D9E75,#158a59);color:#fff;font-weight:600;box-shadow:0 6px 18px rgba(13,55,45,0.12);cursor:pointer;transition:transform .08s ease, box-shadow .12s ease}
+            .btn-calendar:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(13,55,45,0.18)}
+            .btn-calendar:active{transform:translateY(0);box-shadow:0 6px 12px rgba(13,55,45,0.1)}
+            .btn-calendar svg{width:16px;height:16px;flex:0 0 16px}
+            .btn-calendar .btn-calendar-label{font-size:13px}
+            .btn-outline.btn-calendar{background:transparent;border:1px solid #d1f3e6;color:#0f5132}
+            .btn-outline.btn-calendar:hover{background:#eaf7f0}
+            @media (max-width:600px){.btn-calendar .btn-calendar-label{display:none}.btn-calendar{padding:8px;border-radius:999px}}
+        </style>
+    <link rel="stylesheet" href="{{ asset('Front/css/harvest-calendar.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 {% endblock %}
 
@@ -13,14 +24,17 @@
     <!-- Header -->
     <header class="page-header">
         <div class="header-left">
-            <h1><span class="leaf-icon">🌿</span> Crop Management </h1>
-            
+            <h1><span class="leaf-icon">🌿</span> Crop Management</h1>
         </div>
         <div class="header-actions">
-           
-            <a href="{{ path('app_task_index') }}" class="btn btn-outline">
-                Manage Tasks
+            <a href="{{ path('app_task_index') }}" class="btn btn-calendar btn-outline" title="Manage Tasks">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 7h18M7 3v4M17 3v4"/><rect x="3" y="7" width="18" height="14" rx="2"/></svg>
+                <span class="btn-calendar-label">Manage Tasks</span>
             </a>
+            <button id="harvestCalendarBtn" class="btn btn-calendar btn-outline" title="Harvest Calendar" style="margin-left:8px;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/></svg>
+                <span class="btn-calendar-label">Calendar</span>
+            </button>
         </div>
     </header>
 
@@ -31,30 +45,45 @@
         </div>
 
         <div class="filter-chips" id="filterChips">
-            <button class="chip active" data-filter="all">All</button>
-            <button class="chip" data-filter="active">Active</button>
-            <button class="chip" data-filter="growing">Growing</button>
-            <button class="chip" data-filter="harvested">Harvested</button>
-            <button class="chip" data-filter="failed">Failed</button>
+            <button type="button" class="chip active" data-filter="all">All</button>
+            <button type="button" class="chip" data-filter="active">Active</button>
+            <button type="button" class="chip" data-filter="growing">Growing</button>
+            <button type="button" class="chip" data-filter="harvested">Harvested</button>
+            <button type="button" class="chip" data-filter="failed">Failed</button>
         </div>
-        
 
         <div class="crop-count" id="cropCount">
             {{ crops|length }} crop{% if crops|length != 1 %}s{% endif %} registered
         </div>
-        <div class="diagnose-wrap" style="margin-left:12px;">
-            <button id="diagnoseBtn" class="btn btn-primary">Diagnose Photo</button>
-            <input type="file" id="diagnoseInput" accept="image/*" style="display:none">
-            <div id="diagnoseResult" class="diagnose-result" style="display:none; margin-top:8px;"></div>
+    </div>
+
+    {# Modal for diagnosis results #}
+    <div id="diagnoseModal" class="diagnose-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;z-index:60;">
+        <div style="background:#fff;color:#111;padding:20px;border-radius:8px;max-width:480px;width:90%;box-shadow:0 10px 30px rgba(0,0,0,0.3);position:relative;">
+            <button id="diagnoseModalClose" aria-label="Close" style="position:absolute;right:12px;top:8px;border:none;background:transparent;font-size:20px;cursor:pointer;">✕</button>
+            <div id="diagnoseModalContent" style="min-height:80px;"> </div>
         </div>
     </div>
+
+  {# ✅ AI Tasks Modal — must be in body, NOT in javascripts block #}
+<div id="aiTaskModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;">
+    <div style="background:#fff;color:#111;border-radius:12px;padding:24px;max-width:480px;width:90%;box-shadow:0 10px 40px rgba(0,0,0,0.3);position:relative;">
+        <button onclick="closeAiModal()" style="position:absolute;right:14px;top:10px;border:none;background:transparent;font-size:20px;cursor:pointer;">✕</button>
+        <h3 style="margin:0 0 6px;">✨ AI Generated Tasks</h3>
+        <p style="margin:0 0 16px;font-size:13px;color:#666;">Select the tasks you want to add:</p>
+        <div id="aiTaskList" style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;max-height:300px;overflow-y:auto;"></div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+            <button onclick="closeAiModal()" style="padding:8px 16px;border:1px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;">Cancel</button>
+            <button onclick="saveSelectedTasks()" id="aiSaveBtn" style="padding:8px 16px;border:none;border-radius:8px;background:#2e7d32;color:#fff;cursor:pointer;font-weight:500;">Add Selected</button>
+        </div>
+    </div>
+</div>
 
     <!-- Crops Grid -->
     <div class="crops-grid" id="cropsGrid">
 
         {% for crop in crops %}
 
-            {# Stage style #}
             {% set stageClass = 'stage-default' %}
             {% if crop.growthStage == 'flowering' %}{% set stageClass = 'stage-flowering' %}
             {% elseif crop.growthStage == 'maturation' %}{% set stageClass = 'stage-maturation' %}
@@ -64,7 +93,6 @@
             {% elseif crop.growthStage == 'harvesting' %}{% set stageClass = 'stage-harvesting' %}
             {% endif %}
 
-            {# Status style #}
             {% set statusClass = 'status-default' %}
             {% if crop.status == 'active' %}{% set statusClass = 'status-active' %}
             {% elseif crop.status == 'growing' %}{% set statusClass = 'status-growing' %}
@@ -72,7 +100,6 @@
             {% elseif crop.status == 'failed' %}{% set statusClass = 'status-failed' %}
             {% endif %}
 
-            {# Progress estimation #}
             {% set progressPct = 0 %}
             {% if crop.growthStage == 'germination' %}{% set progressPct = 15 %}
             {% elseif crop.growthStage == 'vegetative' %}{% set progressPct = 40 %}
@@ -83,12 +110,17 @@
             {% endif %}
 
             <article class="crop-card"
+                     data-id="{{ crop.cropId }}"
                      data-status="{{ crop.status }}"
-                     data-name="{{ crop.name}}"
+                     data-name="{{ crop.name }}"
                      data-type="{{ crop.type|lower }}"
-                     data-variety="{{ crop.variety|lower }}">
+                     data-variety="{{ crop.variety|lower }}"
+                     data-planting-date="{{ crop.plantingDate ? crop.plantingDate|date('Y-m-d') : '' }}"
+                     data-expected-harvest="{{ crop.expectedHarvestDate ? crop.expectedHarvestDate|date('Y-m-d') : '' }}"
+                     data-growth-stage="{{ crop.growthStage }}"
+                     data-area-size="{{ crop.areaSize }}"
+                     data-image-path="{{ crop.imagePath }}">
 
-                <!-- Image -->
                 <div class="card-image">
                     {% if crop.imagePath %}
                         <img src="{{ asset('cropsimages/' ~ crop.imagePath) }}" alt="{{ crop.name }}">
@@ -100,9 +132,7 @@
                     </span>
                 </div>
 
-                <!-- Content -->
                 <div class="card-body">
-
                     <div class="card-title-row">
                         <h2 class="card-title">{{ crop.name }}</h2>
                         <span class="status-dot {{ statusClass }}"></span>
@@ -112,55 +142,21 @@
                         {{ crop.type }} · {{ crop.variety }}
                     </p>
 
-                    <!-- Progress -->
-                    <div class="progress-block">
-                        <div class="progress-labels">
-                            <span>Growth Progress</span>
-                            <span>{{ progressPct }}%</span>
-                        </div>
-                        <div class="progress-track">
-                            <div class="progress-fill" style="width: {{ progressPct }}%"></div>
-                        </div>
-                    </div>
-
-                    <!-- Info -->
-                    <div class="info-grid">
-                        <div class="info-cell">
-                            <span>📅</span>
-                            <div>
-                                <span class="info-label">Planting Date</span>
-                                <span class="info-value">
-                                    {{ crop.plantingDate ? crop.plantingDate|date('M d, Y') : 'N/A' }}
-                                </span>
-                            </div>
-                        </div>
-
-                        <div class="info-cell">
-                            <span>🌾</span>
-                            <div>
-                                <span class="info-label">Area Size</span>
-                                <span class="info-value">
-                                    {{ crop.areaSize ? crop.areaSize ~ ' ha' : 'N/A' }}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Harvest -->
-                    {% if crop.expectedHarvestDate %}
-                        <div class="harvest-row">
-                            Expected harvest:
-                            <strong>{{ crop.expectedHarvestDate|date('M d, Y') }}</strong>
-                        </div>
-                    {% endif %}
-
-                    <!-- Actions -->
                     <div class="card-footer">
                         <a href="{{ path('app_task_new', {'crop': crop.cropId}) }}" class="btn-task">
                             + Add Task
                         </a>
+                        <a href="{{ path('app_crop_view', {'crop_id': crop.cropId}) }}" class="btn btn-outline" style="margin-left:8px;">View</a>
+                        <button
+                            type="button"
+                            class="btn btn-ai-generate"
+                            data-generate-url="{{ path('ai_generate', {'crop_id': crop.cropId}) }}"
+                            data-save-url="{{ path('ai_save_tasks', {'crop_id': crop.cropId}) }}"
+                            onclick="generateTasksForCrop(this)"
+                        >
+                             Generate Tasks
+                        </button>
                     </div>
-
                 </div>
             </article>
 
@@ -177,10 +173,12 @@
 
     </div>
 
-    <!-- No results -->
     <div class="no-results hidden" id="noResults">
         <p>No crops found matching your search.</p>
     </div>
+
+    {# Harvest calendar modal container (populated by JS) - keep outside grid to avoid layout issues #}
+    <div id="harvestCalendarModal" class="harvest-calendar-modal" style="display:none"></div>
 
 </div>
 
@@ -188,6 +186,7 @@
 
 {% block javascripts %}
     {{ parent() }}
-    <script src="{{ asset('Front/js/showcrop.js') }}"></script>
     <script src="{{ asset('Front/js/diagnose.js') }}"></script>
+    <script src="{{ asset('Front/js/showcrop.js') }}"></script>
+    <script src="{{ asset('Front/js/harvest-calendar.js') }}"></script>
 {% endblock %}

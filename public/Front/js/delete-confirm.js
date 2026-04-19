@@ -7,36 +7,34 @@
   function createModal() {
     const modal = document.createElement('div');
     modal.id = 'global-delete-modal';
-    Object.assign(modal.style, {
-      display: 'none', position: 'fixed', inset: '0',
-      background: 'rgba(0,0,0,0.45)', zIndex: 2000,
-      alignItems: 'center', justifyContent: 'center'
-    });
+    modal.className = 'gd-modal';
 
     const dialog = document.createElement('div');
-    Object.assign(dialog.style, { background: '#fff', maxWidth: '560px', width: '90%', padding: '18px', borderRadius: '10px', boxShadow: '0 8px 30px rgba(0,0,0,0.25)' });
+    dialog.className = 'gd-dialog';
 
-    const header = document.createElement('div');
-    header.style.display = 'flex'; header.style.justifyContent = 'space-between'; header.style.alignItems = 'center';
-    const title = document.createElement('h3'); title.id = 'global-delete-title'; title.style.margin = '0'; title.textContent = 'Confirm Delete';
-    const close = document.createElement('button'); close.type = 'button'; close.id = 'global-delete-close'; close.textContent = '✕';
-    Object.assign(close.style, { background: 'none', border: 'none', fontSize: '18px', cursor: 'pointer' });
-    header.appendChild(title); header.appendChild(close);
+    // header / icon
+    const iconWrap = document.createElement('div');
+    iconWrap.className = 'gd-icon-wrap';
+    iconWrap.innerHTML = '<div class="gd-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 3v1H4v2h16V4h-5V3H9z" fill="#F43F5E"/><path d="M6 7l1 14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-14H6z" fill="#FEE2E2"/><path d="M9 11v6" stroke="#D32F2F" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 11v6" stroke="#D32F2F" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 11v6" stroke="#D32F2F" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>';
 
-    const msg = document.createElement('div'); msg.id = 'global-delete-message'; msg.style.marginTop = '12px'; msg.textContent = '';
+    const close = document.createElement('button'); close.type = 'button'; close.id = 'global-delete-close'; close.className = 'gd-close'; close.textContent = '✕';
 
-    const footer = document.createElement('div'); footer.style.marginTop = '16px'; footer.style.display = 'flex'; footer.style.justifyContent = 'flex-end'; footer.style.gap = '10px';
-    const cancel = document.createElement('button'); cancel.type = 'button'; cancel.id = 'global-delete-cancel'; cancel.textContent = 'Cancel';
-    Object.assign(cancel.style, { padding: '8px 14px', borderRadius: '8px', border: '1px solid #e5e7eb', background: '#fff', cursor: 'pointer' });
-    const confirm = document.createElement('button'); confirm.type = 'button'; confirm.id = 'global-delete-confirm'; confirm.textContent = 'Yes, Delete';
-    Object.assign(confirm.style, { padding: '8px 14px', borderRadius: '8px', border: 'none', background: '#dc2626', color: '#fff', cursor: 'pointer' });
+    const title = document.createElement('h3'); title.id = 'global-delete-title'; title.className = 'gd-title'; title.textContent = 'Confirm Delete';
+    const msg = document.createElement('div'); msg.id = 'global-delete-message'; msg.className = 'gd-message'; msg.textContent = '';
+
+    const footer = document.createElement('div'); footer.className = 'gd-footer';
+    const cancel = document.createElement('button'); cancel.type = 'button'; cancel.id = 'global-delete-cancel'; cancel.className = 'gd-btn gd-cancel'; cancel.textContent = 'Cancel';
+    const confirm = document.createElement('button'); confirm.type = 'button'; confirm.id = 'global-delete-confirm'; confirm.className = 'gd-btn gd-confirm'; confirm.textContent = 'Yes, Delete';
 
     footer.appendChild(cancel); footer.appendChild(confirm);
 
-    dialog.appendChild(header); dialog.appendChild(msg); dialog.appendChild(footer);
+    dialog.appendChild(close);
+    dialog.appendChild(iconWrap);
+    dialog.appendChild(title);
+    dialog.appendChild(msg);
+    dialog.appendChild(footer);
     modal.appendChild(dialog);
 
-    // attach to body
     document.body.appendChild(modal);
 
     // events

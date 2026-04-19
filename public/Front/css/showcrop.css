@@ -521,3 +521,15 @@ body {
 @media (max-width: 480px) {
   .crops-grid { grid-template-columns: 1fr; }
 }
+.btn-ai-generate {
+    background: #22C55E;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.2s, opacity 0.2s;
+}
+.btn-ai-generate:hover { background: #22C55E; }
+.btn-ai-generate:disabled { opacity: 0.6; cursor: not-allowed; }

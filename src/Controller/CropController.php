@@ -65,15 +65,18 @@ final class CropController extends AbstractController
         ]);
     }
 
-    #[Route('/{crop_id}', name: 'app_crop_show', methods: ['GET'], requirements: ['crop_id' => '\\d+'])]
-    public function show(int $cropId, CropRepository $cropRepository): Response
+    #[Route('/{crop_id}', name: 'app_crop_show', methods: ['GET'], requirements: ['crop_id' => '\d+'])]
+    public function show(#[MapEntity(expr: 'repository.find(crop_id)')] Crop $crop): Response
     {
-        $crop = $cropRepository->find($cropId);
-        if (!$crop) {
-            throw $this->createNotFoundException('Crop not found');
-        }
-
         return $this->render('Front/crop/showcrop.html.twig', [
+            'crop' => $crop,
+        ]);
+    }
+
+    #[Route('/{crop_id}/view', name: 'app_crop_view', methods: ['GET'], requirements: ['crop_id' => '\d+'])]
+    public function view(#[MapEntity(expr: 'repository.find(crop_id)')] Crop $crop): Response
+    {
+        return $this->render('Front/crop/viewcrop.html.twig', [
             'crop' => $crop,
         ]);
     }

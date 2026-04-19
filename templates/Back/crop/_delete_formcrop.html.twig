@@ -1,17 +1,17 @@
 {# Hidden form that will be submitted programmatically by the delete-confirm script #}
-<form id="delete-form-{{ crop.crop_id }}" method="post" action="{{ path('app_crop_delete', {'crop_id': crop.crop_id}) }}" style="display:none;">
-    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ crop.crop_id) }}">
+<form id="delete-form-{{ crop.cropId }}" method="post" action="{{ path('app_crop_delete', {'crop_id': crop.cropId}) }}" style="display:none;">
+    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ crop.cropId) }}">
     <button type="submit">Delete</button>
 </form>
 
 {# Visible trigger button. data-* attributes supply modal text and the target form id #}
 <button type="button" class="btn js-delete-btn"
-        data-target-form="delete-form-{{ crop.crop_id }}"
+        data-target-form="delete-form-{{ crop.cropId }}"
         data-title="Delete Crop"
         data-message="Are you sure you want to delete this crop? This action cannot be undone.">
     Delete
 </button>
 
 {# Include the delete-confirm styles + script (idempotent) #}
-<link rel="stylesheet" href="{{ asset('Front/css/delete-confirm.css') }}">
+    <link rel="stylesheet" href="{{ asset('Front/css/delete-confirm.css') }}">
 <script src="{{ asset('Front/js/delete-confirm.js') }}"></script>

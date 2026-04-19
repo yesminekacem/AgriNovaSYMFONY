@@ -11,6 +11,14 @@ HF_MODEL = os.environ.get('HF_MODEL')
 HF_TOKEN = os.environ.get('HF_TOKEN')
 
 
+@app.get('/')
+async def root():
+    return {
+        'status': 'ok',
+        'message': "Diagnosis service running. Use POST /predict with form field 'image' (multipart/form-data)."
+    }
+
+
 @app.post('/predict')
 async def predict(image: UploadFile = File(...)):
     content = await image.read()
