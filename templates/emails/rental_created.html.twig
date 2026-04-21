@@ -1,0 +1,97 @@
+{% extends 'emails/base.html.twig' %}
+
+{% block subject %}We received your rental request{% endblock %}
+
+{% block content %}
+{% set ownerContact = rental.inventory and rental.inventory.ownerContact ? rental.inventory.ownerContact : 'Not provided' %}
+
+<div class="info-box">
+    <h2 style="margin-top: 0; color: #16a34a;">Rental request received</h2>
+    <p style="margin-bottom: 0;">Your request has been created successfully and is waiting for approval.</p>
+</div>
+
+<p>Hello {{ rental.renterName }},</p>
+
+<p>Thank you for choosing AgriNova. Here is a summary of your booking:</p>
+
+<h3 style="color: #374151; margin-top: 25px;">Rental details</h3>
+<table>
+    <tr>
+        <th>Rental ID</th>
+        <td>#{{ rental.id }}</td>
+    </tr>
+    <tr>
+        <th>Current Status</th>
+        <td><strong style="color: #16a34a;">{{ rental.rentalStatus }}</strong></td>
+    </tr>
+    <tr>
+        <th>Payment Status</th>
+        <td>{{ rental.paymentStatus }}</td>
+    </tr>
+    <tr>
+        <th>Item</th>
+        <td>{{ rental.displayItemName }}</td>
+    </tr>
+    <tr>
+        <th>Item Type</th>
+        <td>{{ rental.inventory.itemType }}</td>
+    </tr>
+    <tr>
+        <th>Owner</th>
+        <td>{{ rental.ownerName }}</td>
+    </tr>
+    <tr>
+        <th>Owner Contact</th>
+        <td>{{ ownerContact }}</td>
+    </tr>
+    <tr>
+        <th>Rental Period</th>
+        <td>{{ rental.startDate|date('M d, Y') }} - {{ rental.endDate|date('M d, Y') }}</td>
+    </tr>
+    <tr>
+        <th>Duration</th>
+        <td>{{ rental.totalDays }} day(s)</td>
+    </tr>
+    <tr>
+        <th>Daily Rate</th>
+        <td>${{ rental.dailyRate|number_format(2) }}</td>
+    </tr>
+    {% if rental.requiresDelivery %}
+    <tr>
+        <th>Delivery</th>
+        <td>Required - ${{ rental.deliveryFee|number_format(2) }}</td>
+    </tr>
+    {% else %}
+    <tr>
+        <th>Delivery</th>
+        <td>Self-pickup</td>
+    </tr>
+    {% endif %}
+    <tr style="background-color: #f0fdf4; font-weight: bold;">
+        <th>Total Cost</th>
+        <td>${{ rental.totalCost|number_format(2) }}</td>
+    </tr>
+    <tr>
+        <th>Created At</th>
+        <td>{{ rental.createdAt|date('M d, Y H:i') }}</td>
+    </tr>
+</table>
+
+<div class="info-box">
+    <strong>What happens next?</strong>
+    <ul style="margin: 10px 0 0 0; padding-left: 20px;">
+        <li>Your rental is currently <strong>PENDING</strong>.</li>
+        <li>The owner will review and approve your request.</li>
+        <li>You will receive another email when the rental is approved, activated, or cancelled.</li>
+        <li>Once approved, you can proceed with pickup or delivery.</li>
+    </ul>
+</div>
+
+<center>
+    <a href="{{ url('rental_show', {id: rental.id}) }}" class="button">Track Your Rental</a>
+</center>
+
+<p>If you have any questions about your rental, please contact the AgriNova team.</p>
+
+<p>Best regards,<br><strong>The AgriNova Team</strong></p>
+{% endblock %}

@@ -1,0 +1,105 @@
+{% extends 'emails/base.html.twig' %}
+
+{% block subject %}Reminder: Rental #{{ rental.id }} Return Due in {{ daysRemaining }} Day(s){% endblock %}
+
+{% block content %}
+{% set ownerContact = rental.inventory and rental.inventory.ownerContact ? rental.inventory.ownerContact : 'Not provided' %}
+
+<h2>Rental Return Reminder</h2>
+
+<p>Hello {{ rental.renterName }},</p>
+
+<p>This is a friendly reminder that your rental return is approaching.</p>
+
+<div class="{% if daysRemaining <= 1 %}warning-box{% else %}info-box{% endif %}">
+    <h3 style="margin-top: 0;">Reminder Summary</h3>
+    <table>
+        <tr>
+            <th>Rental ID</th>
+            <td>#{{ rental.id }}</td>
+        </tr>
+        <tr>
+            <th>Current Status</th>
+            <td><strong>{{ rental.rentalStatus }}</strong></td>
+        </tr>
+        <tr>
+            <th>Item</th>
+            <td>{{ rental.displayItemName }}</td>
+        </tr>
+        <tr>
+            <th>Item Type</th>
+            <td>{{ rental.inventory.itemType }}</td>
+        </tr>
+        <tr>
+            <th>Return Due Date</th>
+            <td style="font-weight: bold; font-size: 1.1em;">{{ rental.endDate|date('M d, Y') }}</td>
+        </tr>
+        <tr>
+            <th>Days Remaining</th>
+            <td style="font-weight: bold;">{{ daysRemaining }} day(s)</td>
+        </tr>
+    </table>
+</div>
+
+<h3 style="color: #374151; margin-top: 25px;">Rental details</h3>
+<table>
+    <tr>
+        <th>Owner</th>
+        <td>{{ rental.ownerName }}</td>
+    </tr>
+    <tr>
+        <th>Owner Contact</th>
+        <td>{{ ownerContact }}</td>
+    </tr>
+    <tr>
+        <th>Renter</th>
+        <td>{{ rental.renterName }}</td>
+    </tr>
+    <tr>
+        <th>Renter Contact</th>
+        <td>{{ rental.renterContact }}</td>
+    </tr>
+    <tr>
+        <th>Payment Status</th>
+        <td>{{ rental.paymentStatus }}</td>
+    </tr>
+    <tr>
+        <th>Rental Period</th>
+        <td>{{ rental.startDate|date('M d, Y') }} - {{ rental.endDate|date('M d, Y') }}</td>
+    </tr>
+    <tr>
+        <th>Duration</th>
+        <td>{{ rental.totalDays }} day(s)</td>
+    </tr>
+    <tr>
+        <th>Daily Rate</th>
+        <td>${{ rental.dailyRate|number_format(2) }}</td>
+    </tr>
+    <tr>
+        <th>Total Cost</th>
+        <td>${{ rental.totalCost|number_format(2) }}</td>
+    </tr>
+    {% if rental.requiresDelivery %}
+    <tr>
+        <th>Delivery</th>
+        <td>Yes - ${{ rental.deliveryFee|number_format(2) }}</td>
+    </tr>
+    {% endif %}
+</table>
+
+{% if daysRemaining <= 1 %}
+<div class="warning-box">
+    <strong>Important:</strong> Your rental is due very soon. Please return the item on time to avoid late fees.
+</div>
+{% endif %}
+
+<p>Please ensure the item is returned in good condition. If you need to extend your rental period, please contact us before the due date.</p>
+
+<center>
+    <a href="{{ url('rental_show', {id: rental.id}) }}" class="button">View Rental Details</a>
+</center>
+
+<p>Thank you for choosing AgriNova.</p>
+
+<p>Best regards,<br><strong>The AgriNova Team</strong></p>
+{% endblock %}

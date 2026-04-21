@@ -1,5 +1,8 @@
 import { startStimulusApp } from '@symfony/stimulus-bundle';
+import SearchController from './controllers/search_controller.js';
 
 const app = startStimulusApp();
-// register any custom, 3rd party controllers here
-// app.register('some_controller_name', SomeImportedController);
+app.register('search', SearchController);
+
+console.log('[Stimulus] SearchController registered:', app.controllers.find(c => c.identifier === 'search'));
+console.log('[Stimulus] All controllers:', app.controllers.map(c => c.identifier));

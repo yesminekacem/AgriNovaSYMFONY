@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Repository\InventoryRepository;
 use App\Repository\RentalRepository;
+use App\Service\AlertService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -11,7 +12,7 @@ use Symfony\Component\Routing\Attribute\Route;
 class DashBoardController extends AbstractController
 {
     #[Route('/DashBoard', name: 'app_dashboard')]
-    public function index(InventoryRepository $inventoryRepository, RentalRepository $rentalRepository): Response
+    public function index(InventoryRepository $inventoryRepository, RentalRepository $rentalRepository, AlertService $alertService): Response
     {
         // ---- Dashboard data for crops, inventory, and rentals ----
 
@@ -113,6 +114,9 @@ class DashBoardController extends AbstractController
             'rentalStats' => $rentalStats,
             'inventoryChartData' => $inventoryChartData,
             'rentalChartData' => $rentalChartData,
+            'alerts' => $alertService->getAlerts(),
+            'alertCount' => $alertService->getAlertCount(),
+            'criticalAlertCount' => $alertService->getCriticalAlertCount(),
         ]);
     }
 }

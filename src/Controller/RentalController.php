@@ -9,6 +9,9 @@ use App\Form\RentalType;
 use App\Repository\InventoryRepository;
 use App\Repository\RentalHistoryRepository;
 use App\Repository\RentalRepository;
+use App\Service\AgriLocationService;
+use App\Service\AgriWeatherService;
+use App\Service\RentalNotificationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormError;
@@ -21,7 +24,7 @@ use Symfony\Component\Routing\Attribute\Route;
 final class RentalController extends AbstractController
 {
     #[Route('/', name: 'rental_index', methods: ['GET'])]
-    public function index(Request $request, RentalRepository $rentalRepository, InventoryRepository $inventoryRepository): Response
+    public function index(Request $request, RentalRepository $rentalRepository, InventoryRepository $inventoryRepository, AgriLocationService $agriLocationService): Response
     {
         $search = trim((string) $request->query->get('search', ''));
         $status = $this->normalizeFilter($request->query->get('status'));
@@ -29,6 +32,8 @@ final class RentalController extends AbstractController
         $overdueOnly = $request->query->getBoolean('overdue');
         $inventoryId = $request->query->getInt('inventory');
         $inventory = $inventoryId > 0 ? $inventoryRepository->find($inventoryId) : null;
+        $mapQuery = trim((string) $request->query->get('mapQuery', ''));
+        $loadMap = $request->query->getBoolean('loadMap');
 
         $rentals = $rentalRepository->findByFilters($search, $status, $paymentStatus, $overdueOnly, $inventory instanceof Inventory ? $inventory->getId() : null);
 
@@ -39,6 +44,9 @@ final class RentalController extends AbstractController
             'paymentStatus' => $paymentStatus,
             'overdueOnly' => $overdueOnly,
             'inventoryItem' => $inventory,
+            'mapQuery' => $mapQuery,
+            'loadMap' => $loadMap,
+            'locationLookup' => $loadMap && $mapQuery !== '' ? $agriLocationService->searchLocation($mapQuery) : null,
             'statuses' => Rental::RENTAL_STATUSES,
             'paymentStatuses' => Rental::PAYMENT_STATUSES,
             'stats' => [
@@ -55,7 +63,7 @@ final class RentalController extends AbstractController
     }
 
     #[Route('/new', name: 'rental_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager, InventoryRepository $inventoryRepository, RentalRepository $rentalRepository): Response
+    public function new(Request $request, EntityManagerInterface $entityManager, InventoryRepository $inventoryRepository, RentalRepository $rentalRepository, RentalNotificationService $notificationService): Response
     {
         $inventoryId = $request->query->getInt('inventory');
         if ($inventoryId <= 0) {
@@ -102,6 +110,9 @@ final class RentalController extends AbstractController
                 $entityManager->persist($rental);
                 $this->logHistory($entityManager, $rental, 'CREATED', sprintf('Rental created for %s.', $rental->getRenterName()));
                 $entityManager->flush();
+
+                // Send email notification
+                $notificationService->notifyNewRental($rental);
 
                 $this->addFlash('success', sprintf('Rental for %s was created successfully.', $rental->getRenterName()));
 
@@ -157,16 +168,24 @@ final class RentalController extends AbstractController
     }
 
     #[Route('/{id}', name: 'rental_show', methods: ['GET'], requirements: ['id' => '\d+'])]
-    public function show(Rental $rental, RentalHistoryRepository $rentalHistoryRepository): Response
+    public function show(Request $request, Rental $rental, RentalHistoryRepository $rentalHistoryRepository, AgriWeatherService $agriWeatherService): Response
     {
+        $locationHint = $this->resolveRentalLocationHint($rental);
+        $loadWeather = $request->query->getBoolean('loadWeather');
+
         return $this->render('rental/show.html.twig', [
             'rental' => $rental,
             'historyEntries' => $rentalHistoryRepository->findForRental($rental),
+            'rentalWeather' => $loadWeather && $locationHint !== null
+                ? $agriWeatherService->getRentalWeatherBrief($locationHint, $rental->getStartDate(), $rental->getEndDate())
+                : null,
+            'loadWeather' => $loadWeather,
+            'rentalWeatherLocationHint' => $locationHint,
         ]);
     }
 
     #[Route('/{id}/edit', name: 'rental_edit', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
-    public function edit(Request $request, Rental $rental, EntityManagerInterface $entityManager, RentalRepository $rentalRepository): Response
+    public function edit(Request $request, Rental $rental, EntityManagerInterface $entityManager, RentalRepository $rentalRepository, RentalNotificationService $notificationService): Response
     {
         $previousInventory = $rental->getInventory();
         $previousStatus = $rental->getRentalStatus();
@@ -197,6 +216,11 @@ final class RentalController extends AbstractController
                 $this->syncInventoryStatus($rental, $rentalRepository, $previousInventory, $previousStatus);
                 $this->logHistory($entityManager, $rental, 'UPDATED', sprintf('Rental #%d was updated.', $rental->getId()));
                 $entityManager->flush();
+
+                // Send email if status changed
+                if ($previousStatus !== $rental->getRentalStatus()) {
+                    $notificationService->notifyStatusChange($rental, $previousStatus, $rental->getRentalStatus());
+                }
 
                 $this->addFlash('success', sprintf('Rental #%d was updated successfully.', $rental->getId()));
 
@@ -242,50 +266,52 @@ final class RentalController extends AbstractController
     }
 
     #[Route('/{id}/approve', name: 'rental_approve', methods: ['POST'], requirements: ['id' => '\d+'])]
-    public function approve(Request $request, Rental $rental, EntityManagerInterface $entityManager): Response
+    public function approve(Request $request, Rental $rental, EntityManagerInterface $entityManager, RentalNotificationService $notificationService): Response
     {
-        return $this->transitionRental($request, $rental, $entityManager, 'APPROVED', 'Rental approved.', 'Rental approved for pickup.', 'APPROVED');
+        return $this->transitionRental($request, $rental, $entityManager, $notificationService, 'APPROVED', 'Rental approved.', 'Rental approved for pickup.', 'APPROVED');
     }
 
     #[Route('/{id}/activate', name: 'rental_activate', methods: ['POST'], requirements: ['id' => '\d+'])]
-    public function activate(Request $request, Rental $rental, EntityManagerInterface $entityManager): Response
+    public function activate(Request $request, Rental $rental, EntityManagerInterface $entityManager, RentalNotificationService $notificationService): Response
     {
-        return $this->transitionRental($request, $rental, $entityManager, 'ACTIVATED', 'Rental activated.', 'Rental is now active.', 'ACTIVE');
+        return $this->transitionRental($request, $rental, $entityManager, $notificationService, 'ACTIVATED', 'Rental activated.', 'Rental is now active.', 'ACTIVE');
     }
 
     #[Route('/{id}/return', name: 'rental_return', methods: ['POST'], requirements: ['id' => '\d+'])]
-    public function returnRental(Request $request, Rental $rental, EntityManagerInterface $entityManager): Response
+    public function returnRental(Request $request, Rental $rental, EntityManagerInterface $entityManager, RentalNotificationService $notificationService): Response
     {
-        return $this->transitionRental($request, $rental, $entityManager, 'RETURNED', 'Rental marked as returned.', 'Item was returned by the renter.', 'RETURNED', true);
+        return $this->transitionRental($request, $rental, $entityManager, $notificationService, 'RETURNED', 'Rental marked as returned.', 'Item was returned by the renter.', 'RETURNED', true);
     }
 
     #[Route('/{id}/complete', name: 'rental_complete', methods: ['POST'], requirements: ['id' => '\d+'])]
-    public function complete(Request $request, Rental $rental, EntityManagerInterface $entityManager): Response
+    public function complete(Request $request, Rental $rental, EntityManagerInterface $entityManager, RentalNotificationService $notificationService): Response
     {
-        return $this->transitionRental($request, $rental, $entityManager, 'COMPLETED', 'Rental completed.', 'Rental was completed and closed.', 'COMPLETED', true);
+        return $this->transitionRental($request, $rental, $entityManager, $notificationService, 'COMPLETED', 'Rental completed.', 'Rental was completed and closed.', 'COMPLETED', true);
     }
 
     #[Route('/{id}/cancel', name: 'rental_cancel', methods: ['POST'], requirements: ['id' => '\d+'])]
-    public function cancel(Request $request, Rental $rental, EntityManagerInterface $entityManager): Response
+    public function cancel(Request $request, Rental $rental, EntityManagerInterface $entityManager, RentalNotificationService $notificationService): Response
     {
-        return $this->transitionRental($request, $rental, $entityManager, 'CANCELLED', 'Rental cancelled.', 'Rental was cancelled.', 'CANCELLED');
+        return $this->transitionRental($request, $rental, $entityManager, $notificationService, 'CANCELLED', 'Rental cancelled.', 'Rental was cancelled.', 'CANCELLED');
     }
 
     #[Route('/{id}/dispute', name: 'rental_dispute', methods: ['POST'], requirements: ['id' => '\d+'])]
-    public function dispute(Request $request, Rental $rental, EntityManagerInterface $entityManager): Response
+    public function dispute(Request $request, Rental $rental, EntityManagerInterface $entityManager, RentalNotificationService $notificationService): Response
     {
-        return $this->transitionRental($request, $rental, $entityManager, 'DISPUTED', 'Rental marked as disputed.', 'Rental was flagged for dispute review.', 'DISPUTED');
+        return $this->transitionRental($request, $rental, $entityManager, $notificationService, 'DISPUTED', 'Rental marked as disputed.', 'Rental was flagged for dispute review.', 'DISPUTED');
     }
 private function transitionRental(
     Request $request,
     Rental $rental,
     EntityManagerInterface $entityManager,
+    RentalNotificationService $notificationService,
     string $actionType,
     string $flashMessage,
     string $historyMessage,
     ?string $newStatus = null,
     bool $markReturned = false
 ): Response {
+    $previousStatus = $rental->getRentalStatus();
     if (!$this->isCsrfTokenValid('action_rental_'.$rental->getId().'_'.$actionType, $request->request->getString('_token'))) {
         $this->addFlash('error', 'The action could not be verified. Please try again.');
 
@@ -316,6 +342,13 @@ private function transitionRental(
     $this->syncInventoryStatus($rental, $entityManager->getRepository(Rental::class));
     $this->logHistory($entityManager, $rental, $actionType, $historyMessage);
     $entityManager->flush();
+
+    // Send email notification for status change
+    if ($newStatus !== null
+        && $previousStatus !== $newStatus
+        && in_array($newStatus, ['APPROVED', 'ACTIVE', 'CANCELLED'], true)) {
+        $notificationService->notifyStatusChange($rental, $previousStatus, $newStatus);
+    }
 
     $this->addFlash('success', $flashMessage);
 
@@ -474,5 +507,20 @@ private function getAllowedTransitions(): array
         $value = is_string($value) ? trim($value) : '';
 
         return $value !== '' ? $value : null;
+    }
+
+    private function resolveRentalLocationHint(Rental $rental): ?string
+    {
+        $deliveryAddress = trim((string) $rental->getDeliveryAddress());
+        if ($deliveryAddress !== '') {
+            return $deliveryAddress;
+        }
+
+        $renterAddress = trim((string) $rental->getRenterAddress());
+        if ($renterAddress !== '') {
+            return $renterAddress;
+        }
+
+        return null;
     }
 }

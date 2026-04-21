@@ -1,0 +1,123 @@
+{% extends 'emails/base.html.twig' %}
+
+{% block subject %}Rental status updated{% endblock %}
+
+{% block content %}
+{% set ownerContact = rental.inventory and rental.inventory.ownerContact ? rental.inventory.ownerContact : 'Not provided' %}
+
+{% if newStatus == 'APPROVED' %}
+    {% set title = 'Rental approved' %}
+    {% set intro = 'Good news. Your rental request has been approved.' %}
+    {% set boxClass = 'info-box' %}
+    {% set nextStep = 'Please coordinate pickup or delivery and complete the payment if needed.' %}
+{% elseif newStatus == 'ACTIVE' %}
+    {% set title = 'Rental activated' %}
+    {% set intro = 'Your rental is now active. The booked period has officially started.' %}
+    {% set boxClass = 'warning-box' %}
+    {% set nextStep = 'Please return the item by ' ~ rental.endDate|date('M d, Y') ~ ' to avoid late fees.' %}
+{% elseif newStatus == 'CANCELLED' %}
+    {% set title = 'Rental cancelled' %}
+    {% set intro = 'This rental has been cancelled.' %}
+    {% set boxClass = 'danger-box' %}
+    {% set nextStep = 'If this was unexpected, please contact the owner or support team.' %}
+{% else %}
+    {% set title = 'Rental status updated' %}
+    {% set intro = 'Your rental status has changed.' %}
+    {% set boxClass = 'info-box' %}
+    {% set nextStep = 'Please review the rental details below.' %}
+{% endif %}
+
+<h2>{{ title }}</h2>
+
+<p>Hello {{ rental.renterName }},</p>
+
+<p>{{ intro }}</p>
+
+<div class="{{ boxClass }}">
+    <h3 style="margin-top: 0; color: #16a34a;">Status update</h3>
+    <table>
+        <tr>
+            <th>Rental ID</th>
+            <td>#{{ rental.id }}</td>
+        </tr>
+        <tr>
+            <th>Previous Status</th>
+            <td><span style="color: #6b7280;">{{ oldStatus }}</span></td>
+        </tr>
+        <tr>
+            <th>New Status</th>
+            <td><strong style="color: #16a34a; font-size: 1.1em;">{{ newStatus }}</strong></td>
+        </tr>
+        <tr>
+            <th>Updated At</th>
+            <td>{{ 'now'|date('M d, Y H:i') }}</td>
+        </tr>
+    </table>
+</div>
+
+<h3 style="color: #374151; margin-top: 25px;">Rental details</h3>
+<table>
+    <tr>
+        <th>Item</th>
+        <td>{{ rental.displayItemName }}</td>
+    </tr>
+    <tr>
+        <th>Item Type</th>
+        <td>{{ rental.inventory.itemType }}</td>
+    </tr>
+    <tr>
+        <th>Owner</th>
+        <td>{{ rental.ownerName }}</td>
+    </tr>
+    <tr>
+        <th>Owner Contact</th>
+        <td>{{ ownerContact }}</td>
+    </tr>
+    <tr>
+        <th>Renter</th>
+        <td>{{ rental.renterName }}</td>
+    </tr>
+    <tr>
+        <th>Renter Contact</th>
+        <td>{{ rental.renterContact }}</td>
+    </tr>
+    <tr>
+        <th>Payment Status</th>
+        <td>{{ rental.paymentStatus }}</td>
+    </tr>
+    <tr>
+        <th>Rental Period</th>
+        <td>{{ rental.startDate|date('M d, Y') }} - {{ rental.endDate|date('M d, Y') }}</td>
+    </tr>
+    <tr>
+        <th>Duration</th>
+        <td>{{ rental.totalDays }} day(s)</td>
+    </tr>
+    <tr>
+        <th>Daily Rate</th>
+        <td>${{ rental.dailyRate|number_format(2) }}</td>
+    </tr>
+    {% if rental.requiresDelivery %}
+    <tr>
+        <th>Delivery</th>
+        <td>Required - ${{ rental.deliveryFee|number_format(2) }}</td>
+    </tr>
+    {% endif %}
+    <tr style="background-color: #f0fdf4; font-weight: bold;">
+        <th>Total Cost</th>
+        <td>${{ rental.totalCost|number_format(2) }}</td>
+    </tr>
+</table>
+
+<div class="{{ boxClass }}">
+    <strong>Next step:</strong> {{ nextStep }}
+</div>
+
+<center>
+    <a href="{{ url('rental_show', {id: rental.id}) }}" class="button">View Rental Details</a>
+</center>
+
+<p>If you have any questions, please contact the AgriNova team.</p>
+
+<p>Best regards,<br><strong>The AgriNova Team</strong></p>
+{% endblock %}
