@@ -106,6 +106,7 @@
 
         <section class="rental-card">
             {{ form_start(form, {attr: {novalidate: 'novalidate'}}) }}
+                {% set is_admin = is_granted('ROLE_ADMIN') %}
                 {% if form.vars.submitted and not form.vars.valid %}
                     <div class="rental-summary mb-6">
                         <h2 class="text-base font-semibold text-red-700">Some fields still need your attention.</h2>
@@ -123,6 +124,12 @@
                     </div>
                 {% endif %}
 
+                {% if not is_admin %}
+                    <div class="mb-6 rounded-2xl border border-green-100 bg-green-50 px-4 py-3 text-sm text-green-700">
+                        Internal workflow fields such as status, return notes, and post-rental ratings are managed automatically and hidden from the customer form.
+                    </div>
+                {% endif %}
+
                 <div class="rental-grid">
                     {{ form_row(form.inventory) }}
                     {{ form_row(form.renterName) }}
@@ -130,23 +137,34 @@
                     {{ form_row(form.dailyRate) }}
                     {{ form_row(form.startDate) }}
                     {{ form_row(form.endDate) }}
-                    {{ form_row(form.rentalStatus) }}
-                    {{ form_row(form.paymentStatus) }}
                     {{ form_row(form.paymentMethod) }}
                     {{ form_row(form.requiresDelivery) }}
-                    {{ form_row(form.deliveryFee) }}
-                    {{ form_row(form.actualReturnDate) }}
                     <div class="md:col-span-2">{{ form_row(form.renterAddress) }}</div>
                     <div class="md:col-span-2">{{ form_row(form.deliveryAddress) }}</div>
-                    {{ form_row(form.pickupCondition) }}
-                    {{ form_row(form.returnCondition) }}
-                    {{ form_row(form.ownerRating) }}
-                    {{ form_row(form.renterRating) }}
-                    <div class="md:col-span-2">{{ form_row(form.pickupPhotos) }}</div>
-                    <div class="md:col-span-2">{{ form_row(form.returnPhotos) }}</div>
-                    <div class="md:col-span-2">{{ form_row(form.damageNotes) }}</div>
-                    <div class="md:col-span-2">{{ form_row(form.ownerReview) }}</div>
-                    <div class="md:col-span-2">{{ form_row(form.renterReview) }}</div>
+                    {% if form.deliveryFee is defined %}
+                        {{ form_row(form.deliveryFee) }}
+                    {% endif %}
+                    {% if form.paymentStatus is defined %}
+                        {{ form_row(form.paymentStatus) }}
+                    {% endif %}
+                    {% if form.actualReturnDate is defined %}
+                        {{ form_row(form.actualReturnDate) }}
+                    {% endif %}
+                    {% if form.pickupCondition is defined %}
+                        {{ form_row(form.pickupCondition) }}
+                    {% endif %}
+                    {% if form.returnCondition is defined %}
+                        {{ form_row(form.returnCondition) }}
+                    {% endif %}
+                    {% if form.pickupPhotos is defined %}
+                        <div class="md:col-span-2">{{ form_row(form.pickupPhotos) }}</div>
+                    {% endif %}
+                    {% if form.returnPhotos is defined %}
+                        <div class="md:col-span-2">{{ form_row(form.returnPhotos) }}</div>
+                    {% endif %}
+                    {% if form.damageNotes is defined %}
+                        <div class="md:col-span-2">{{ form_row(form.damageNotes) }}</div>
+                    {% endif %}
                 </div>
 
                 {{ form_rest(form) }}

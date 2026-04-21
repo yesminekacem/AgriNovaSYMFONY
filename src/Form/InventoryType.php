@@ -53,16 +53,6 @@ class InventoryType extends AbstractType
                 'required' => false,
                 'attr' => ['rows' => 4, 'placeholder' => 'Short description of the item'],
             ])
-            ->add('ownerName', TextType::class, [
-                'label' => 'Owner name',
-                'required' => false,
-                'attr' => ['placeholder' => 'Ex: Ahmed Ben Salem'],
-            ])
-            ->add('ownerContact', TextType::class, [
-                'label' => 'Owner contact',
-                'required' => false,
-                'attr' => ['placeholder' => 'Phone or email'],
-            ])
             ->add('isRentable', CheckboxType::class, [
                 'label' => 'Available for rental',
                 'required' => false,
@@ -72,11 +62,6 @@ class InventoryType extends AbstractType
                 'required' => false,
                 'html5' => true,
                 'attr' => ['step' => '0.01', 'min' => '0'],
-            ])
-            ->add('rentalStatus', ChoiceType::class, [
-                'label' => 'Rental status',
-                'choices' => array_combine(Inventory::RENTAL_STATUSES, Inventory::RENTAL_STATUSES),
-                'placeholder' => 'Choose a rental status',
             ])
             ->add('lastMaintenanceDate', DateType::class, [
                 'label' => 'Last maintenance',
@@ -100,12 +85,39 @@ class InventoryType extends AbstractType
                 'required' => false,
                 'attr' => ['placeholder' => 'Optional local or web image path'],
             ]);
+
+        if ($options['is_admin']) {
+            $builder
+                ->add('ownerName', TextType::class, [
+                    'label' => 'Owner name',
+                    'required' => false,
+                    'attr' => ['placeholder' => 'Ex: Ahmed Ben Salem'],
+                ])
+                ->add('ownerContact', TextType::class, [
+                    'label' => 'Owner contact',
+                    'required' => false,
+                    'attr' => ['placeholder' => 'Phone or email'],
+                ]);
+        }
+
+        if ($options['is_admin'] && $options['is_edit']) {
+            $builder->add('rentalStatus', ChoiceType::class, [
+                'label' => 'Rental status',
+                'choices' => array_combine(Inventory::RENTAL_STATUSES, Inventory::RENTAL_STATUSES),
+                'placeholder' => 'Choose a rental status',
+            ]);
+        }
     }
 
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
             'data_class' => Inventory::class,
+            'is_admin' => false,
+            'is_edit' => false,
         ]);
+
+        $resolver->setAllowedTypes('is_admin', 'bool');
+        $resolver->setAllowedTypes('is_edit', 'bool');
     }
 }

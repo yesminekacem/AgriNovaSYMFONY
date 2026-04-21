@@ -87,6 +87,8 @@ final class RentalController extends AbstractController
         $form = $this->createForm(RentalType::class, $rental, [
             'inventory_id' => $inventory->getId(),
             'lock_inventory' => true,
+            'is_admin' => $this->isGranted('ROLE_ADMIN'),
+            'is_edit' => false,
         ]);
         $form->handleRequest($request);
 
@@ -194,6 +196,8 @@ final class RentalController extends AbstractController
             'inventory_id' => $rental->getInventory()?->getId(),
             'current_rental_id' => $rental->getId(),
             'lock_inventory' => true,
+            'is_admin' => $this->isGranted('ROLE_ADMIN'),
+            'is_edit' => true,
         ]);
         $form->handleRequest($request);
 
@@ -360,7 +364,7 @@ private function getAllowedTransitions(): array
 {
     return [
         'APPROVED'   => ['PENDING'],
-        'ACTIVATED'  => ['APPROVED'],
+        'ACTIVE'     => ['APPROVED'],
         'RETURNED'   => ['ACTIVE'],
         'COMPLETED'  => ['RETURNED'],
         'CANCELLED'  => ['PENDING', 'APPROVED'],

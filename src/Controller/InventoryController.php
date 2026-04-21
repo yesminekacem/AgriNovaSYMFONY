@@ -65,7 +65,10 @@ final class InventoryController extends AbstractController
     public function new(Request $request, EntityManagerInterface $entityManager): Response
     {
         $inventory = new Inventory();
-        $form = $this->createForm(InventoryType::class, $inventory);
+        $form = $this->createForm(InventoryType::class, $inventory, [
+            'is_admin' => $this->isGranted('ROLE_ADMIN'),
+            'is_edit' => false,
+        ]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -175,7 +178,10 @@ final class InventoryController extends AbstractController
     {
         $this->assertInventoryOwnerOrAdmin($inventory);
 
-        $form = $this->createForm(InventoryType::class, $inventory);
+        $form = $this->createForm(InventoryType::class, $inventory, [
+            'is_admin' => $this->isGranted('ROLE_ADMIN'),
+            'is_edit' => true,
+        ]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
