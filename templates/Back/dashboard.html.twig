@@ -411,39 +411,8 @@
                 <span>Inventory & Rental Snapshot</span>
             </div>
 
-            <div class="summary-item">
-                <span class="summary-label">Total inventory items</span>
-                <span class="summary-value">{{ inventoryStats.total }}</span>
-            </div>
-            <div class="summary-item">
-                <span class="summary-label">Rentable inventory</span>
-                <span class="summary-value">{{ inventoryStats.rentable }}</span>
-            </div>
-            <div class="summary-item">
-                <span class="summary-label">Currently rented out</span>
-                <span class="summary-value">{{ inventoryStats.rentedOut }}</span>
-            </div>
-            <div class="summary-item">
-                <span class="summary-label">Low-stock items</span>
-                <span class="summary-value">{{ inventoryStats.lowStock }}</span>
-            </div>
+          
 
-            <div class="summary-item">
-                <span class="summary-label">Total rental agreements</span>
-                <span class="summary-value">{{ rentalStats.total }}</span>
-            </div>
-            <div class="summary-item">
-                <span class="summary-label">Active rentals</span>
-                <span class="summary-value">{{ rentalStats.active }}</span>
-            </div>
-            <div class="summary-item">
-                <span class="summary-label">Pending rentals</span>
-                <span class="summary-value">{{ rentalStats.pending }}</span>
-            </div>
-            <div class="summary-item">
-                <span class="summary-label">Overdue rentals</span>
-                <span class="summary-value">{{ rentalStats.overdue }}</span>
-            </div>
         </div>
 
         <div class="panel chart-card">
@@ -452,21 +421,9 @@
                 <span>Inventory + Rental Live Chart</span>
             </div>
 
-            <div class="chart-wrapper">
-                <canvas id="inventoryRentalChart"
-                    data-inventory-labels='{{ inventoryChartData.labels|json_encode|raw }}'
-                    data-inventory-values='{{ inventoryChartData.values|json_encode|raw }}'
-                    data-rental-labels='{{ rentalChartData.labels|json_encode|raw }}'
-                    data-rental-values='{{ rentalChartData.values|json_encode|raw }}'>
-                </canvas>
+           
             </div>
 
-            <div class="chart-footer">
-                <span class="chart-pill">Inventory available: {{ inventoryChartData.values[0] }}</span>
-                <span class="chart-pill">Rentable: {{ inventoryChartData.values[1] }}</span>
-                <span class="chart-pill">Rented out: {{ inventoryChartData.values[2] }}</span>
-                <span class="chart-pill">Overdue rentals: {{ rentalStats.overdue }}</span>
-            </div>
         </div>
     </section>
 

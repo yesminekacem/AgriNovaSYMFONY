@@ -9,21 +9,21 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Table(name: 'post_reaction')]
 class PostReaction
 {
-
+    #[ORM\Id]
     #[ORM\ManyToOne(targetEntity: Post::class)]
-    #[ORM\JoinColumn(name: 'id_post', referencedColumnName: 'id_post', nullable: false)]
+    #[ORM\JoinColumn(name: 'id_post', referencedColumnName: 'id_post', nullable: false, onDelete: 'CASCADE')]
     private ?Post $idPost = null;
 
+    #[ORM\Id]
     #[ORM\ManyToOne(targetEntity: User::class)]
-    #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', nullable: false)]
+    #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
     private ?User $user = null;
 
-    #[ORM\Column(type: 'string')]
+    #[ORM\Column(type: 'string', length: 10)]
     private string $reaction;
 
-    #[ORM\Column(type: 'datetime', nullable: true)]
+    #[ORM\Column(name: 'created_at', type: 'datetime', nullable: true)]
     private ?\DateTimeInterface $createdAt = null;
-
 
     public function getIdPost(): ?Post
     {
@@ -68,5 +68,4 @@ class PostReaction
         $this->createdAt = $createdAt;
         return $this;
     }
-
 }

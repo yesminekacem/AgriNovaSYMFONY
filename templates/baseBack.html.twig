@@ -84,8 +84,12 @@
         <div class="sidebar-footer">
             <div class="user-card">
                 <div class="user-avatar">
-                    {{ app.user ? app.user.username|first|upper : 'A' }}
-                </div>
+    {% if app.user and app.user.profileImage %}
+        <img src="{{ asset('uploads/profile_images/' ~ app.user.profileImage) }}" alt="Profile">
+    {% else %}
+        {{ app.user ? app.user.username|first|upper : 'A' }}
+    {% endif %}
+</div>
                 <div class="user-info">
                     <p>{{ app.user ? app.user.username : 'Admin' }}</p>
                     <span>Administrator</span>
@@ -123,8 +127,14 @@
 
                 {% if app.user %}
                     <div class="header-avatar" title="{{ app.user.username }}">
-                        <a href="{{ path('app_profile') }}" style="color:inherit;text-decoration:none">{{ app.user.username|first|upper }}</a>
-                    </div>
+    <a href="{{ path('app_profile') }}" style="display:block;">
+        {% if app.user and app.user.profileImage %}
+            <img src="{{ asset('uploads/profile_images/' ~ app.user.profileImage) }}" alt="Profile">
+        {% else %}
+            <span>{{ app.user.username|first|upper }}</span>
+        {% endif %}
+    </a>
+</div>
                     <form id="logout-form" action="{{ path('app_logout') }}" method="post" style="display:inline;margin-left:12px;">
                         <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}">
                         <button class="btn btn-logout" type="submit">Logout</button>

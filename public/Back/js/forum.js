@@ -37,27 +37,44 @@ function applyFilters() {
 }
 
 /* ── Like toggle ── */
-function toggleLike(btn, e) {
-    e.stopPropagation();
-    const countSpan = btn.querySelector('.like-count');
-    let count = parseInt(btn.dataset.count, 10) || 0;
 
-    if (btn.classList.contains('liked')) {
-        btn.classList.remove('liked');
-        count = Math.max(0, count - 1);
-    } else {
-        btn.classList.add('liked');
-        count++;
-        btn.querySelector('svg').animate(
-            [{ transform: 'scale(1)' }, { transform: 'scale(1.4)' }, { transform: 'scale(1)' }],
-            { duration: 300, easing: 'ease-out' }
-        );
+async function reactToPostBack(postId, reaction) {
+    const formData = new FormData();
+    formData.append('reaction', reaction);
+
+    const response = await fetch(`/forumBack/react/${postId}`, {
+        method: 'POST',
+        body: formData,
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    });
+
+    const data = await response.json();
+    if (!data.success) return;
+
+    const label = document.getElementById(`reaction-label-${postId}`);
+    const total = document.getElementById(`reaction-total-${postId}`);
+    const btn = label ? label.closest('.btn-reaction-main') : null;
+
+    if (label) label.textContent = formatReactionLabel(data.userReaction);
+    if (total) total.textContent = data.totalCount;
+
+    if (btn) {
+        if (data.userReaction) btn.classList.add('reacted');
+        else btn.classList.remove('reacted');
     }
-    btn.dataset.count = count;
-    countSpan.textContent = count;
 }
-
 /* ── View post modal ── */
+function formatReactionLabel(reaction) {
+    switch (reaction) {
+        case 'LIKE': return '👍 Like';
+        case 'LOVE': return '❤️ Love';
+        case 'HAHA': return '😂 Haha';
+        case 'WOW': return '😮 Wow';
+        case 'SAD': return '😢 Sad';
+        case 'ANGRY': return '😡 Angry';
+        default: return 'React';
+    }
+}
 function openViewModal(id) {
     const post = POSTS_DATA[id];
     if (!post) return;
@@ -71,7 +88,7 @@ function openViewModal(id) {
            const isCommentOwner = CURRENT_USER_ID !== null && Number(c.authorId) === Number(CURRENT_USER_ID);
 
 items += `
-<div class="comment-item">
+<div class="comment-item ${c.hasBadWordMask ? 'comment-flagged' : ''}">
     <div class="comment-header">
         <span class="comment-author">${escapeHtml(c.author)}</span>
         <div style="position:relative;">
@@ -83,6 +100,11 @@ items += `
             </div>
         </div>
     </div>
+
+    ${c.hasBadWordMask ? `
+        <div class="comment-flag-badge">🚩 Censored comment</div>
+    ` : ''}
+
     <div class="comment-time">${escapeHtml(c.createdAt)}</div>
     <div class="comment-content">${escapeHtml(c.content)}</div>
 </div>`;
@@ -126,24 +148,70 @@ items += `
 
         <div class="view-modal-body">${escapeHtml(post.content)}</div>
 
-        <div class="view-modal-footer">
-            <button type="button" class="btn-like" onclick="toggleLike(this, event)" data-count="0">
-                <svg viewBox="0 0 24 24">
-                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                </svg>
-                <span class="like-count">0</span>
-            </button>
+<div style="margin-top:16px;">
+    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px;">
+    <button type="button"
+            class="btn-read-more"
+            onclick="translatePostBack(${id}, 'en')">
+        Translate to English
+    </button>
 
-            ${isOwner ? `
-            <button type="button" class="btn-update" onclick="openEditModal(${post.id})">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 20h9"/>
-                    <path d="M16.5 3.5a2.12 2.12 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>
-                </svg>
-                Update
-            </button>
-            ` : ''}
+    <button type="button"
+            class="btn-read-more"
+            onclick="translatePostBack(${id}, 'fr')">
+        Translate to French
+    </button>
+
+    <button type="button"
+            class="btn-read-more"
+            onclick="translatePostBack(${id}, 'ar')">
+        Translate to Arabic
+    </button>
+</div>
+
+    <div id="translated-box-${id}" style="display:none; background:#f3f4f6; padding:10px; border-radius:10px;">
+        <div id="translated-label-${id}" style="font-weight:bold;"></div>
+        <div id="translated-content-${id}"></div>
+    </div>
+</div>
+
+       <div class="view-modal-footer">
+    <div class="reaction-box">
+        <button
+            type="button"
+            class="btn-reaction-main ${post.userReaction ? 'reacted' : ''}"
+            onclick="toggleReactionMenu(event, ${id})"
+        >
+            <span id="reaction-label-${id}">
+                ${formatReactionLabel(post.userReaction)}
+            </span>
+            <span id="reaction-total-${id}"
+                  onclick="event.stopPropagation(); openReactionsModalBack(${id})"
+                  style="cursor:pointer;">
+                ${post.totalReactions || ''}
+            </span>
+        </button>
+
+        <div class="reaction-menu" id="reaction-menu-${id}">
+            <button type="button" onclick="reactToPostBack(${id}, 'LIKE')">👍</button>
+            <button type="button" onclick="reactToPostBack(${id}, 'LOVE')">❤️</button>
+            <button type="button" onclick="reactToPostBack(${id}, 'HAHA')">😂</button>
+            <button type="button" onclick="reactToPostBack(${id}, 'WOW')">😮</button>
+            <button type="button" onclick="reactToPostBack(${id}, 'SAD')">😢</button>
+            <button type="button" onclick="reactToPostBack(${id}, 'ANGRY')">😡</button>
         </div>
+    </div>
+
+    ${isOwner ? `
+    <button type="button" class="btn-update" onclick="openEditModal(${id})">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 20h9"/>
+            <path d="M16.5 3.5a2.12 2.12 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>
+        </svg>
+        Update
+    </button>
+    ` : ''}
+</div>
 
         ${commentsHtml}
 
@@ -169,7 +237,7 @@ function escapeHtml(str) {
 }
 
 function openNewPost() { document.getElementById('newPostModal').classList.add('open'); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
 
 function openEditModal(id) {
     const post = POSTS_DATA[id];
@@ -188,42 +256,40 @@ function toggleCommentMenu(postId, index) {
     menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
 }
 
-function deleteComment(postId, index) {
-    const comment = POSTS_DATA[postId].comments[index];
-    if (!confirm("Delete this comment?")) return;
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = `/forumBack/comment/delete/${comment.id}`;
-    document.body.appendChild(form);
-    form.submit();
-}
+
+let editCommentId = null;
 
 function editComment(postId, index) {
     const comment = POSTS_DATA[postId].comments[index];
-    const newContent = prompt("Edit your comment:", comment.content);
-    if (!newContent) return;
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = `/forumBack/comment/update/${comment.id}`;
-    const input = document.createElement('input');
-    input.name = 'content';
-    input.value = newContent;
-    form.appendChild(input);
-    document.body.appendChild(form);
-    form.submit();
+    if (!comment) return;
+
+    editCommentId = comment.id;
+    document.getElementById('editCommentContent').value = comment.content;
+    document.getElementById('editCommentForm').action = `/forumBack/comment/update/${comment.id}`;
+    document.getElementById('editCommentModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+
+    // optional: close the small 3-dots menu
+    const menu = document.getElementById(`menu-${postId}-${index}`);
+    if (menu) menu.style.display = 'none';
 }
 
 /* Close on overlay click */
 document.querySelectorAll('.modal-overlay').forEach(overlay => {
     overlay.addEventListener('click', e => {
-        if (e.target === overlay) overlay.classList.remove('open');
+        if (e.target === overlay && overlay.id) {
+            closeModal(overlay.id);
+        }
     });
 });
 
 /* Close on ESC */
 document.addEventListener('keydown', e => {
-    if (e.key === 'Escape')
-        document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+    if (e.key === 'Escape') {
+        document.querySelectorAll('.modal-overlay.open').forEach(m => {
+            if (m.id) closeModal(m.id);
+        });
+    }
 });
 
 /* Close comment dropdowns on outside click */
@@ -390,3 +456,344 @@ document.addEventListener('DOMContentLoaded', function () {
         showToast(msg, 'success');
     }
 });
+const editCommentForm = document.getElementById('editCommentForm');
+if (editCommentForm) {
+    editCommentForm.addEventListener('submit', function (e) {
+        const content = document.getElementById('editCommentContent').value.trim();
+
+        this.querySelectorAll('.modal-inline-error').forEach(el => el.remove());
+
+        if (!content) {
+            e.preventDefault();
+            showModalErrors(this, ['Comment cannot be empty.']);
+            return;
+        }
+
+        if (content.length < 2) {
+            e.preventDefault();
+            showModalErrors(this, ['Comment must be at least 2 characters.']);
+            return;
+        }
+    });
+}
+
+let deleteFormToSubmit = null;
+let deleteCommentUrl = null;
+
+
+function openDeleteModal(button) {
+     console.log('delete clicked');
+    deleteFormToSubmit = button.closest('form');
+    document.getElementById('deleteConfirmModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+
+function confirmDeletePost() {
+    if (deleteFormToSubmit) {
+        deleteFormToSubmit.submit();
+    }
+}
+
+function deleteComment(postId, index) {
+    const comment = POSTS_DATA[postId].comments[index];
+    if (!comment) return;
+
+    deleteCommentUrl = `/forumBack/comment/delete/${comment.id}`;
+    document.getElementById('deleteCommentModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+
+function confirmDeleteComment() {
+    if (!deleteCommentUrl) return;
+
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = deleteCommentUrl;
+    document.body.appendChild(form);
+    form.submit();
+}
+
+function closeModal(id) {
+    const modal = document.getElementById(id);
+    if (modal) modal.classList.remove('open');
+
+    if (id === 'deleteConfirmModal') {
+        deleteFormToSubmit = null;
+    }
+
+    if (id === 'deleteCommentModal') {
+        deleteCommentUrl = null;
+    }
+
+    if (id === 'editCommentModal') {
+        editCommentId = null;
+        const form = document.getElementById('editCommentForm');
+        if (form) form.querySelectorAll('.modal-inline-error').forEach(el => el.remove());
+    }
+
+    document.body.style.overflow = '';
+}
+function toggleReactionMenu(event, postId) {
+    event.stopPropagation();
+
+    const menu = document.getElementById(`reaction-menu-${postId}`);
+
+    // close all menus first
+    document.querySelectorAll('.reaction-menu').forEach(m => {
+        if (m !== menu) m.classList.remove('open');
+    });
+
+    // toggle current
+    menu.classList.toggle('open');
+}
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.reaction-box')) {
+        document.querySelectorAll('.reaction-menu').forEach(menu => {
+            menu.classList.remove('open');
+        });
+    }
+});
+async function reactToPostBack(postId, reaction) {
+    const formData = new FormData();
+    formData.append('reaction', reaction);
+
+    const response = await fetch(`/forumBack/react/${postId}`, {
+        method: 'POST',
+        body: formData,
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    });
+
+    const data = await response.json();
+    if (!data.success) return;
+
+    const label = document.getElementById(`reaction-label-${postId}`);
+    const total = document.getElementById(`reaction-total-${postId}`);
+    const btn = label ? label.closest('.btn-reaction-main') : null;
+
+    if (label) label.textContent = formatReactionLabel(data.userReaction);
+    if (total) total.textContent = data.totalCount;
+
+    if (btn) {
+        if (data.userReaction) btn.classList.add('reacted');
+        else btn.classList.remove('reacted');
+    }
+
+    // ✅ CLOSE MENU AFTER CLICK
+    document.getElementById(`reaction-menu-${postId}`).classList.remove('open');
+}
+function getReactionEmoji(reaction) {
+    switch (reaction) {
+        case 'LIKE': return '👍';
+        case 'LOVE': return '❤️';
+        case 'HAHA': return '😂';
+        case 'WOW': return '😮';
+        case 'SAD': return '😢';
+        case 'ANGRY': return '😡';
+        default: return '•';
+    }
+}
+
+function renderReactionsListBack(reactions, filter = 'ALL') {
+    const list = document.getElementById('reactionsList');
+    if (!list) return;
+
+    const filtered = filter === 'ALL'
+        ? reactions
+        : reactions.filter(item => item.reaction === filter);
+
+    if (filtered.length === 0) {
+        list.innerHTML = `<p style="color:#888;">No reactions found.</p>`;
+        return;
+    }
+
+    list.innerHTML = filtered.map(item => `
+        <div style="
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            padding:10px 0;
+            border-bottom:1px solid #eee;
+            gap:12px;
+        ">
+            <div style="display:flex;align-items:center;gap:10px;">
+                <div style="
+                    width:38px;
+                    height:38px;
+                    border-radius:50%;
+                    overflow:hidden;
+                    background:#e5e7eb;
+                    display:flex;
+                    align-items:center;
+                    justify-content:center;
+                    font-weight:600;
+                    color:#374151;
+                    flex-shrink:0;
+                ">
+                    ${item.profileImage
+                        ? `<img src="/${item.profileImage}" alt="${escapeHtml(item.author)}" style="width:100%;height:100%;object-fit:cover;">`
+                        : escapeHtml(item.author).slice(0, 2).toUpperCase()
+                    }
+                </div>
+                <div>${escapeHtml(item.author)}</div>
+            </div>
+
+            <div style="font-weight:600;">
+                ${getReactionEmoji(item.reaction)}
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderReactionFiltersBack(reactions) {
+    const container = document.getElementById('reactionsFilters');
+    if (!container) return;
+
+    const counts = {
+        LIKE: 0,
+        LOVE: 0,
+        HAHA: 0,
+        WOW: 0,
+        SAD: 0,
+        ANGRY: 0
+    };
+
+    reactions.forEach(item => {
+        if (counts[item.reaction] !== undefined) {
+            counts[item.reaction]++;
+        }
+    });
+
+    const filters = [
+        { key: 'ALL', label: `All ${reactions.length}` },
+        { key: 'LIKE', label: `👍 ${counts.LIKE}` },
+        { key: 'LOVE', label: `❤️ ${counts.LOVE}` },
+        { key: 'HAHA', label: `😂 ${counts.HAHA}` },
+        { key: 'WOW', label: `😮 ${counts.WOW}` },
+        { key: 'SAD', label: `😢 ${counts.SAD}` },
+        { key: 'ANGRY', label: `😡 ${counts.ANGRY}` }
+    ];
+
+    container.innerHTML = filters.map(filter => `
+        <button type="button"
+                data-filter="${filter.key}"
+                style="
+                    padding:6px 12px;
+                    border:1px solid #d1d5db;
+                    border-radius:999px;
+                    background:#fff;
+                    cursor:pointer;
+                ">
+            ${filter.label}
+        </button>
+    `).join('');
+
+    container.querySelectorAll('button').forEach(button => {
+        button.addEventListener('click', () => {
+            renderReactionsListBack(reactions, button.dataset.filter);
+
+            container.querySelectorAll('button').forEach(btn => {
+                btn.style.background = '#fff';
+                btn.style.color = '#111';
+            });
+
+            button.style.background = '#111';
+            button.style.color = '#fff';
+        });
+    });
+
+    const allBtn = container.querySelector('button[data-filter="ALL"]');
+    if (allBtn) {
+        allBtn.style.background = '#111';
+        allBtn.style.color = '#fff';
+    }
+}
+
+async function openReactionsModalBack(postId) {
+    const list = document.getElementById('reactionsList');
+    const filters = document.getElementById('reactionsFilters');
+
+    if (list) list.innerHTML = `<p style="color:#888;">Loading...</p>`;
+    if (filters) filters.innerHTML = '';
+
+    document.getElementById('reactionsModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+
+    try {
+        const response = await fetch(`/forumBack/reactions/${postId}`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+
+        const raw = await response.text();
+        console.log('BACK REACTIONS RAW RESPONSE:', raw);
+
+        let data;
+        try {
+            data = JSON.parse(raw);
+        } catch (e) {
+            console.error('Invalid JSON response:', raw);
+            if (list) list.innerHTML = `<p style="color:red;">Server returned invalid JSON.</p>`;
+            return;
+        }
+
+        if (!data.success) {
+            if (list) list.innerHTML = `<p style="color:red;">${escapeHtml(data.message || 'Failed to load reactions.')}</p>`;
+            return;
+        }
+
+        const reactions = data.reactions || [];
+        renderReactionFiltersBack(reactions);
+        renderReactionsListBack(reactions, 'ALL');
+    } catch (error) {
+        console.error(error);
+        if (list) list.innerHTML = `<p style="color:red;">Error loading reactions.</p>`;
+    }
+}
+async function translatePostBack(postId, language) {
+    const box = document.getElementById(`translated-box-${postId}`);
+    const label = document.getElementById(`translated-label-${postId}`);
+    const content = document.getElementById(`translated-content-${postId}`);
+
+    box.style.display = 'block';
+    label.textContent = 'Translating...';
+    content.textContent = '';
+
+    try {
+        const formData = new FormData();
+        formData.append('language', language);
+
+        const response = await fetch(`/forumBack/translate/${postId}`, {
+            method: 'POST',
+            body: formData
+        });
+
+       const raw = await response.text();
+console.log('TRANSLATE BACK RAW RESPONSE:', raw);
+
+let data;
+try {
+    data = JSON.parse(raw);
+} catch (e) {
+    label.textContent = 'Error';
+    content.textContent = 'Server returned invalid JSON';
+    return;
+}
+
+if (!data.success) {
+    label.textContent = 'Error';
+    content.textContent = data.message || 'Translation failed';
+    console.error('Translation backend error:', data);
+    return;
+}
+
+        const names = { en: 'English', fr: 'French', ar: 'Arabic' };
+
+        label.textContent = 'Translated to ' + names[data.language];
+        content.textContent = data.translatedText;
+
+    } catch (e) {
+        label.textContent = 'Error';
+        content.textContent = 'Translation failed';
+    }
+}
