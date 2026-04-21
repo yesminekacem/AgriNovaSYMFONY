@@ -4,15 +4,23 @@ namespace App\Controller;
 
 use App\Repository\InventoryRepository;
 use App\Repository\RentalRepository;
+use App\Service\AgriAiCopilotService;
 use App\Service\AlertService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
 class DashBoardController extends AbstractController
 {
     #[Route('/DashBoard', name: 'app_dashboard')]
-    public function index(InventoryRepository $inventoryRepository, RentalRepository $rentalRepository, AlertService $alertService): Response
+    public function index(
+        Request $request,
+        InventoryRepository $inventoryRepository,
+        RentalRepository $rentalRepository,
+        AlertService $alertService,
+        AgriAiCopilotService $agriAiCopilotService
+    ): Response
     {
         // ---- Dashboard data for crops, inventory, and rentals ----
 
@@ -106,6 +114,47 @@ class DashBoardController extends AbstractController
             ],
         ];
 
+        $alerts = $alertService->getAlerts();
+        $alertCount = count($alerts);
+        $criticalAlertCount = count(array_filter($alerts, static fn (array $alert): bool => ($alert['severity'] ?? null) === 'danger'));
+
+        $operationalPulse = [
+            'inventoryUtilization' => $inventoryStats['rentable'] > 0
+                ? (int) round(($inventoryStats['rentedOut'] / max(1, $inventoryStats['rentable'])) * 100)
+                : 0,
+            'overdueRate' => $rentalStats['total'] > 0
+                ? (int) round(($rentalStats['overdue'] / max(1, $rentalStats['total'])) * 100)
+                : 0,
+            'completionRate' => $rentalStats['total'] > 0
+                ? (int) round(($rentalStats['completed'] / max(1, $rentalStats['total'])) * 100)
+                : 0,
+            'revenue' => (float) $rentalStats['revenue'],
+        ];
+
+        $aiResult = null;
+        if ($request->query->getBoolean('generateAi')) {
+            $aiResult = $agriAiCopilotService->generateDashboardBrief([
+                'generated_at' => (new \DateTimeImmutable())->format(DATE_ATOM),
+                'inventory' => $inventoryStats,
+                'rentals' => $rentalStats,
+                'alerts' => [
+                    'total' => $alertCount,
+                    'critical' => $criticalAlertCount,
+                    'top' => array_map(
+                        static fn (array $alert): array => [
+                            'title' => (string) ($alert['title'] ?? ''),
+                            'message' => (string) ($alert['message'] ?? ''),
+                            'severity' => (string) ($alert['severity'] ?? 'info'),
+                        ],
+                        array_slice($alerts, 0, 5)
+                    ),
+                ],
+                'operational_pulse' => $operationalPulse,
+                'crop_yields' => $cropYields,
+                'recent_transactions' => $transactions,
+            ]);
+        }
+
         return $this->render('Back/dashboard.html.twig', [
             'stats' => $stats,
             'cropYields' => $cropYields,
@@ -114,9 +163,14 @@ class DashBoardController extends AbstractController
             'rentalStats' => $rentalStats,
             'inventoryChartData' => $inventoryChartData,
             'rentalChartData' => $rentalChartData,
-            'alerts' => $alertService->getAlerts(),
-            'alertCount' => $alertService->getAlertCount(),
-            'criticalAlertCount' => $alertService->getCriticalAlertCount(),
+            'alerts' => $alerts,
+            'alertCount' => $alertCount,
+            'criticalAlertCount' => $criticalAlertCount,
+            'operationalPulse' => $operationalPulse,
+            'aiResult' => $aiResult,
+            'aiConfigured' => $agriAiCopilotService->isConfigured(),
+            'aiProvider' => $agriAiCopilotService->getProviderLabel(),
+            'aiModel' => $agriAiCopilotService->getModel(),
         ]);
     }
 }
