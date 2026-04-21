@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Crop {{ crop.cropId }}</title>
+    <style>
+        body { font-family: DejaVu Sans, sans-serif; }
+        table { width:100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 6px; border: 1px solid #ddd; }
+        h1 { text-align: center; }
+    </style>
+</head>
+<body>
+    <h1>Crop #{{ crop.cropId }}</h1>
+    <table>
+        <tbody>
+            <tr><th>Crop_id</th><td>{{ crop.cropId }}</td></tr>
+            <tr><th>Name</th><td>{{ crop.name }}</td></tr>
+            <tr><th>Type</th><td>{{ crop.type }}</td></tr>
+            <tr><th>Variety</th><td>{{ crop.variety }}</td></tr>
+            <tr><th>Planting_date</th><td>{{ crop.plantingDate ? crop.plantingDate|date('Y-m-d') : '' }}</td></tr>
+            <tr><th>Expected_harvest_date</th><td>{{ crop.expectedHarvestDate ? crop.expectedHarvestDate|date('Y-m-d') : '' }}</td></tr>
+            <tr><th>Growth_stage</th><td>{{ crop.growthStage }}</td></tr>
+            <tr><th>Area_size</th><td>{{ crop.areaSize }}</td></tr>
+            <tr><th>Status</th><td>{{ crop.status }}</td></tr>
+        </tbody>
+    </table>
+</body>
+</html>

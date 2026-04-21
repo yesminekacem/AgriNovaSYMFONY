@@ -11,6 +11,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Knp\Snappy\Pdf;
 use Symfony\Component\String\Slugger\SluggerInterface;
 
 #[Route('/crops')]
@@ -153,4 +154,39 @@ public function table(Request $request, CropRepository $cropRepository): Respons
         'crops' => $query->getQuery()->getResult(),
     ]);
 }
+
+    #[Route('/{crop_id}/pdf', name: 'app_crop_pdf', methods: ['GET'], requirements: ['crop_id' => '\\d+'])]
+    public function pdf(#[MapEntity(expr: 'repository.find(crop_id)')] Crop $crop, Pdf $knpSnappy): Response
+    {
+        // Render HTML for the PDF
+        $html = $this->renderView('Front/crop/pdf_crop.html.twig', [
+            'crop' => $crop,
+        ]);
+
+        // Generate PDF via KnpSnappy (wkhtmltopdf)
+        $pdfOutput = $knpSnappy->getOutputFromHtml($html);
+
+        return new Response($pdfOutput, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="crop_' . $crop->getCropId() . '.pdf"',
+        ]);
+    }
+
+    #[Route('/pdf/all', name: 'app_crop_pdf_all', methods: ['GET'])]
+    public function pdfAll(CropRepository $cropRepository, Pdf $knpSnappy): Response
+    {
+        $crops = $cropRepository->findAll();
+
+        $html = $this->renderView('Back/crop/pdf_all.html.twig', [
+            'crops' => $crops,
+        ]);
+
+        $pdfOutput = $knpSnappy->getOutputFromHtml($html);
+
+        return new Response($pdfOutput, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="crops_all.pdf"',
+        ]);
+    }
+
 }
