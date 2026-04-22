@@ -16,7 +16,7 @@ class ProductListingRepository extends ServiceEntityRepository
     /**
      * @return ProductListing[] Returns an array of ProductListing objects
      */
-    public function searchMarketplace(?string $query, ?string $excludeUserId): array
+    public function searchMarketplace(?string $query, ?string $excludeUserId, ?string $category = null): array
     {
         $qb = $this->createQueryBuilder('p');
 
@@ -28,6 +28,11 @@ class ProductListingRepository extends ServiceEntityRepository
         if ($query) {
             $qb->andWhere('p.productName LIKE :query OR p.description LIKE :query OR p.category LIKE :query')
                ->setParameter('query', '%' . $query . '%');
+        }
+
+        if ($category) {
+            $qb->andWhere('p.category = :category')
+               ->setParameter('category', $category);
         }
 
         return $qb->getQuery()->getResult();

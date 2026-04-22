@@ -131,6 +131,11 @@ class CartController extends AbstractController
             $order->setStatus('Pending');
             $order->setTotalPrice($totalPrice);
             $order->setCreatedAt(new \DateTime());
+
+            $lat = $request->request->get('delivery_lat');
+            $lng = $request->request->get('delivery_lng');
+            $order->setDeliveryLat($lat !== '' && $lat !== null ? (float) $lat : null);
+            $order->setDeliveryLng($lng !== '' && $lng !== null ? (float) $lng : null);
             
             $em->persist($order);
             $em->flush();

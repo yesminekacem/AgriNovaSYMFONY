@@ -113,9 +113,10 @@ final class ProductController extends AbstractController
         $user = $this->getUser();
         $userId = $user ? (string)$user->getEmail() : null;
         $query = $request->query->get('q');
+        $category = $request->query->get('category');
 
         // Get matching products except those belonging to current user
-        $products = $repository->searchMarketplace($query, $userId);
+        $products = $repository->searchMarketplace($query, $userId, $category ?: null);
 
         // If it's an AJAX request (live search), return only the products grid
         if ($request->headers->get('X-Requested-With') === 'XMLHttpRequest') {
@@ -126,6 +127,7 @@ final class ProductController extends AbstractController
 
         return $this->render('product/marketplace.html.twig', [
             'products' => $products,
+            'currentCategory' => $category,
         ]);
     }
 
