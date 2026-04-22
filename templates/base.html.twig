@@ -70,7 +70,7 @@
         </ul>
 
         <div class="sidebar-footer">
-            <a href="{{ path('app_profile') }}" style="display:flex;text-decoration:none;color:inherit;">
+            <a id="sidebarProfileLink" href="{{ path('app_profile') }}" onclick="window.location.href='{{ path('app_profile') }}'" style="display:flex;text-decoration:none;color:inherit;">
                 <div class="user-card">
                     <div class="user-avatar">
                         {{ app.user ? app.user.username|first|upper : 'A' }}
@@ -111,9 +111,9 @@
                     <span class="notif-dot"></span>
                 </button>
                 {% if app.user %}
-                    <div class="header-avatar" title="{{ app.user.username }}">
-                        <a href="{{ path('app_profile') }}" style="color:inherit;text-decoration:none">{{ app.user.username|first|upper }}</a>
-                    </div>
+                    <a id="headerProfileLink" class="header-avatar" href="{{ path('app_profile') }}" onclick="window.location.href='{{ path('app_profile') }}'" title="{{ app.user.username }}" style="color:inherit;text-decoration:none;display:inline-flex;align-items:center;padding:6px;border-radius:6px">
+                        <span style="display:inline-block;width:34px;height:34px;border-radius:999px;background:#e6f5ea;color:#2d7a45;display:flex;align-items:center;justify-content:center;font-weight:700">{{ app.user.username|first|upper }}</span>
+                    </a>
                     <form id="logout-form" action="{{ path('app_logout') }}" method="post" style="display:inline;margin-left:12px;">
                         <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}">
                         <button class="btn btn-logout" type="submit">Logout</button>
@@ -133,6 +133,28 @@
     </div>
 
     <script src="{{ asset('Front/js/base.js') }}"></script>
+    <script>
+        // Ensure profile links navigate even if other handlers prevent default
+        (function(){
+            try{
+                var header = document.getElementById('headerProfileLink');
+                var side = document.getElementById('sidebarProfileLink');
+                function ensureNav(el){
+                    if(!el) return;
+                    el.addEventListener('click', function(e){
+                        // If default prevented, force navigation
+                        if(e.defaultPrevented){
+                            window.location.href = el.getAttribute('href');
+                        }
+                        // Also ensure navigation on long-press or other strange cases
+                        setTimeout(function(){ if(document.location.pathname !== new URL(el.href, document.baseURI).pathname) { window.location.href = el.getAttribute('href'); } }, 250);
+                    }, {passive: true});
+                }
+                ensureNav(header);
+                ensureNav(side);
+            }catch(e){/* no-op */}
+        })();
+    </script>
     {% block javascripts %}{% endblock %}
 
 </body>

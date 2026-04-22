@@ -8,6 +8,12 @@
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
     profile_images_directory: '%kernel.project_dir%/public/uploads/profile_images'
+    # Face API configuration (wrapped in a parameter so it can be replaced in env or services)
+    face_api_options:
+        provider: '%env(FACE_API_PROVIDER)%'
+        api_key: '%env(FACEPP_API_KEY)%'
+        api_secret: '%env(FACEPP_API_SECRET)%'
+        url: '%env(FACE_API_URL)%'
 
 services:
     # default configuration for services in *this* file
@@ -32,6 +38,13 @@ services:
         public: true
         autowire: true
         autoconfigure: true
+
+    # Face API client service
+    App\Service\FaceApiClient:
+        arguments:
+            $client: '@http_client'
+            $options: '%face_api_options%'
+        public: false
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

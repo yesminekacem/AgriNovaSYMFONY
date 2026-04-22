@@ -313,6 +313,16 @@
 
 <div class="dashboard-page">
 
+    {# provide safe defaults so template doesn't crash when controller doesn't pass these vars #}
+    {% set stats = stats|default([]) %}
+    {% set cropYields = cropYields|default([]) %}
+    {% set categoryStats = categoryStats|default([]) %}&
+    {% set inventoryStats = inventoryStats|default({'total': 0, 'rentable': 0, 'rentedOut': 0, 'lowStock': 0}) %}
+    {% set rentalStats = rentalStats|default({'total': 0, 'active': 0, 'pending': 0, 'overdue': 0}) %}
+    {% set inventoryChartData = inventoryChartData|default({'labels': [], 'values': [0,0,0]}) %}
+    {% set rentalChartData = rentalChartData|default({'labels': [], 'values': []}) %}
+    {% set totalPosts = totalPosts|default(0) %}
+
     <section class="hero-banner">
         <div class="hero-content">
             <h1 class="hero-title">Welcome to AGRINOVA</h1>

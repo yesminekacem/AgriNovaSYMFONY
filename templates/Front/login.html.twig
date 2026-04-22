@@ -179,6 +179,15 @@
         }
 
         .card-footer a:hover { text-decoration: underline; }
+
+        /* Face overlay styling */
+        .face-overlay { display:none; position:fixed; inset:0; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); z-index:12000 }
+        .face-overlay.active { display:flex }
+        .face-panel { background:#fff; padding:16px; border-radius:12px; max-width:480px; width:95%; box-shadow:0 10px 40px rgba(0,0,0,0.4); }
+        .face-panel .face-video { width:100%; border-radius:8px; background:#000 }
+        .face-panel .face-actions { margin-top:10px; display:flex; justify-content:flex-end; gap:8px }
+        .face-panel .face-save-btn { background:var(--green-mid); color:#fff; border:none; padding:10px 12px; border-radius:8px; cursor:pointer }
+        .face-panel .face-cancel-btn { background:#eee; border:none; padding:10px 12px; border-radius:8px; cursor:pointer }
     </style>
 </head>
 <body>
@@ -251,9 +260,64 @@
     Don't have an account? <a href="{{ path('app_register') }}">Sign up</a>
 </div>
 
+            <div style="text-align:center;margin-top:12px">
+                <button id="openFaceBtn" class="card-footer" type="button" style="background:none;border:none;color:var(--green-mid);cursor:pointer;font-weight:600">Or login with Face ID</button>
+            </div>
+
         </div>
 
     </div>
+
+    <!-- Face overlay (used for login detection) -->
+    <div id="faceOverlay" class="face-overlay" aria-hidden="true">
+        <div class="face-panel">
+            <button id="faceCancelBtn" class="face-cancel-btn" style="float:right">✕</button>
+            <h3 style="margin:0 0 10px">Face Login</h3>
+            <div class="face-camera-widget" data-detect-url="{{ path('app_login_face_detect') }}" data-select-url="{{ path('app_login_face_select') }}">
+                <form class="face-detect-form" action="{{ path('app_login_face_detect') }}" method="post">
+                    <video class="face-video" autoplay playsinline></video>
+                    <canvas class="face-canvas" style="display:none"></canvas>
+                    <input type="hidden" name="face_image_base64" value="">
+                    <div class="face-actions">
+                        <button type="button" class="face-save-btn">Use Face</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ asset('Front/js/face.js') }}"></script>
+    <script>
+        (function(){
+            const openBtn = document.getElementById('openFaceBtn');
+            const overlay = document.getElementById('faceOverlay');
+            const cancel = document.getElementById('faceCancelBtn');
+            const widget = overlay ? overlay.querySelector('.face-camera-widget') : null;
+
+            function open(){
+                if(!overlay || !widget) return;
+                overlay.classList.add('active');
+                // ensure widget is visible, then start detection
+                try{
+                    widget.style.display = 'block';
+                    if(widget.__faceControls) widget.__faceControls.start({detect:true});
+                    else {
+                        // in case widget not yet initialized, wait a short time
+                        setTimeout(()=>{ if(widget.__faceControls) widget.__faceControls.start({detect:true}); }, 200);
+                    }
+                }catch(e){console.error(e)}
+            }
+            function close(){
+                if(!overlay || !widget) return;
+                overlay.classList.remove('active');
+                try{ if(widget.__faceControls) widget.__faceControls.stop(); }catch(e){}
+            }
+
+            if(openBtn) openBtn.addEventListener('click', open);
+            if(cancel) cancel.addEventListener('click', close);
+            if(overlay) overlay.addEventListener('click', function(e){ if(e.target===overlay) close(); });
+        })();
+    </script>
 
 </body>
 </html>

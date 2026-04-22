@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Face Login – AGRINOVA</title>
+    <link rel="stylesheet" href="{{ asset('Front/css/login.css') }}">
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <h2>Face ID Login</h2>
+
+        {% for flash in app.flashes('error') %}
+            <div class="alert alert-error">{{ flash }}</div>
+        {% endfor %}
+        {% for flash in app.flashes('success') %}
+            <div class="alert alert-success">{{ flash }}</div>
+        {% endfor %}
+
+        <form method="post" action="{{ path('app_login_face') }}" enctype="multipart/form-data">
+            <div class="field">
+                <label for="email">Email</label>
+                <input id="email" name="email" type="email" required>
+            </div>
+
+            <div class="field">
+                <label>Use camera to capture your face</label>
+                <div class="face-camera-widget" data-auto-submit="0">
+                    <video class="face-video" autoplay playsinline style="width:100%;max-width:360px;border-radius:8px;background:#000"></video>
+                    <canvas class="face-canvas" style="display:none"></canvas>
+                    <img class="face-preview-img" src="" alt="preview" style="display:block;margin-top:8px;width:120px;height:120px;border-radius:999px;object-fit:cover;"/>
+                    <div style="margin-top:8px;display:flex;gap:8px">
+                        <button type="button" class="face-start-btn btn">Start camera</button>
+                        <button type="button" class="face-stop-btn btn">Stop</button>
+                        <button type="button" class="face-capture-btn btn">Capture</button>
+                    </div>
+                    <input type="hidden" name="face_image_base64" value="">
+                </div>
+            </div>
+
+            <div class="field" style="margin-top:12px">
+                <label for="face_image">Or upload a photo</label>
+                <input id="face_image" name="face_image" type="file" accept="image/*">
+            </div>
+
+            <div class="actions">
+                <button type="submit" class="btn-submit">Login with Face ID</button>
+            </div>
+        </form>
+
+        <div class="note" style="margin-top:12px">
+            <a href="{{ path('app_login') }}">Back to password login</a>
+        </div>
+    </div>
+</div>
+<script src="{{ asset('Front/js/face.js') }}"></script>
+</body>
+</html>

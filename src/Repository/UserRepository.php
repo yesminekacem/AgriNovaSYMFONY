@@ -24,5 +24,18 @@ class UserRepository extends ServiceEntityRepository
             ->getQuery()
             ->getOneOrNullResult();
     }
-}
 
+    /**
+     * Return users that have enrolled face data (non-null, non-empty)
+     * Used by face detection logic to compare probe against enrolled images.
+     * @return User[]
+     */
+    public function findAllWithFaceData(): array
+    {
+        return $this->createQueryBuilder('u')
+            ->andWhere('u.faceData IS NOT NULL')
+            ->andWhere("u.faceData <> ''")
+            ->getQuery()
+            ->getResult();
+    }
+}

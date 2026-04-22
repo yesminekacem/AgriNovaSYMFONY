@@ -134,6 +134,57 @@
 
         <div class="card-section">
             <div class="card-header">
+                <h3>Face ID (Biometric login)</h3>
+            </div>
+            <div class="card-body">
+                {% if user.isFaceEnrolled() %}
+                    <p>Face ID is currently enrolled for this account.</p>
+                    <form method="post" action="{{ path('app_profile') }}">
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token('profile_edit') }}">
+                        <input type="hidden" name="form_type" value="face_remove">
+                        <button type="submit" class="btn btn-secondary-blue">Remove Face Enrollment</button>
+                    </form>
+                    <p style="margin-top:12px">To login using Face ID, go to <a href="{{ path('app_login_face') }}">Face Login</a> or use the camera widget below.</p>
+                {% else %}
+                    <p>Face ID is not enrolled. Use the camera to enroll or upload a clear photo of your face to enroll.</p>
+                    <form method="post" action="{{ path('app_profile') }}" enctype="multipart/form-data">
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token('profile_edit') }}">
+                        <input type="hidden" name="form_type" value="face">
+                        <div class="row">
+                            <div class="col">
+                                <label>Use camera to capture your face</label>
+                                <div class="face-camera-widget" data-auto-submit="0">
+                                    <video class="face-video" autoplay playsinline style="width:100%;max-width:360px;border-radius:8px;background:#000"></video>
+                                    <canvas class="face-canvas" style="display:none"></canvas>
+                                    <input type="hidden" name="face_image_base64" value="">
+                                    <div style="margin-top:8px;display:flex;gap:8px">
+                                        <button type="button" class="face-open-btn btn">Open camera</button>
+                                        <button type="button" class="face-save-btn btn">Save Face</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row" style="margin-top:12px">
+                            <div class="col">
+                                <label for="face_image">Or upload a photo</label>
+                                <input id="face_image" name="face_image" type="file" accept="image/*">
+                            </div>
+                        </div>
+
+                        <div class="row actions-row" style="margin-top:12px">
+                            <div class="spacer"></div>
+                            <div>
+                                <button type="submit" class="btn btn-primary">Enroll Face ID</button>
+                            </div>
+                        </div>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card-section">
+            <div class="card-header">
                 <h3>Change Password</h3>
             </div>
             <div class="card-body">
@@ -172,4 +223,5 @@
 
 {% block javascripts %}
     <script src="{{ asset('Front/js/profile.js') }}"></script>
+    <script src="{{ asset('Front/js/face.js') }}"></script>
 {% endblock %}

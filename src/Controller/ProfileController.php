@@ -7,6 +7,8 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use App\Service\FaceApiClient;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -15,7 +17,7 @@ use Symfony\Component\Routing\Annotation\Route;
 class ProfileController extends AbstractController
 {
     #[Route('/profile', name: 'app_profile', methods: ['GET','POST'])]
-    public function profile(Request $request, EntityManagerInterface $em, UserPasswordHasherInterface $passwordHasher, UserRepository $userRepository): Response
+    public function profile(Request $request, EntityManagerInterface $em, UserPasswordHasherInterface $passwordHasher, UserRepository $userRepository, \App\Service\FaceApiClient $faceClient): Response
     {
         $user = $this->getUser();
         if (!$user) {
@@ -66,6 +68,43 @@ class ProfileController extends AbstractController
             // profile form (default)
             if (!$this->isCsrfTokenValid('profile_edit', $request->request->get('_csrf_token'))) {
                 $this->addFlash('error', 'Invalid CSRF token.');
+                return $this->redirectToRoute('app_profile');
+            }
+
+            // Face enrollment (file upload or camera base64)
+            if ($formType === 'face') {
+                /** @var UploadedFile|null $face */
+                $face = $request->files->get('face_image');
+                $faceBase64 = trim((string) $request->request->get('face_image_base64', '')) ?: null;
+
+                if ($face instanceof UploadedFile || $faceBase64) {
+                    try {
+                        if ($face instanceof UploadedFile) {
+                            $base64 = $faceClient->enroll($face, '');
+                        } else {
+                            $base64 = $faceClient->enroll($faceBase64, '');
+                        }
+                        $user->setFaceData($base64);
+                        $em->persist($user);
+                        $em->flush();
+
+                        $this->addFlash('success', 'Face enrolled successfully. You can now login using Face ID.');
+                    } catch (\Throwable $e) {
+                        $this->addFlash('error', 'Failed to enroll face: ' . $e->getMessage());
+                    }
+                } else {
+                    $this->addFlash('error', 'No face image provided.');
+                }
+
+                return $this->redirectToRoute('app_profile');
+            }
+
+            if ($formType === 'face_remove') {
+                // remove enrolled face
+                $user->setFaceData(null);
+                $em->persist($user);
+                $em->flush();
+                $this->addFlash('success', 'Face enrollment removed.');
                 return $this->redirectToRoute('app_profile');
             }
 

@@ -40,6 +40,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: 'string', length: 100, nullable: true, name: 'profile_image')]
     private ?string $profileImage = null;
 
+    // Biometric / face related data (your DB already has a `face_data` mediumtext column)
+    #[ORM\Column(type: 'text', nullable: true, name: 'face_data')]
+    private ?string $faceData = null;
 
     #[ORM\Column(type: 'boolean', options: ['default' => 0])]
     private bool $banned = false;
@@ -162,6 +165,23 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->profileImage = $profileImage;
 
         return $this;
+    }
+
+    public function getFaceData(): ?string
+    {
+        return $this->faceData;
+    }
+
+    public function setFaceData(?string $faceData): self
+    {
+        $this->faceData = $faceData;
+
+        return $this;
+    }
+
+    public function isFaceEnrolled(): bool
+    {
+        return $this->faceData !== null && $this->faceData !== '';
     }
 
     public function isVerified(): bool
