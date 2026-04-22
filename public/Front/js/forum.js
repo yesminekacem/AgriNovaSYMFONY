@@ -1582,6 +1582,9 @@ function insertCropAdviceIntoContent() {
 }
 async function toggleNotifications() {
     const dropdown = document.getElementById('notificationsDropdown');
+    const list = document.getElementById('notificationsList');
+
+    if (!dropdown || !list) return;
 
     if (dropdown.style.display === 'block') {
         dropdown.style.display = 'none';
@@ -1589,40 +1592,95 @@ async function toggleNotifications() {
     }
 
     dropdown.style.display = 'block';
-
-    const list = document.getElementById('notificationsList');
-    list.innerHTML = 'Loading...';
+    list.innerHTML = `<p class="notif-empty">Loading...</p>`;
 
     try {
-        const res = await fetch('/notifications/json');
+        const res = await fetch('/notifications/json', {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+
         const data = await res.json();
 
         if (!data.success) {
-            list.innerHTML = 'Error loading notifications';
+            list.innerHTML = `<p class="notif-empty">Error loading notifications</p>`;
             return;
         }
 
-        if (data.notifications.length === 0) {
-            list.innerHTML = '<p style="color:#888;">No notifications</p>';
+        if (!data.notifications || data.notifications.length === 0) {
+            list.innerHTML = `<p class="notif-empty">No notifications</p>`;
             return;
         }
 
-        list.innerHTML = data.notifications.map(n => `
-            <div style="
-                padding:8px;
-                border-bottom:1px solid #eee;
-                cursor:pointer;
-                background:${n.isRead ? '#fff' : '#f0f9ff'};
-            "
-            onclick="openNotification(${n.id}, ${n.postId})">
-                <div style="font-size:14px;">${n.message}</div>
-                <div style="font-size:12px;color:#888;">${n.createdAt}</div>
-            </div>
-        `).join('');
+      list.innerHTML = data.notifications.map(n => `
+    <div class="notification-item ${n.isRead ? 'read' : 'unread'}"
+         onclick='openNotificationGroup(${JSON.stringify(n.ids)}, ${n.postId})'>
 
+        <div class="notification-icon">
+            ${getNotificationIcon(n.type)}
+        </div>
+
+        <div class="notification-body">
+            <p class="notification-text">${escapeHtml(n.message || '')}</p>
+            <span class="notification-time">${formatNotificationTime(n.createdAt)}</span>
+        </div>
+    </div>
+`).join('');
     } catch (e) {
-        list.innerHTML = 'Error';
+        console.error(e);
+        list.innerHTML = `<p class="notif-empty">Error loading notifications</p>`;
     }
+}
+async function openNotificationGroup(ids, postId) {
+    try {
+        await fetch('/notifications/read-group', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ ids })
+        });
+    } catch (e) {
+        console.error(e);
+    }
+
+    window.location.href = `/forum?highlightPost=${postId}`;
+}
+function getNotificationIcon(type) {
+    switch (type) {
+        case 'reaction':
+            return '❤️';
+        case 'comment':
+            return '💬';
+        case 'post':
+            return '📝';
+        case 'alert':
+            return '🚨';
+        default:
+            return '🔔';
+    }
+}
+
+function formatNotificationTime(dateString) {
+    if (!dateString) return '';
+
+    const date = new Date(dateString.replace(' ', 'T'));
+    if (isNaN(date.getTime())) return dateString;
+
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMin = Math.floor(diffMs / 60000);
+    const diffHour = Math.floor(diffMs / 3600000);
+    const diffDay = Math.floor(diffMs / 86400000);
+
+    if (diffMin < 1) return 'Just now';
+    if (diffMin < 60) return `${diffMin} min ago`;
+    if (diffHour < 24) return `${diffHour} h ago`;
+    if (diffDay < 7) return `${diffDay} d ago`;
+
+    return dateString;
 }
 async function openNotification(id, postId) {
     await fetch(`/notifications/read/${id}`, {
