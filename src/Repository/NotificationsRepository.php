@@ -12,4 +12,26 @@ class NotificationsRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Notifications::class);
     }
+
+    public function findUnreadByRecipient(int $recipientId): array
+    {
+        return $this->createQueryBuilder('n')
+            ->where('n.recipientId = :recipientId')
+            ->andWhere('n.isRead = :isRead')
+            ->setParameter('recipientId', $recipientId)
+            ->setParameter('isRead', false)
+            ->orderBy('n.createdAt', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function findAllByRecipient(int $recipientId): array
+    {
+        return $this->createQueryBuilder('n')
+            ->where('n.recipientId = :recipientId')
+            ->setParameter('recipientId', $recipientId)
+            ->orderBy('n.createdAt', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
 }

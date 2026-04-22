@@ -27,12 +27,12 @@
     </div>
 
     <!-- Flash messages -->
-    {% for message in app.flashes('success') %}
-        <div class="flash-success">{{ message }}</div>
-    {% endfor %}
-    {% for message in app.flashes('error') %}
-        <div class="flash-error">{{ message }}</div>
-    {% endfor %}
+   {% for message in app.flashes('success') %}
+    <div class="flash-success" style="display:none;">{{ message }}</div>
+{% endfor %}
+{% for message in app.flashes('error') %}
+    <div class="flash-error" style="display:none;">{{ message }}</div>
+{% endfor %}
 
     <!-- Controls -->
     <div class="forum-controls">
@@ -77,9 +77,12 @@
                  data-id="{{ post.idPost }}">
 
                 <div class="post-avatar" onclick="openViewModal({{ post.idPost }})">
-                    {{ post.author|slice(0, 2)|upper }}
-                </div>
-
+    {% if postProfileImages[post.idPost] is defined and postProfileImages[post.idPost] %}
+        <img src="{{ asset(postProfileImages[post.idPost]) }}" alt="{{ post.author }}">
+    {% else %}
+        {{ post.author|slice(0, 2)|upper }}
+    {% endif %}
+</div>
                 <div class="post-body">
                     <div class="post-top">
                         <div class="post-title" onclick="openViewModal({{ post.idPost }})">
@@ -98,8 +101,8 @@
                         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                         {{ post.author }} · {{ post.createdAt ? post.createdAt|time_ago : 'No date' }}
                     </div>
-                    {% if post.imagePath %}
-    <img src="{{ asset('Front/images/Forum/' ~ post.imagePath) }}"
+             {% if post.imagePath %}
+    <img src="{{ asset(post.imagePath) }}"
          style="width:100%; max-height:160px; object-fit:cover; border-radius:10px; margin-bottom:10px;">
 {% endif %}
 
@@ -108,13 +111,48 @@
                     </div>
 
                     <div class="post-footer">
-                        <button class="btn-like" onclick="toggleLike(this, event)" data-count="0">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                            </svg>
-                            <span class="like-count">0</span>
-                        </button>
+                        <div class="reaction-box">
+    <button
+        type="button"
+        class="btn-reaction-main {{ postsData[post.idPost].userReaction ? 'reacted' : '' }}"
+        onclick="toggleReactionMenu(event, {{ post.idPost }})"
+    >
+        <span id="reaction-label-{{ post.idPost }}">
+    {% if postsData[post.idPost].userReaction == 'LIKE' %}
+        👍 Like
+    {% elseif postsData[post.idPost].userReaction == 'LOVE' %}
+        ❤️ Love
+    {% elseif postsData[post.idPost].userReaction == 'HAHA' %}
+        😂 Haha
+    {% elseif postsData[post.idPost].userReaction == 'WOW' %}
+        😮 Wow
+    {% elseif postsData[post.idPost].userReaction == 'SAD' %}
+        😢 Sad
+    {% elseif postsData[post.idPost].userReaction == 'ANGRY' %}
+        😡 Angry
+    {% else %}
+        React
+    {% endif %}
+</span>
+        <span id="reaction-total-{{ post.idPost }}"
+      onclick="openReactionsModal({{ post.idPost }})"
+      style="cursor:pointer; text-decoration:underline;">
+    {{ postsData[post.idPost].totalReactions }}
+</span>
+    </button>
 
+    <div class="reaction-menu" id="reaction-menu-{{ post.idPost }}">
+        <button type="button" onclick="reactToPost({{ post.idPost }}, 'LIKE')">👍</button>
+        <button type="button" onclick="reactToPost({{ post.idPost }}, 'LOVE')">❤️</button>
+        <button type="button" onclick="reactToPost({{ post.idPost }}, 'HAHA')">😂</button>
+        <button type="button" onclick="reactToPost({{ post.idPost }}, 'WOW')">😮</button>
+        <button type="button" onclick="reactToPost({{ post.idPost }}, 'SAD')">😢</button>
+        <button type="button" onclick="reactToPost({{ post.idPost }}, 'ANGRY')">😡</button>
+    </div>
+</div>
+<span class="comments-count">
+    💬 {{ postsData[post.idPost].commentsCount }}
+</span>
                         <button class="btn-read-more" onclick="openViewModal({{ post.idPost }})">
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                             Read
@@ -124,10 +162,10 @@
 
 
     <form method="post"
-          action="{{ path('app_forum_delete', { id: post.idPost }) }}"
-          onsubmit="return confirm('Delete this post?');"
-          style="margin-left:auto;">
-        <button type="submit" class="btn-delete">
+      action="{{ path('app_forum_delete', { id: post.idPost }) }}"
+      class="delete-post-form"
+      style="margin-left:auto;">
+    <button type="button" class="btn-delete" onclick="openDeleteModal(this)">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="3 6 5 6 21 6"/>
                 <path d="M19 6l-1 14H6L5 6"/>
@@ -145,6 +183,9 @@
             {% endfor %}
         {% endif %}
     </div>
+ <div class="pagination-wrapper">
+    {{ knp_pagination_render(posts, 'custom_pagination.html.twig') }}
+</div>
 
     <!-- No results -->
     <div id="noResults">
@@ -161,45 +202,202 @@
     </div>
 
     <!-- ── NEW POST MODAL ── -->
-    <div class="modal-overlay" id="newPostModal">
-        <div class="modal">
-            <button class="modal-close" onclick="closeModal('newPostModal')">✕</button>
-            <h2>✏️ Create New Post</h2>
-            <form method="post" action="{{ path('app_forum_new') }}" enctype="multipart/form-data">
+<div class="modal-overlay" id="newPostModal">
+    <div class="modal">
+        <button class="modal-close" onclick="closeModal('newPostModal')">✕</button>
+
+        <div class="new-post-banner">
+            <div class="new-post-banner-icon">🖍️</div>
+            <h2>Create New Post</h2>
+            <p>Share your knowledge with the farming community</p>
+        </div>
+
+        <div class="new-post-body">
+            <form method="post" action="{{ path('app_forum_new') }}" enctype="multipart/form-data" novalidate>
 
                 <div class="form-field">
-                    <label>Title</label>
-                    <input type="text" name="title" placeholder="What's your question or topic?" required>
+                    <label>Post Title</label>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <input
+                            type="text"
+                            name="title"
+                            id="postTitleInput"
+                            placeholder="What's your question or topic?"
+                            required
+                        >
+
+                        <button type="button" class="btn-read-more" onclick="suggestTitleAI()">
+                            ✨ AI Title
+                        </button>
+                    </div>
                 </div>
+
                 <div class="form-field">
                     <label>Category</label>
-                    <select name="category" required>
-                       <option value="Organic Farming">Organic Farming</option>
-                        <option value="Soil Management">Soil Management</option>
-                        <option value="Water Management">Water Management</option>
-                        <option value="Harvesting">Harvesting</option>
-                        <option value="Crop Management">Crop Management</option>
-                    </select>
+
+                    <input type="hidden" name="category" id="postCategoryInput" value="Organic Farming">
+
+                    <div class="cat-pills-group">
+                        <button type="button" class="cat-pill-btn active" data-val="Organic Farming" onclick="selectPostCategory('Organic Farming', this)">
+                            🌿 Organic Farming
+                        </button>
+                        <button type="button" class="cat-pill-btn" data-val="Soil Management" onclick="selectPostCategory('Soil Management', this)">
+                            🪨 Soil Management
+                        </button>
+                        <button type="button" class="cat-pill-btn" data-val="Water Management" onclick="selectPostCategory('Water Management', this)">
+                            💧 Water Management
+                        </button>
+                        <button type="button" class="cat-pill-btn" data-val="Harvesting" onclick="selectPostCategory('Harvesting', this)">
+                            🌾 Harvesting
+                        </button>
+                        <button type="button" class="cat-pill-btn" data-val="Crop Management" onclick="selectPostCategory('Crop Management', this)">
+                            🌱 Crop Management
+                        </button>
+                    </div>
                 </div>
+
                 <div class="form-field">
                     <label>Content</label>
-                    <textarea name="content" placeholder="Share your knowledge, question, or experience..." required></textarea>
+
+                    <textarea
+                        id="postContentInput"
+                        name="content"
+                        placeholder="Share your farming experience, tips, or question in detail..."
+                        required
+                    ></textarea>
+
+                    <div style="margin-top:8px; display:flex; gap:10px; flex-wrap:wrap;">
+                        <button type="button" class="btn-read-more" onclick="fixGrammarAI()">
+                            ✨ Fix Grammar
+                        </button>
+
+                        <button type="button" class="btn-read-more" onclick="getCropAdvice()">
+                            ✨ Get Crop Advice
+                        </button>
+                    </div>
                 </div>
+
+                <div id="cropAdviceBox" style="display:none;">
+                    <div id="cropAdviceLabel" style="font-weight:700; margin-bottom:8px;"></div>
+                    <div id="cropAdviceContent" style="white-space:pre-wrap; line-height:1.6;"></div>
+                </div>
+
+                <div class="modal-section-divider">
+                    <span>Optional</span>
+                </div>
+
                 <div class="form-field">
-    <label>Image (optional)</label>
-    <input type="file" name="image" accept="image/*">
-</div>
-                <button type="submit" class="btn-submit-post">Publish Post</button>
+                    <label>Post Image</label>
+
+                    <label for="postImageInput" class="upload-zone">
+                        <div style="font-size:24px; margin-bottom:8px;">🖼️</div>
+                        <div style="font-weight:700; color:#1f2937;">Click to upload an image</div>
+                        <div style="font-size:12px; color:#94a3b8; margin-top:4px;">
+                            JPG, PNG, WebP — max 5 MB
+                        </div>
+                    </label>
+
+                    <input
+                        type="file"
+                        name="image"
+                        id="postImageInput"
+                        accept="image/*"
+                        style="display:none;"
+                    >
+
+                    <div style="margin-top:10px;">
+                        <button type="button" class="btn-read-more" onclick="generatePostImageAI()">
+                            ✨ Generate AI Image
+                        </button>
+                    </div>
+
+                    <div id="generatedImageBox" style="display:none; margin-top:10px;">
+                        <img
+                            id="generatedImagePreview"
+                            style="width:100%; max-height:200px; object-fit:cover; border-radius:10px;"
+                        >
+                    </div>
+
+                    <input type="hidden" name="generatedImage" id="generatedImage">
+                </div>
+
+                <button type="submit" class="btn-submit-post">
+                    ✈ Publish Post
+                </button>
             </form>
         </div>
     </div>
+</div>
 
+
+
+<div class="modal-overlay" id="deleteConfirmModal">
+    <div class="modal delete-modal">
+        <button type="button" class="modal-close" onclick="closeModal('deleteConfirmModal')">✕</button>
+
+        <div class="delete-modal-icon">🗑️</div>
+        <h2>Delete Post</h2>
+        <p>Are you sure you want to delete this post? This action cannot be undone.</p>
+
+        <div class="delete-modal-actions">
+            <button type="button" class="btn-cancel-delete" onclick="closeModal('deleteConfirmModal')">
+                Cancel
+            </button>
+            <button type="button" class="btn-confirm-delete" onclick="confirmDeletePost()">
+                Yes, Delete
+            </button>
+        </div>
+    </div>
+</div>
+<!-- DELETE COMMENT MODAL -->
+<div class="modal-overlay" id="deleteCommentModal">
+    <div class="modal delete-modal">
+        <button type="button" class="modal-close" onclick="closeModal('deleteCommentModal')">✕</button>
+
+        <div class="delete-modal-icon">🗑️</div>
+        <h2>Delete Comment</h2>
+        <p>Are you sure you want to delete this comment? This action cannot be undone.</p>
+
+        <div class="delete-modal-actions">
+            <button type="button" class="btn-cancel-delete" onclick="closeModal('deleteCommentModal')">
+                Cancel
+            </button>
+            <button type="button" class="btn-confirm-delete" onclick="confirmDeleteComment()">
+                Yes, Delete
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- EDIT COMMENT MODAL -->
+<div class="modal-overlay" id="editCommentModal">
+    <div class="modal">
+        <button type="button" class="modal-close" onclick="closeModal('editCommentModal')">✕</button>
+        <h2>✏️ Edit Comment</h2>
+
+        <form id="editCommentForm" method="post">
+            <div class="form-field">
+                <label>Comment</label>
+                <textarea name="content" id="editCommentContent" required></textarea>
+            </div>
+
+            <div class="delete-modal-actions">
+                <button type="button" class="btn-cancel-delete" onclick="closeModal('editCommentModal')">
+                    Cancel
+                </button>
+                <button type="submit" class="btn-submit-post">
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
     <!-- ── EDIT POST MODAL ── -->
     <div class="modal-overlay" id="editPostModal">
         <div class="modal">
             <button class="modal-close" onclick="closeModal('editPostModal')">✕</button>
             <h2>✏️ Edit Post</h2>
-            <form method="post" id="editPostForm">
+            <form method="post" id="editPostForm" novalidate>
                 <div class="form-field">
                     <label>Title</label>
                     <input type="text" name="title" id="editTitle" required>
@@ -222,6 +420,19 @@
             </form>
         </div>
     </div>
+    <div class="modal-overlay" id="reactionsModal">
+    <div class="modal">
+        <button type="button" class="modal-close" onclick="closeModal('reactionsModal')">✕</button>
+        <h2>Reactions</h2>
+
+        <div id="reactionsFilters" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;"></div>
+
+        <div id="reactionsList">
+            <p style="color:#888;">Loading...</p>
+        </div>
+    </div>
+</div>
+</div>
 
 </div>
 <script>

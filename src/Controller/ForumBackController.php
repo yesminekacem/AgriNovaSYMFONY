@@ -11,61 +11,115 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
-
+use App\Repository\UserRepository;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
-
+use App\Entity\PostReaction;
+use App\Repository\PostReactionRepository;
+use Knp\Component\Pager\PaginatorInterface;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Symfony\Component\Mercure\HubInterface;
 
 final class ForumBackController extends AbstractController
 {
-    #[Route('/forumBack', name: 'app_forum_back')]
-    public function index(PostRepository $postRepository, CommentRepository $commentRepository): Response
-    {
-        $posts = $postRepository->findActivePosts();
-        $commentsByPost = [];
-        $postsData = [];
+#[Route('/forumBack', name: 'app_forum_back')]
+public function index(
+    Request $request,
+    PostRepository $postRepository,
+    CommentRepository $commentRepository,
+    UserRepository $userRepository,
+    PostReactionRepository $postReactionRepository,
+    PaginatorInterface $paginator
+): Response {
+   $query = $postRepository->createQueryBuilder('p')
+    ->andWhere('p.status = :status')
+    ->setParameter('status', 'ACTIVE')
+    ->orderBy('p.createdAt', 'DESC')
+    ->getQuery();
 
-        foreach ($posts as $post) {
-            $comments = $commentRepository->findByPost($post->getIdPost());
-            $commentsByPost[$post->getIdPost()] = $comments;
+$posts = $paginator->paginate(
+    $query,
+    $request->query->getInt('page', 1),
+    3
+);
+    $commentsByPost = [];
+    $postsData = [];
+    $postProfileImages = [];
 
-         $commentsData = [];
+    foreach ($posts as $post) {
+        $postUser = $userRepository->find($post->getAuthorId());
 
-foreach ($comments as $comment) {
-    $commentsData[] = [
-        'id' => $comment->getIdComment(),
-        'author' => $comment->getAuthor(),
-        'authorId' => $comment->getAuthorId(),
-        'content' => $comment->getContent(),
-        'createdAt' => $comment->getCreatedAt()
-            ? $comment->getCreatedAt()->format('Y-m-d H:i')
-            : 'now',
-    ];
-}
+        $postProfileImages[$post->getIdPost()] =
+            $postUser && $postUser->getProfileImage()
+                ? 'uploads/profile_images/' . $postUser->getProfileImage()
+                : null;
 
-            $postsData[$post->getIdPost()] = [
-                'id' => $post->getIdPost(),
-                'title' => $post->getTitle(),
-                'author' => $post->getAuthor(),
-                'authorId' => $post->getAuthorId(),
-                'category' => $post->getCategory() ?: 'Organic Farming',
-                'content' => $post->getContent(),
-                'createdAt' => $post->getCreatedAt()
-                    ? $post->getCreatedAt()->format('Y-m-d H:i')
-                    : 'No date',
-                'image' => $post->getImagePath()
-                    ? 'Front/images/Forum/' . $post->getImagePath()
+        $comments = $commentRepository->findByPost($post->getIdPost());
+        $commentsByPost[$post->getIdPost()] = $comments;
+
+        $commentsData = [];
+
+        foreach ($comments as $comment) {
+            $commentUser = $userRepository->find($comment->getAuthorId());
+
+            $commentsData[] = [
+                'id' => $comment->getIdComment(),
+                'author' => $comment->getAuthor(),
+                'authorId' => $comment->getAuthorId(),
+                'content' => $comment->getContent(),
+                'createdAt' => $this->timeAgo($comment->getCreatedAt()),
+                'profileImage' => $commentUser && $commentUser->getProfileImage()
+                    ? 'uploads/profile_images/' . $commentUser->getProfileImage()
                     : null,
-                'comments' => $commentsData,
+                'hasBadWordMask' => preg_match('/\*{3,}/', $comment->getContent() ?? '') === 1,
             ];
         }
+        $hasMaskedComment = false;
 
-        return $this->render('Back/forumBack.html.twig', [
-            'posts' => $posts,
-            'commentsByPost' => $commentsByPost,
-            'postsData' => $postsData,
-        ]);
+foreach ($commentsData as $commentData) {
+    if (preg_match('/\*{3,}/', $commentData['content'] ?? '')) {
+        $hasMaskedComment = true;
+        break;
+    }
+}
+$userReaction = null;
+
+if ($this->getUser()) {
+    $existingReaction = $postReactionRepository->findUserReaction($post, $this->getUser());
+    $userReaction = $existingReaction ? $existingReaction->getReaction() : null;
+}
+
+$reactionCounts = $postReactionRepository->countGroupedByReaction($post);
+$totalReactions = $postReactionRepository->countByPost($post);
+        $postsData[$post->getIdPost()] = [
+            'id' => $post->getIdPost(),
+            'title' => $post->getTitle(),
+            'reactionCounts' => $reactionCounts,
+'totalReactions' => $totalReactions,
+'userReaction' => $userReaction,
+            'author' => $post->getAuthor(),
+            'authorId' => $post->getAuthorId(),
+            'category' => $post->getCategory() ?: 'Organic Farming',
+            'content' => $post->getContent(),
+            'createdAt' => $this->timeAgo($post->getCreatedAt()),
+            'image' => $post->getImagePath()
+                ? 'Front/images/Forum/' . $post->getImagePath()
+                : null,
+            'profileImage' => $postUser && $postUser->getProfileImage()
+                ? 'uploads/profile_images/' . $postUser->getProfileImage()
+                : null,
+            'commentsCount' => count($comments),
+            'hasMaskedComment' => $hasMaskedComment,
+            'comments' => $commentsData,
+        ];
     }
 
+    return $this->render('Back/forumBack.html.twig', [
+        'posts' => $posts,
+        'commentsByPost' => $commentsByPost,
+        'postsData' => $postsData,
+        'postProfileImages' => $postProfileImages,
+    ]);
+}
 #[Route('/forumBack/new', name: 'app_forum_back_new', methods: ['POST'])]
 public function new(
     Request $request,
@@ -317,5 +371,239 @@ public function updateComment(
 
     $this->addFlash('success', 'Comment updated successfully.');
     return $this->redirectToRoute('app_forum_back');
+}
+private function timeAgo(?\DateTimeInterface $date): string
+{
+    if (!$date) {
+        return 'No date';
+    }
+
+    $now = new \DateTime();
+    $diff = $now->diff($date);
+
+    if ($diff->y > 0) return $diff->y . ' year' . ($diff->y > 1 ? 's' : '') . ' ago';
+    if ($diff->m > 0) return $diff->m . ' month' . ($diff->m > 1 ? 's' : '') . ' ago';
+    if ($diff->d > 0) return $diff->d . ' day' . ($diff->d > 1 ? 's' : '') . ' ago';
+    if ($diff->h > 0) return $diff->h . ' hour' . ($diff->h > 1 ? 's' : '') . ' ago';
+    if ($diff->i > 0) return $diff->i . ' minute' . ($diff->i > 1 ? 's' : '') . ' ago';
+
+    return 'Just now';
+}
+#[Route('/forumBack/react/{id}', name: 'app_forum_back_react', methods: ['POST'])]
+public function react(
+    int $id,
+    Request $request,
+    PostRepository $postRepository,
+    PostReactionRepository $postReactionRepository,
+    EntityManagerInterface $entityManager
+): Response {
+    $user = $this->getUser();
+
+    if (!$user) {
+        return $this->json(['success' => false], 403);
+    }
+
+    $post = $postRepository->find($id);
+
+    if (!$post) {
+        return $this->json(['success' => false], 404);
+    }
+
+    $reaction = strtoupper(trim($request->request->get('reaction', '')));
+    $allowed = ['LIKE','LOVE','HAHA','WOW','SAD','ANGRY'];
+
+    if (!in_array($reaction, $allowed)) {
+        return $this->json(['success' => false], 400);
+    }
+
+    $existing = $postReactionRepository->findUserReaction($post, $user);
+
+    if ($existing) {
+        if ($existing->getReaction() === $reaction) {
+            $entityManager->remove($existing);
+            $entityManager->flush();
+
+            return $this->json([
+                'success' => true,
+                'userReaction' => null,
+                'totalCount' => $postReactionRepository->countByPost($post),
+            ]);
+        }
+
+        $existing->setReaction($reaction);
+        $entityManager->flush();
+
+        return $this->json([
+            'success' => true,
+            'userReaction' => $reaction,
+            'totalCount' => $postReactionRepository->countByPost($post),
+        ]);
+    }
+
+    $new = new PostReaction();
+    $new->setIdPost($post);
+    $new->setUser($user);
+    $new->setReaction($reaction);
+    $new->setCreatedAt(new \DateTime());
+
+    $entityManager->persist($new);
+    $entityManager->flush();
+
+    return $this->json([
+        'success' => true,
+        'userReaction' => $reaction,
+        'totalCount' => $postReactionRepository->countByPost($post),
+    ]);
+}
+#[Route('/forumBack/reactions/{id}', name: 'app_forum_back_reactions', methods: ['GET'])]
+public function getPostReactionsBack(
+    int $id,
+    PostRepository $postRepository,
+    PostReactionRepository $postReactionRepository
+): Response {
+    try {
+        $post = $postRepository->find($id);
+
+        if (!$post) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Post not found'
+            ], 404);
+        }
+
+        $reactions = $postReactionRepository->findBy(
+            ['idPost' => $post],
+            ['createdAt' => 'DESC']
+        );
+
+        $items = [];
+
+        foreach ($reactions as $reaction) {
+            $user = $reaction->getUser();
+
+            $author = 'Unknown user';
+            if ($user) {
+                $author = $user->getFullName() ?: $user->getUsername();
+            }
+
+            $items[] = [
+                'userId' => $user ? $user->getId() : null,
+                'author' => $author,
+                'profileImage' => ($user && $user->getProfileImage())
+                    ? 'uploads/profile_images/' . $user->getProfileImage()
+                    : null,
+                'reaction' => $reaction->getReaction(),
+            ];
+        }
+
+        return $this->json([
+            'success' => true,
+            'reactions' => $items
+        ]);
+    } catch (\Throwable $e) {
+        return $this->json([
+            'success' => false,
+            'message' => $e->getMessage()
+        ], 500);
+    }
+}
+
+#[Route('/forumBack/translate/{id}', name: 'app_forum_back_translate', methods: ['POST'])]
+public function translatePostBack(
+    int $id,
+    Request $request,
+    PostRepository $postRepository,
+    HttpClientInterface $httpClient
+): Response {
+    try {
+        $post = $postRepository->find($id);
+
+        if (!$post) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Post not found'
+            ], 404);
+        }
+
+        $targetLanguage = trim((string) $request->request->get('language'));
+
+        if (!in_array($targetLanguage, ['en', 'fr', 'ar'], true)) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Invalid language'
+            ], 400);
+        }
+
+        $groqApiKey = $_ENV['GROQ_API_KEY'] ?? $_SERVER['GROQ_API_KEY'] ?? null;
+
+        if (!$groqApiKey) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Groq API key is missing'
+            ], 500);
+        }
+
+        $langMap = [
+            'en' => 'English',
+            'fr' => 'French',
+            'ar' => 'Arabic',
+        ];
+
+        $targetLabel = $langMap[$targetLanguage];
+        $text = $post->getContent();
+
+        $prompt = "Translate the following forum post into {$targetLabel}.\n"
+            . "Keep the exact meaning.\n"
+            . "Do not summarize.\n"
+            . "Do not add explanations.\n"
+            . "Return only the translated text.\n\n"
+            . "Text:\n{$text}";
+
+        $response = $httpClient->request('POST', 'https://api.groq.com/openai/v1/chat/completions', [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $groqApiKey,
+                'Content-Type' => 'application/json',
+            ],
+            'json' => [
+                'model' => 'llama-3.3-70b-versatile',
+                'messages' => [
+                    [
+                        'role' => 'system',
+                        'content' => 'You are a precise translation assistant.'
+                    ],
+                    [
+                        'role' => 'user',
+                        'content' => $prompt
+                    ]
+                ],
+                'temperature' => 0.2,
+            ],
+        ]);
+
+        $data = $response->toArray(false);
+
+        $translated = $data['choices'][0]['message']['content'] ?? null;
+
+        if (!$translated) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Groq returned no translation',
+                'groq_response' => $data
+            ], 500);
+        }
+
+        return $this->json([
+            'success' => true,
+            'translatedText' => trim($translated),
+            'language' => $targetLanguage
+        ]);
+    } catch (\Throwable $e) {
+        return $this->json([
+            'success' => false,
+            'message' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine()
+        ], 500);
+    }
 }
 }

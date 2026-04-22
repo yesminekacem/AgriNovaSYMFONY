@@ -1,6 +1,6 @@
 {% extends 'baseBack.html.twig' %}
 
-{% block title %}Admin Dashboard - AGRINOVA{% endblock %}
+{% block title %}Admin Dashboard – AGRINOVA{% endblock %}
 {% block page_title %}Dashboard{% endblock %}
 
 {% block body %}
@@ -14,15 +14,9 @@
         --text-mid: #5f6f64;
         --border: #d8e4da;
         --orange: #f59e0b;
-        --orange-soft: #fff4dd;
         --white: #ffffff;
-        --ai-navy: #12344d;
-        --ai-blue: #1d5f7a;
-        --ai-mist: #edf7fb;
-        --danger-soft: #fee2e2;
-        --danger-text: #b42318;
-        --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
-        --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.06);
+        --shadow-sm: 0 2px 8px rgba(0,0,0,0.05);
+        --shadow-md: 0 8px 24px rgba(0,0,0,0.06);
     }
 
     .dashboard-page {
@@ -36,15 +30,13 @@
         position: relative;
         overflow: hidden;
         border-radius: 24px;
-        min-height: 320px;
+        min-height: 280px;
         padding: 2.5rem;
-        color: var(--white);
+        color: white;
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        gap: 2rem;
         background:
-            linear-gradient(100deg, rgba(26, 77, 46, 0.86), rgba(18, 52, 77, 0.72), rgba(245, 158, 11, 0.42)),
+            linear-gradient(90deg, rgba(26,77,46,0.72), rgba(45,122,69,0.35), rgba(245,158,11,0.45)),
             url('{{ asset("Front/images/Forum/dashboard-banner.jpg") }}') center/cover no-repeat;
         box-shadow: var(--shadow-md);
         margin-bottom: 1.8rem;
@@ -55,370 +47,19 @@
         z-index: 2;
     }
 
-    .hero-kicker {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.55rem;
-        padding: 0.45rem 0.9rem;
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.14);
-        border: 1px solid rgba(255, 255, 255, 0.22);
-        font-size: 0.86rem;
-        font-weight: 700;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
-        margin-bottom: 1rem;
-    }
-
     .hero-title {
         font-size: 3rem;
-        line-height: 1.05;
+        line-height: 1.1;
         font-weight: 800;
         margin-bottom: 1rem;
         letter-spacing: -0.03em;
     }
 
     .hero-text {
-        font-size: 1.07rem;
+        font-size: 1.1rem;
         line-height: 1.65;
-        max-width: 720px;
-        color: rgba(255, 255, 255, 0.95);
-        margin-bottom: 1.4rem;
-    }
-
-    .hero-meta {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.8rem;
-    }
-
-    .hero-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.45rem;
-        padding: 0.7rem 1rem;
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.12);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        color: var(--white);
-        font-size: 0.92rem;
-        font-weight: 600;
-    }
-
-    .hero-actions {
-        display: flex;
-        flex-direction: column;
-        gap: 0.85rem;
-        align-items: stretch;
-        min-width: 260px;
-        z-index: 2;
-    }
-
-    .action-button,
-    .secondary-button {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.6rem;
-        border-radius: 16px;
-        padding: 0.95rem 1.15rem;
-        font-size: 0.96rem;
-        font-weight: 700;
-        text-decoration: none;
-        transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-    }
-
-    .action-button {
-        background: linear-gradient(135deg, #ffffff, #d6f4df);
-        color: var(--green-dark);
-        box-shadow: 0 12px 30px rgba(9, 30, 18, 0.18);
-    }
-
-    .secondary-button {
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        color: var(--white);
-    }
-
-    .action-button:hover,
-    .secondary-button:hover {
-        transform: translateY(-1px);
-    }
-
-    .hero-note {
-        font-size: 0.84rem;
-        color: rgba(255, 255, 255, 0.86);
-        text-align: center;
-    }
-
-    .ai-panel {
-        position: relative;
-        overflow: hidden;
-        background:
-            radial-gradient(circle at top right, rgba(245, 158, 11, 0.18), transparent 32%),
-            linear-gradient(145deg, var(--ai-navy), #0d2638 58%, #164968);
-        color: var(--white);
-        border-radius: 24px;
-        padding: 1.8rem;
-        box-shadow: var(--shadow-md);
-        margin-bottom: 1.8rem;
-        border: 1px solid rgba(255, 255, 255, 0.08);
-    }
-
-    .ai-panel::after {
-        content: '';
-        position: absolute;
-        inset: auto -60px -90px auto;
-        width: 220px;
-        height: 220px;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.06);
-        filter: blur(4px);
-    }
-
-    .ai-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-        position: relative;
-        z-index: 1;
-    }
-
-    .ai-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.55rem;
-        padding: 0.45rem 0.85rem;
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.12);
-        border: 1px solid rgba(255, 255, 255, 0.18);
-        font-size: 0.84rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        margin-bottom: 0.9rem;
-    }
-
-    .ai-title {
-        font-size: 2rem;
-        line-height: 1.1;
-        font-weight: 800;
-        margin: 0 0 0.85rem;
-    }
-
-    .ai-summary {
         max-width: 760px;
-        color: rgba(255, 255, 255, 0.88);
-        line-height: 1.7;
-        font-size: 1rem;
-    }
-
-    .ai-meta {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(120px, 1fr));
-        gap: 0.9rem;
-        min-width: 240px;
-        position: relative;
-        z-index: 1;
-    }
-
-    .ai-score-card {
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        border-radius: 18px;
-        padding: 1rem;
-    }
-
-    .ai-score-label {
-        color: rgba(255, 255, 255, 0.72);
-        font-size: 0.82rem;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-        margin-bottom: 0.55rem;
-    }
-
-    .ai-score-value {
-        font-size: 1.45rem;
-        font-weight: 800;
-    }
-
-    .priority-high,
-    .priority-critical {
-        color: #ffd4c7;
-    }
-
-    .priority-moderate {
-        color: #ffe7aa;
-    }
-
-    .priority-low {
-        color: #d1fadf;
-    }
-
-    .ai-pulse-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.8rem;
-        margin: 1.25rem 0 1.4rem;
-        position: relative;
-        z-index: 1;
-    }
-
-    .ai-pulse-pill {
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        border-radius: 999px;
-        padding: 0.8rem 1rem;
-        font-size: 0.92rem;
-        font-weight: 600;
-        color: rgba(255, 255, 255, 0.9);
-    }
-
-    .ai-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.8rem;
-        position: relative;
-        z-index: 1;
-    }
-
-    .ai-panel-button {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.55rem;
-        padding: 0.9rem 1.1rem;
-        border-radius: 14px;
-        text-decoration: none;
-        font-size: 0.94rem;
-        font-weight: 700;
-    }
-
-    .ai-panel-button.primary {
-        background: linear-gradient(135deg, #fff7d6, #ffffff);
-        color: var(--ai-navy);
-    }
-
-    .ai-panel-button.ghost {
-        background: rgba(255, 255, 255, 0.08);
-        color: var(--white);
-        border: 1px solid rgba(255, 255, 255, 0.15);
-    }
-
-    .ai-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 1.2rem;
-        margin-bottom: 1.8rem;
-    }
-
-    .ai-list-card {
-        background: var(--white);
-        border: 1px solid var(--border);
-        border-radius: 20px;
-        padding: 1.4rem;
-        box-shadow: var(--shadow-sm);
-    }
-
-    .ai-list-card.risks {
-        background: linear-gradient(180deg, #fff9f7, #ffffff);
-    }
-
-    .ai-list-card.actions {
-        background: linear-gradient(180deg, #f5fbf7, #ffffff);
-    }
-
-    .ai-list-card.opportunities {
-        background: linear-gradient(180deg, #f7fbff, #ffffff);
-    }
-
-    .ai-list-title {
-        display: flex;
-        align-items: center;
-        gap: 0.55rem;
-        margin-bottom: 1rem;
-        color: var(--text-dark);
-        font-size: 1.02rem;
-        font-weight: 800;
-    }
-
-    .ai-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-        display: grid;
-        gap: 0.8rem;
-    }
-
-    .ai-list li {
-        display: flex;
-        gap: 0.75rem;
-        color: #44525f;
-        line-height: 1.55;
-    }
-
-    .ai-list-index {
-        width: 28px;
-        height: 28px;
-        border-radius: 50%;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.8rem;
-        font-weight: 800;
-        flex-shrink: 0;
-    }
-
-    .risks .ai-list-index {
-        background: #fde4e1;
-        color: #b42318;
-    }
-
-    .actions .ai-list-index {
-        background: #dff5e5;
-        color: var(--green-dark);
-    }
-
-    .opportunities .ai-list-index {
-        background: #dbeafe;
-        color: #1d4ed8;
-    }
-
-    .ai-empty {
-        background: linear-gradient(160deg, #f9fcfa, #f1f7f3);
-        color: var(--text-dark);
-        border: 1px solid var(--border);
-    }
-
-    .ai-empty .ai-summary {
-        color: #50616e;
-        max-width: 820px;
-    }
-
-    .ai-empty .ai-badge {
-        background: var(--green-bg);
-        border-color: var(--border);
-        color: var(--green-dark);
-    }
-
-    .ai-status {
-        margin-top: 1rem;
-        padding: 0.95rem 1rem;
-        border-radius: 16px;
-        font-size: 0.94rem;
-        line-height: 1.6;
-    }
-
-    .ai-status.warning {
-        background: var(--orange-soft);
-        color: #92400e;
-    }
-
-    .ai-status.danger {
-        background: var(--danger-soft);
-        color: var(--danger-text);
+        color: rgba(255,255,255,0.95);
     }
 
     .stats-grid {
@@ -497,6 +138,9 @@
         gap: 0.6rem;
     }
 
+    .panel-title .green-icon { color: var(--green-mid); }
+    .panel-title .orange-icon { color: var(--orange); }
+
     .yield-item {
         margin-bottom: 1.45rem;
     }
@@ -532,13 +176,8 @@
         border-radius: 999px;
     }
 
-    .progress-fill.green {
-        background: #2f9e4f;
-    }
-
-    .progress-fill.orange {
-        background: #f59e0b;
-    }
+    .progress-fill.green { background: #2f9e4f; }
+    .progress-fill.orange { background: #f59e0b; }
 
     .transaction-list {
         display: flex;
@@ -579,6 +218,39 @@
         color: #6b7f71;
         font-size: 0.9rem;
         text-align: right;
+    }
+
+    @media (max-width: 1100px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 700px) {
+        .dashboard-page {
+            padding: 1rem;
+        }
+
+        .hero-banner {
+            padding: 1.5rem;
+            min-height: 220px;
+        }
+
+        .hero-title {
+            font-size: 2rem;
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .stat-card {
+            min-height: auto;
+        }
     }
 
     .summary-grid {
@@ -637,231 +309,19 @@
         font-size: 0.94rem;
         font-weight: 600;
     }
-
-    @media (max-width: 1180px) {
-        .hero-banner {
-            flex-direction: column;
-            align-items: flex-start;
-        }
-
-        .hero-actions {
-            width: 100%;
-            min-width: 0;
-        }
-
-        .stats-grid {
-            grid-template-columns: repeat(2, 1fr);
-        }
-
-        .dashboard-grid,
-        .summary-grid,
-        .ai-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .ai-header {
-            flex-direction: column;
-        }
-    }
-
-    @media (max-width: 700px) {
-        .dashboard-page {
-            padding: 1rem;
-        }
-
-        .hero-banner {
-            padding: 1.5rem;
-            min-height: 250px;
-        }
-
-        .hero-title {
-            font-size: 2rem;
-        }
-
-        .stats-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .stat-card {
-            min-height: auto;
-        }
-
-        .ai-meta {
-            width: 100%;
-            grid-template-columns: 1fr 1fr;
-        }
-    }
 </style>
 
 <div class="dashboard-page">
+
     <section class="hero-banner">
         <div class="hero-content">
-            <div class="hero-kicker">AgriNova intelligence hub</div>
-            <h1 class="hero-title">Turn your farm dashboard into an AI decision room</h1>
+            <h1 class="hero-title">Welcome to AGRINOVA</h1>
             <p class="hero-text">
-                Monitor operations, spot rental pressure, and generate an executive AI brief from your real
-                inventory and rental activity in one click.
+                Your smart farm management and marketplace platform.
+                Monitor crops, manage inventory, and connect with buyers.
             </p>
-            <div class="hero-meta">
-                <span class="hero-pill">Inventory utilization {{ operationalPulse.inventoryUtilization }}%</span>
-                <span class="hero-pill">Overdue rental rate {{ operationalPulse.overdueRate }}%</span>
-                <span class="hero-pill">{{ alertCount }} live alerts</span>
-            </div>
-        </div>
-
-        <div class="hero-actions">
-            <a class="action-button" href="{{ path('app_dashboard', { generateAi: 1 }) }}#ai-copilot">
-                Generate AI Copilot Brief
-            </a>
-            <a class="secondary-button" href="{{ path('rental_index') }}">
-                Open Rentals Workspace
-            </a>
-            <div class="hero-note">
-                Provider: {{ aiProvider }} | Model: {{ aiModel }}{% if not aiConfigured %} | add the matching API key to go live{% endif %}
-            </div>
         </div>
     </section>
-
-    <section id="ai-copilot" class="ai-panel {% if aiResult is null %}ai-empty{% endif %}">
-        {% if aiResult and aiResult.status == 'success' and aiResult.brief %}
-            <div class="ai-header">
-                <div>
-                    <div class="ai-badge">AI Copilot Brief</div>
-                    <h2 class="ai-title">{{ aiResult.brief.headline }}</h2>
-                    <p class="ai-summary">{{ aiResult.brief.summary }}</p>
-                </div>
-
-                <div class="ai-meta">
-                    <div class="ai-score-card">
-                        <div class="ai-score-label">Priority</div>
-                        <div class="ai-score-value priority-{{ aiResult.brief.priority|lower }}">{{ aiResult.brief.priority }}</div>
-                    </div>
-                    <div class="ai-score-card">
-                        <div class="ai-score-label">Confidence</div>
-                        <div class="ai-score-value">{{ aiResult.brief.confidence }}%</div>
-                    </div>
-                    <div class="ai-score-card">
-                        <div class="ai-score-label">Model</div>
-                        <div class="ai-score-value" style="font-size: 1.05rem;">{{ aiResult.model }}</div>
-                    </div>
-                    <div class="ai-score-card">
-                        <div class="ai-score-label">Generated</div>
-                        <div class="ai-score-value" style="font-size: 1.05rem;">{{ aiResult.generatedAt|date('M d, H:i') }}</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="ai-pulse-row">
-                <div class="ai-pulse-pill">Utilization {{ operationalPulse.inventoryUtilization }}%</div>
-                <div class="ai-pulse-pill">Completion rate {{ operationalPulse.completionRate }}%</div>
-                <div class="ai-pulse-pill">Overdue rate {{ operationalPulse.overdueRate }}%</div>
-                <div class="ai-pulse-pill">Rental revenue ${{ operationalPulse.revenue|number_format(2, '.', ',') }}</div>
-            </div>
-
-            <div class="ai-actions">
-                <a class="ai-panel-button primary" href="{{ path('app_dashboard', { generateAi: 1 }) }}#ai-copilot">Refresh AI Brief</a>
-                <a class="ai-panel-button ghost" href="{{ path('inventory_index') }}">Review Inventory</a>
-                <a class="ai-panel-button ghost" href="{{ path('rental_index') }}">Review Rentals</a>
-            </div>
-        {% else %}
-            <div class="ai-badge">AI Copilot</div>
-            <h2 class="ai-title">Generate a live executive brief from your current farm operations</h2>
-            <p class="ai-summary">
-                This dashboard can now call {{ aiProvider }} and transform your inventory,
-                rentals, alerts, and revenue signals into a polished operational brief for demos and decision-making.
-            </p>
-
-            <div class="ai-pulse-row">
-                <div class="ai-pulse-pill">Reads live inventory and rental stats</div>
-                <div class="ai-pulse-pill">Highlights risk, actions, and opportunities</div>
-                <div class="ai-pulse-pill">Safe read-only integration</div>
-                <div class="ai-pulse-pill">Powered by {{ aiProvider }} / {{ aiModel }}</div>
-            </div>
-
-            <div class="ai-actions">
-                <a class="ai-panel-button primary" href="{{ path('app_dashboard', { generateAi: 1 }) }}#ai-copilot">Generate AI Copilot Brief</a>
-                <a class="ai-panel-button ghost" href="{{ path('inventory_index') }}">Open Inventory</a>
-            </div>
-
-            {% if aiResult and aiResult.status == 'not_configured' %}
-                <div class="ai-status warning">{{ aiResult.error }}</div>
-            {% elseif aiResult and aiResult.status == 'error' %}
-                <div class="ai-status danger">{{ aiResult.error }}</div>
-            {% elseif not aiConfigured %}
-                <div class="ai-status warning">Live AI is ready in code. Add the API key for {{ aiProvider }} in your .env.local to activate it.</div>
-            {% endif %}
-        {% endif %}
-    </section>
-
-    {% if aiResult and aiResult.status == 'success' and aiResult.brief %}
-        <section class="ai-grid">
-            <div class="ai-list-card risks">
-                <div class="ai-list-title">Top Risks</div>
-                <ul class="ai-list">
-                    {% for risk in aiResult.brief.risks %}
-                        <li>
-                            <span class="ai-list-index">{{ loop.index }}</span>
-                            <span>{{ risk }}</span>
-                        </li>
-                    {% endfor %}
-                </ul>
-            </div>
-
-            <div class="ai-list-card actions">
-                <div class="ai-list-title">Recommended Actions</div>
-                <ul class="ai-list">
-                    {% for action in aiResult.brief.actions %}
-                        <li>
-                            <span class="ai-list-index">{{ loop.index }}</span>
-                            <span>{{ action }}</span>
-                        </li>
-                    {% endfor %}
-                </ul>
-            </div>
-
-            <div class="ai-list-card opportunities">
-                <div class="ai-list-title">Growth Opportunities</div>
-                <ul class="ai-list">
-                    {% for opportunity in aiResult.brief.opportunities %}
-                        <li>
-                            <span class="ai-list-index">{{ loop.index }}</span>
-                            <span>{{ opportunity }}</span>
-                        </li>
-                    {% endfor %}
-                </ul>
-            </div>
-        </section>
-    {% endif %}
-
-    {% if alerts|length > 0 %}
-        <section class="panel" style="margin-bottom: 1.8rem;">
-            <div class="panel-title">
-                <span>Alerts & Notifications ({{ alertCount }})</span>
-                {% if criticalAlertCount > 0 %}
-                    <span style="background: #fee2e2; color: #dc2626; padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.8rem; font-weight: 600; margin-left: auto;">{{ criticalAlertCount }} Critical</span>
-                {% endif %}
-            </div>
-            <div style="max-height: 300px; overflow-y: auto;">
-                {% for alert in alerts|slice(0, 10) %}
-                    <div style="padding: 0.75rem; border-left: 4px solid {% if alert.severity == 'danger' %}#dc2626{% elseif alert.severity == 'warning' %}#f59e0b{% else %}#3b82f6{% endif %}; background: {% if alert.severity == 'danger' %}#fee2e2{% elseif alert.severity == 'warning' %}#fef3c7{% else %}#dbeafe{% endif %}; border-radius: 8px; margin-bottom: 0.5rem;">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                            <div>
-                                <div style="font-weight: 600; color: #1f2937; font-size: 0.95rem;">{{ alert.title }}</div>
-                                <div style="color: #4b5563; font-size: 0.85rem; margin-top: 0.25rem;">{{ alert.message }}</div>
-                                <div style="color: #6b7280; font-size: 0.75rem; margin-top: 0.25rem;">{{ alert.date|date('M d, Y') }}</div>
-                            </div>
-                            <a href="{{ path(alert.link, alert.linkParams) }}" style="background: white; color: #374151; padding: 0.35rem 0.75rem; border-radius: 6px; font-size: 0.8rem; font-weight: 500; text-decoration: none; border: 1px solid #d1d5db; white-space: nowrap; margin-left: 1rem;">View</a>
-                        </div>
-                    </div>
-                {% endfor %}
-                {% if alerts|length > 10 %}
-                    <div style="text-align: center; padding: 1rem; color: #6b7280; font-size: 0.9rem;">
-                        And {{ alerts|length - 10 }} more alerts...
-                    </div>
-                {% endif %}
-            </div>
-        </section>
-    {% endif %}
 
     <section class="stats-grid">
         {% for stat in stats %}
@@ -888,7 +348,7 @@
                         </svg>
                     {% elseif stat.icon == 'box' %}
                         <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4A2 2 0 0 0 13 22l7-4A2 2 0 0 0 21 16z"/>
+                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
                             <path d="M3.3 7l8.7 5 8.7-5"/>
                             <path d="M12 22V12"/>
                         </svg>
@@ -907,6 +367,7 @@
     <section class="dashboard-grid">
         <div class="panel">
             <div class="panel-title">
+                <span class="green-icon">↗</span>
                 <span>Crop Yield Overview</span>
             </div>
 
@@ -922,92 +383,52 @@
                 </div>
             {% endfor %}
         </div>
+<div class="panel">
+    <div class="panel-title">
+        <span class="orange-icon">📊</span>
+        <span>Forum Category Statistics</span>
+    </div>
 
-        <div class="panel">
-            <div class="panel-title">
-                <span>Recent Transactions</span>
+    {% for category in categoryStats %}
+        <div class="yield-item">
+            <div class="yield-row">
+                <span class="yield-name">{{ category.name }}</span>
+                <span class="yield-value">{{ category.count }} posts</span>
             </div>
-
-            <div class="transaction-list">
-                {% for transaction in transactions %}
-                    <div class="transaction-item">
-                        <div>
-                            <div class="transaction-name">{{ transaction.customer }}</div>
-                            <div class="transaction-desc">{{ transaction.product }}</div>
-                        </div>
-                        <div>
-                            <div class="transaction-price">{{ transaction.amount }}</div>
-                            <div class="transaction-time">{{ transaction.time }}</div>
-                        </div>
-                    </div>
-                {% endfor %}
+            <div class="progress-track">
+                <div class="progress-fill {{ category.color }}"
+                     style="width: {{ totalPosts > 0 ? (category.count / totalPosts * 100) : 0 }}%;"></div>
             </div>
         </div>
+    {% endfor %}
+</div>
     </section>
 
     <section class="summary-grid">
         <div class="panel">
             <div class="panel-title">
+                <span class="green-icon">📦</span>
                 <span>Inventory & Rental Snapshot</span>
             </div>
 
-            <div class="summary-item">
-                <span class="summary-label">Total inventory items</span>
-                <span class="summary-value">{{ inventoryStats.total }}</span>
-            </div>
-            <div class="summary-item">
-                <span class="summary-label">Rentable inventory</span>
-                <span class="summary-value">{{ inventoryStats.rentable }}</span>
-            </div>
-            <div class="summary-item">
-                <span class="summary-label">Currently rented out</span>
-                <span class="summary-value">{{ inventoryStats.rentedOut }}</span>
-            </div>
-            <div class="summary-item">
-                <span class="summary-label">Low-stock items</span>
-                <span class="summary-value">{{ inventoryStats.lowStock }}</span>
-            </div>
-            <div class="summary-item">
-                <span class="summary-label">Total rental agreements</span>
-                <span class="summary-value">{{ rentalStats.total }}</span>
-            </div>
-            <div class="summary-item">
-                <span class="summary-label">Active rentals</span>
-                <span class="summary-value">{{ rentalStats.active }}</span>
-            </div>
-            <div class="summary-item">
-                <span class="summary-label">Pending rentals</span>
-                <span class="summary-value">{{ rentalStats.pending }}</span>
-            </div>
-            <div class="summary-item">
-                <span class="summary-label">Overdue rentals</span>
-                <span class="summary-value">{{ rentalStats.overdue }}</span>
-            </div>
+          
+
         </div>
 
         <div class="panel chart-card">
             <div class="panel-title">
+                <span class="orange-icon">📈</span>
                 <span>Inventory + Rental Live Chart</span>
             </div>
 
-            <div class="chart-wrapper">
-                <canvas id="inventoryRentalChart"
-                    data-inventory-labels='{{ inventoryChartData.labels|json_encode|raw }}'
-                    data-inventory-values='{{ inventoryChartData.values|json_encode|raw }}'
-                    data-rental-labels='{{ rentalChartData.labels|json_encode|raw }}'
-                    data-rental-values='{{ rentalChartData.values|json_encode|raw }}'>
-                </canvas>
+           
             </div>
 
-            <div class="chart-footer">
-                <span class="chart-pill">Inventory available: {{ inventoryChartData.values[0] }}</span>
-                <span class="chart-pill">Rentable: {{ inventoryChartData.values[1] }}</span>
-                <span class="chart-pill">Rented out: {{ inventoryChartData.values[2] }}</span>
-                <span class="chart-pill">Overdue rentals: {{ rentalStats.overdue }}</span>
-            </div>
         </div>
     </section>
+
 </div>
+
 {% endblock %}
 
 {% block javascripts %}
@@ -1015,9 +436,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const chartEl = document.getElementById('inventoryRentalChart');
-            if (!chartEl) {
-                return;
-            }
+            if (!chartEl) return;
 
             const inventoryLabels = JSON.parse(chartEl.dataset.inventoryLabels);
             const inventoryValues = JSON.parse(chartEl.dataset.inventoryValues);

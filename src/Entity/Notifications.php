@@ -41,6 +41,11 @@ class Notifications
     {
         return $this->id;
     }
+    public function __construct()
+{
+    $this->isRead = false;
+    $this->createdAt = new \DateTime();
+}
 
     public function getRecipientId(): int
     {
