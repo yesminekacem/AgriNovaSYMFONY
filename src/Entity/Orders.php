@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\OrdersRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: OrdersRepository::class)]
@@ -41,6 +43,14 @@ class Orders
 
     #[ORM\Column(type: 'float', nullable: true, precision: 22)]
     private ?float $deliveryLng = null;
+
+    #[ORM\OneToMany(targetEntity: OrderItems::class, mappedBy: 'order', cascade: ['persist', 'remove'])]
+    private Collection $orderItems;
+
+    public function __construct()
+    {
+        $this->orderItems = new ArrayCollection();
+    }
 
 
     public function getId(): ?int
@@ -144,6 +154,32 @@ class Orders
     public function setDeliveryLng(?float $deliveryLng): self
     {
         $this->deliveryLng = $deliveryLng;
+        return $this;
+    }
+
+    public function getOrderItems(): Collection
+    {
+        return $this->orderItems;
+    }
+
+    public function addOrderItem(OrderItems $orderItem): self
+    {
+        if (!$this->orderItems->contains($orderItem)) {
+            $this->orderItems->add($orderItem);
+            $orderItem->setOrder($this);
+        }
+
+        return $this;
+    }
+
+    public function removeOrderItem(OrderItems $orderItem): self
+    {
+        if ($this->orderItems->removeElement($orderItem)) {
+            if ($orderItem->getOrder() === $this) {
+                $orderItem->setOrder(null);
+            }
+        }
+
         return $this;
     }
 

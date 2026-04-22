@@ -1,0 +1,103 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}My Orders - AgriNova{% endblock %}
+{% block page_title %}My Orders{% endblock %}
+
+{% block body %}
+<section class="mx-auto max-w-6xl p-6">
+    {% include 'product/_marketplace_nav.html.twig' %}
+
+    <div class="mb-8">
+        <h1 class="text-3xl font-semibold text-slate-900">My Orders</h1>
+        <p class="mt-2 text-sm text-slate-600">View your order history and status</p>
+    </div>
+
+    {% for label, messages in app.flashes %}
+        {% for message in messages %}
+            <div class="mb-4 rounded-lg p-4 {% if label == 'success' %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endfor %}
+
+    {% if orders is empty %}
+        <div class="rounded-3xl border border-slate-200 bg-white p-12 text-center">
+            <div class="mb-4 text-4xl">📦</div>
+            <h3 class="text-lg font-semibold text-slate-900">No orders yet</h3>
+            <p class="mt-2 text-sm text-slate-600">You haven't placed any orders yet. Start shopping now!</p>
+            <a href="{{ path('product_marketplace') }}" class="mt-6 inline-block rounded-lg bg-green-600 px-6 py-2 text-sm font-semibold text-white transition hover:bg-green-700">
+                Browse Marketplace
+            </a>
+        </div>
+    {% else %}
+        <div class="space-y-4">
+            {% for order in orders %}
+                <div class="rounded-xl border border-slate-200 bg-white overflow-hidden shadow hover:shadow-lg transition">
+                    <div class="p-6">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-4">
+                                    <div>
+                                        <h3 class="text-lg font-semibold text-slate-900">Order #{{ order.id }}</h3>
+                                        <p class="text-sm text-slate-600 mt-1">
+                                            Placed on {{ order.orderDate|date('d M Y, H:i') }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="text-right">
+                                <div class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
+                                    {% if order.status == 'Pending' %}
+                                        bg-yellow-100 text-yellow-800
+                                    {% elseif order.status == 'Confirmed' %}
+                                        bg-blue-100 text-blue-800
+                                    {% elseif order.status == 'Shipped' %}
+                                        bg-purple-100 text-purple-800
+                                    {% elseif order.status == 'Delivered' %}
+                                        bg-green-100 text-green-800
+                                    {% elseif order.status == 'Cancelled' %}
+                                        bg-red-100 text-red-800
+                                    {% else %}
+                                        bg-slate-100 text-slate-800
+                                    {% endif %}
+                                ">
+                                    {{ order.status }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 grid grid-cols-2 gap-4 md:grid-cols-4">
+                            <div>
+                                <p class="text-xs text-slate-600 uppercase tracking-wider">Total Amount</p>
+                                <p class="mt-1 text-lg font-semibold text-slate-900">{{ order.totalPrice }} TND</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-slate-600 uppercase tracking-wider">Payment</p>
+                                <p class="mt-1 text-sm text-slate-900">
+                                    {% if order.paymentMethod == 'cash_on_delivery' %}
+                                        Cash on Delivery
+                                    {% elseif order.paymentMethod == 'paypal' %}
+                                        PayPal
+                                    {% else %}
+                                        {{ order.paymentMethod }}
+                                    {% endif %}
+                                </p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-slate-600 uppercase tracking-wider">Delivery Address</p>
+                                <p class="mt-1 text-sm text-slate-900 line-clamp-2">{{ order.deliveryAddress }}</p>
+                            </div>
+                            <div class="flex items-end">
+                                <a href="{{ path('orders_detail', {'id': order.id}) }}" class="w-full rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white text-center transition hover:bg-green-700">
+                                    View Details
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</section>
+{% endblock %}

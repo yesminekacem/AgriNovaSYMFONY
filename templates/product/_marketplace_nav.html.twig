@@ -42,9 +42,9 @@
             Cart
         </a>
 
-        <a href="#"
+        <a href="{{ path('orders_index') }}"
            class="flex-1 px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 text-center
-           {% if current_route starts with 'order' %}
+           {% if current_route starts with 'orders' %}
                bg-green-600 text-white shadow-sm
            {% else %}
                text-slate-600 hover:text-slate-900 hover:bg-slate-50

@@ -1,0 +1,110 @@
+{% extends 'baseBack.html.twig' %}
+
+{% block title %}{{ is_edit ? 'Edit' : 'Create' }} Product - Admin{% endblock %}
+{% block page_title %}Marketplace › {{ is_edit ? 'Edit Product' : 'Create Product' }}{% endblock %}
+
+{% block stylesheets %}
+    <link rel="stylesheet" href="{{ asset('Front/css/admin.css') }}">
+    <style>
+        .pf-card { max-width:700px;margin:1rem auto;padding:2rem;border-radius:10px;background:#fff;border:1px solid #e5e7eb; }
+        .pf-card h1 { font-size:1.3rem;font-weight:700;color:#1a2e1a;margin:0 0 1.5rem; }
+        .pf-field { margin-bottom:1.2rem; }
+        .pf-field label { display:block;font-size:.85rem;font-weight:600;color:#374151;margin-bottom:.35rem; }
+        .pf-field input[type="text"],
+        .pf-field input[type="number"],
+        .pf-field input[type="file"],
+        .pf-field select,
+        .pf-field textarea {
+            display:block;width:100%;padding:.65rem .85rem;border:1px solid #d1d5db;border-radius:8px;
+            font-size:.875rem;font-family:inherit;background:#fff;transition:border-color .2s;box-sizing:border-box;
+        }
+        .pf-field input:focus,.pf-field select:focus,.pf-field textarea:focus {
+            outline:none;border-color:#16a34a;box-shadow:0 0 0 3px rgba(22,163,74,.1);
+        }
+        .pf-field ul { list-style:none;padding:0;margin:.35rem 0 0; }
+        .pf-field ul li { color:#dc2626;font-size:.78rem; }
+        .pf-actions { display:flex;gap:.75rem;margin-top:1.75rem; }
+        .pf-current-img { display:flex;align-items:center;gap:.75rem;margin-top:.5rem; }
+        .pf-current-img img { width:72px;height:72px;object-fit:cover;border-radius:8px;border:1px solid #e5e7eb; }
+        .pf-current-img span { font-size:.8rem;color:#6b7280; }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="pf-card">
+
+    <a href="{{ path('admin_marketplace_products') }}"
+       style="display:inline-flex;align-items:center;gap:.35rem;font-size:.82rem;color:#6b7280;text-decoration:none;margin-bottom:1.25rem;">
+        ← Back to Products
+    </a>
+
+    <h1>{{ is_edit ? 'Edit Product' : 'Create New Product' }}</h1>
+
+    {% for flash in app.flashes('error') %}
+        <div class="alert alert-error" style="margin-bottom:1rem;">{{ flash }}</div>
+    {% endfor %}
+
+    {{ form_start(form, {attr: {novalidate: 'novalidate', enctype: 'multipart/form-data'}}) }}
+
+    <div class="pf-field">
+        {{ form_label(form.productName) }}
+        {{ form_widget(form.productName) }}
+        {{ form_errors(form.productName) }}
+    </div>
+
+    <div class="pf-field">
+        {{ form_label(form.description) }}
+        {{ form_widget(form.description) }}
+        {{ form_errors(form.description) }}
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="pf-field">
+            {{ form_label(form.quantity) }}
+            {{ form_widget(form.quantity) }}
+            {{ form_errors(form.quantity) }}
+        </div>
+        <div class="pf-field">
+            {{ form_label(form.pricePerUnit) }}
+            {{ form_widget(form.pricePerUnit) }}
+            {{ form_errors(form.pricePerUnit) }}
+        </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="pf-field">
+            {{ form_label(form.category) }}
+            {{ form_widget(form.category) }}
+            {{ form_errors(form.category) }}
+        </div>
+        <div class="pf-field">
+            {{ form_label(form.status) }}
+            {{ form_widget(form.status) }}
+            {{ form_errors(form.status) }}
+        </div>
+    </div>
+
+    <div class="pf-field">
+        {{ form_label(form.picture) }}
+        {% if is_edit and product.picture %}
+            <div class="pf-current-img">
+                <img src="/uploads/products/{{ product.picture }}" alt="{{ product.productName }}">
+                <span>Current image — upload a new one to replace it</span>
+            </div>
+        {% endif %}
+        {{ form_widget(form.picture) }}
+        {{ form_errors(form.picture) }}
+    </div>
+
+    <div class="pf-actions">
+        <button type="submit" class="inline-flex items-center rounded-xl bg-green-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-green-800">
+            {{ is_edit ? 'Save Changes' : 'Create Product' }}
+        </button>
+        <a href="{{ path('admin_marketplace_products') }}" class="inline-flex items-center rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+            Cancel
+        </a>
+    </div>
+
+    {{ form_end(form) }}
+</div>
+{% endblock %}

@@ -8,6 +8,7 @@ parameters:
         api_key: '%env(FACEPP_API_KEY)%'
         api_secret: '%env(FACEPP_API_SECRET)%'
         url: '%env(FACE_API_URL)%'
+    paypal_client_id: '%env(PAYPAL_CLIENT_ID)%'
 
 services:
     _defaults:
@@ -27,6 +28,12 @@ services:
         public: true
         autowire: true
         autoconfigure: true
+
+    App\Service\PayPalService:
+        arguments:
+            $clientId: '%env(PAYPAL_CLIENT_ID)%'
+            $secret:   '%env(PAYPAL_CLIENT_SECRET)%'
+            $baseUrl:  '%env(PAYPAL_BASE_URL)%'
 
     App\Service\GroqModerationService:
         arguments:
