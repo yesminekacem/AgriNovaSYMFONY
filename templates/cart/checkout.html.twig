@@ -4,6 +4,7 @@
 {% block page_title %}Checkout{% endblock %}
 
 {% block stylesheets %}
+    <script src="https://www.paypal.com/sdk/js?client-id={{ paypal_client_id }}&currency=USD"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <style>
         #delivery-map { height: 300px; border-radius: 8px; border: 1px solid #d1d5db; z-index: 0; }
@@ -175,10 +176,17 @@
                         {% endif %}
                     </div>
 
-                    <div class="pt-4">
+                    {# ── Submit (shown for Cash on Delivery) ── #}
+                    <div class="pt-4" id="submit-btn-wrap">
                         <button type="submit" class="w-full rounded-lg bg-green-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-green-700">
                             Confirm Order
                         </button>
+                    </div>
+
+                    {# ── PayPal button (shown when PayPal is selected) ── #}
+                    <div class="pt-4" id="paypal-btn-wrap" style="display:none;">
+                        <div id="paypal-button-container"></div>
+                        <div id="paypal-error" style="display:none;margin-top:8px;color:#dc2626;font-size:13px;text-align:center;"></div>
                     </div>
 
                     <div class="pt-2">
@@ -199,6 +207,79 @@
 {% block javascripts %}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
+// ── PayPal button ─────────────────────────────────────────────────────────────
+(function () {
+    const paymentSelect = document.getElementById('checkout_paymentMethod');
+    const submitWrap    = document.getElementById('submit-btn-wrap');
+    const paypalWrap    = document.getElementById('paypal-btn-wrap');
+    const paypalError   = document.getElementById('paypal-error');
+    let   buttonsRendered = false;
+
+    function togglePaypal() {
+        const isPayPal = paymentSelect.value === 'paypal';
+        submitWrap.style.display = isPayPal ? 'none'  : '';
+        paypalWrap.style.display = isPayPal ? ''      : 'none';
+
+        if (isPayPal && !buttonsRendered) {
+            buttonsRendered = true;
+            paypal.Buttons({
+                style: { layout: 'vertical', color: 'blue', shape: 'rect', label: 'pay' },
+
+                createOrder: function () {
+                    if (!document.getElementById('delivery_lat').value) {
+                        document.getElementById('map-error').style.display = 'block';
+                        document.getElementById('delivery-map').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        return Promise.reject(new Error('No delivery location selected'));
+                    }
+                    return fetch('{{ path('cart_paypal_create_order') }}', { method: 'POST' })
+                        .then(function (r) { return r.json(); })
+                        .then(function (data) {
+                            if (data.error) { throw new Error(data.error); }
+                            return data.id;
+                        });
+                },
+
+                onApprove: function (data) {
+                    return fetch('{{ path('cart_paypal_capture') }}', {
+                        method:  'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body:    JSON.stringify({
+                            orderID:         data.orderID,
+                            deliveryAddress: document.getElementById('checkout_deliveryAddress').value,
+                            deliveryLat:     document.getElementById('delivery_lat').value,
+                            deliveryLng:     document.getElementById('delivery_lng').value,
+                        }),
+                    })
+                    .then(function (r) { return r.json(); })
+                    .then(function (result) {
+                        if (result.success) {
+                            window.location.href = result.redirectUrl;
+                        } else {
+                            paypalError.textContent = result.error || 'Payment failed. Please try again.';
+                            paypalError.style.display = 'block';
+                        }
+                    });
+                },
+
+                onError: function (err) {
+                    console.error('PayPal error', err);
+                    paypalError.textContent = 'PayPal encountered an error. Please try again.';
+                    paypalError.style.display = 'block';
+                },
+
+                onCancel: function () {
+                    paypalError.textContent = 'Payment cancelled.';
+                    paypalError.style.display = 'block';
+                },
+            }).render('#paypal-button-container');
+        }
+    }
+
+    paymentSelect.addEventListener('change', togglePaypal);
+    togglePaypal(); // run once on load in case of server-side re-render with PayPal selected
+})();
+
+// ── Leaflet map ───────────────────────────────────────────────────────────────
 (function () {
     // ── Map init (centered on Tunisia) ──
     const map = L.map('delivery-map').setView([33.8869, 9.5375], 6);

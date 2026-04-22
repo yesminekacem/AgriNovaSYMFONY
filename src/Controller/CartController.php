@@ -8,8 +8,10 @@ use App\Entity\OrderItems;
 use App\Entity\ProductListing;
 use App\Form\CheckoutType;
 use App\Repository\CartRepository;
+use App\Service\PayPalService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -98,7 +100,7 @@ class CartController extends AbstractController
     }
 
     #[Route('/checkout', name: 'cart_checkout', methods: ['GET', 'POST'])]
-    public function checkout(Request $request, CartRepository $cartRepository, EntityManagerInterface $em): Response
+    public function checkout(Request $request, CartRepository $cartRepository, EntityManagerInterface $em, PayPalService $paypal): Response
     {
         $user = $this->getUser();
         $userId = (string)$user->getEmail();
@@ -165,14 +167,110 @@ class CartController extends AbstractController
             
             $em->flush();
             
-            $this->addFlash('success', 'Order created successfully! Order ID: ' . $order->getId());
-            
+            $this->addFlash('success', 'Order #' . $order->getId() . ' placed successfully!');
             return $this->redirectToRoute('cart_index');
         }
-        
+
         return $this->render('cart/checkout.html.twig', [
-            'form' => $form,
-            'cart_items' => $cartItems,
+            'form'             => $form,
+            'cart_items'       => $cartItems,
+            'paypal_client_id' => $paypal->getClientId(),
+        ]);
+    }
+
+    // ── PayPal: create a PayPal order (called by JS before popup opens) ──────
+
+    #[Route('/paypal/create-order', name: 'cart_paypal_create_order', methods: ['POST'])]
+    public function paypalCreateOrder(CartRepository $cartRepository, PayPalService $paypal): JsonResponse
+    {
+        $userId     = (string) $this->getUser()->getEmail();
+        $cartItems  = $cartRepository->findBy(['userId' => $userId]);
+
+        if (empty($cartItems)) {
+            return new JsonResponse(['error' => 'Cart is empty'], 400);
+        }
+
+        $total = 0.0;
+        foreach ($cartItems as $item) {
+            $total += $item->getProduct()->getPricePerUnit() * $item->getQuantity();
+        }
+
+        $paypalOrderId = $paypal->createOrder($total);
+
+        return new JsonResponse(['id' => $paypalOrderId]);
+    }
+
+    // ── PayPal: capture payment then create the Symfony order ────────────────
+
+    #[Route('/paypal/capture', name: 'cart_paypal_capture', methods: ['POST'])]
+    public function paypalCapture(Request $request, CartRepository $cartRepository, EntityManagerInterface $em, PayPalService $paypal): JsonResponse
+    {
+        $data      = json_decode($request->getContent(), true);
+        $ppOrderId = $data['orderID'] ?? null;
+
+        if (!$ppOrderId) {
+            return new JsonResponse(['error' => 'Missing PayPal orderID'], 400);
+        }
+
+        $capture = $paypal->captureOrder($ppOrderId);
+
+        if (($capture['status'] ?? '') !== 'COMPLETED') {
+            return new JsonResponse(['error' => 'Payment not completed by PayPal'], 400);
+        }
+
+        $userId    = (string) $this->getUser()->getEmail();
+        $cartItems = $cartRepository->findBy(['userId' => $userId]);
+
+        if (empty($cartItems)) {
+            return new JsonResponse(['error' => 'Cart is empty'], 400);
+        }
+
+        $total = 0.0;
+        foreach ($cartItems as $item) {
+            $total += $item->getProduct()->getPricePerUnit() * $item->getQuantity();
+        }
+
+        $order = new Orders();
+        $order->setUserId($userId);
+        $order->setDeliveryAddress($data['deliveryAddress'] ?? '');
+        $order->setPaymentMethod('paypal');
+        $order->setOrderDate(new \DateTime());
+        $order->setStatus('Pending');
+        $order->setTotalPrice($total);
+        $order->setCreatedAt(new \DateTime());
+
+        $lat = $data['deliveryLat'] ?? null;
+        $lng = $data['deliveryLng'] ?? null;
+        $order->setDeliveryLat($lat !== '' && $lat !== null ? (float) $lat : null);
+        $order->setDeliveryLng($lng !== '' && $lng !== null ? (float) $lng : null);
+
+        $em->persist($order);
+        $em->flush();
+
+        foreach ($cartItems as $cartItem) {
+            $product   = $cartItem->getProduct();
+            $orderItem = new OrderItems();
+            $orderItem->setOrder($order);
+            $orderItem->setProduct($product);
+            $orderItem->setProductName($product->getProductName());
+            $orderItem->setQuantity($cartItem->getQuantity());
+            $orderItem->setPricePerUnit($product->getPricePerUnit());
+            $orderItem->setSubtotal($product->getPricePerUnit() * $cartItem->getQuantity());
+            $em->persist($orderItem);
+        }
+
+        foreach ($cartItems as $cartItem) {
+            $em->remove($cartItem);
+        }
+
+        $em->flush();
+
+        $this->addFlash('success', 'PayPal payment confirmed! Order #' . $order->getId() . ' placed.');
+
+        return new JsonResponse([
+            'success'     => true,
+            'orderId'     => $order->getId(),
+            'redirectUrl' => $this->generateUrl('cart_index'),
         ]);
     }
 }
