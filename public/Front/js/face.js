@@ -55,6 +55,8 @@
                 stream = await navigator.mediaDevices.getUserMedia({video: { facingMode: 'user' }, audio: false});
                 video.srcObject = stream;
                 await video.play();
+                video.style.transform = 'scaleX(-1)';
+                video.style.webkitTransform = 'scaleX(-1)';
                 root.classList.add('camera-active');
                 isActive = true;
             }catch(e){
@@ -80,7 +82,11 @@
             canvas.width = w;
             canvas.height = h;
             const ctx = canvas.getContext('2d');
+            ctx.save();
+            ctx.translate(w, 0);
+            ctx.scale(-1, 1);
             ctx.drawImage(video, 0, 0, w, h);
+            ctx.restore();
             const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
             const stripped = dataUrl.replace(/^data:image\/(png|jpeg|jpg);base64,/, '');
             if(hidden) hidden.value = stripped;

@@ -27,7 +27,7 @@
             <div class="field">
                 <label>Use camera to capture your face</label>
                 <div class="face-camera-widget" data-auto-submit="0">
-                    <video class="face-video" autoplay playsinline style="width:100%;max-width:360px;border-radius:8px;background:#000"></video>
+                    <video class="face-video" autoplay playsinline style="width:100%;max-width:360px;border-radius:8px;background:#000;transform: scaleX(-1);-webkit-transform: scaleX(-1);"></video>
                     <canvas class="face-canvas" style="display:none"></canvas>
                     <img class="face-preview-img" src="" alt="preview" style="display:block;margin-top:8px;width:120px;height:120px;border-radius:999px;object-fit:cover;"/>
                     <div style="margin-top:8px;display:flex;gap:8px">
@@ -55,5 +55,70 @@
     </div>
 </div>
 <script src="{{ asset('Front/js/face.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const video = document.querySelector('.face-video');
+        const canvas = document.querySelector('.face-canvas');
+        const previewImg = document.querySelector('.face-preview-img');
+        const faceImageInput = document.querySelector('input[name="face_image_base64"]');
+
+        let stream = null;
+
+        // Start the camera automatically
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then((mediaStream) => {
+                stream = mediaStream;
+                video.srcObject = stream;
+
+                // Apply horizontal inversion to the video feed
+                video.style.transform = 'rotateY(180deg)';
+                video.style.webkitTransform = 'rotateY(180deg)'; // For Safari compatibility
+            })
+            .catch((err) => {
+                console.error('Error accessing the camera:', err);
+            });
+
+        // Continuously capture frames and send for detection
+        const detectFace = () => {
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            // Flip the canvas horizontally to match the inverted video feed
+            context.translate(canvas.width, 0);
+            context.scale(-1, 1);
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            const imageData = canvas.toDataURL('image/png');
+            faceImageInput.value = imageData;
+
+            // Send the image to the server for detection
+            fetch('{{ path('app_login_face_detect') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ face_image: imageData }),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.href = '{{ path('app_profile') }}';
+                    }
+                })
+                .catch(err => console.error('Face detection error:', err));
+        };
+
+        // Run detection every 2 seconds
+        setInterval(detectFace, 2000);
+
+        // Stop the camera when the page is unloaded
+        window.addEventListener('beforeunload', () => {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+        });
+    });
+</script>
 </body>
 </html>
