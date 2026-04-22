@@ -1,0 +1,136 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Checkout - AgriNova{% endblock %}
+{% block page_title %}Checkout{% endblock %}
+
+{% block body %}
+<section class="mx-auto max-w-6xl p-6">
+    {% include 'product/_marketplace_nav.html.twig' %}
+
+    <div class="mb-8">
+        <h1 class="text-3xl font-semibold text-slate-900">Checkout</h1>
+        <p class="mt-2 text-sm text-slate-600">Complete your purchase</p>
+    </div>
+
+    {% for label, messages in app.flashes %}
+        {% for message in messages %}
+            <div class="mb-4 rounded-lg p-4 {% if label == 'success' %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endfor %}
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Order Summary -->
+        <div class="lg:col-span-2">
+            <div class="rounded-xl border border-slate-200 bg-white overflow-hidden shadow">
+                <div class="bg-slate-50 px-6 py-4 border-b border-slate-200">
+                    <h2 class="text-lg font-semibold text-slate-900">Order Summary</h2>
+                </div>
+                
+                <table class="min-w-full divide-y divide-slate-200">
+                    <thead class="bg-slate-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Product</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Price</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Quantity</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-slate-200">
+                        {% set total = 0 %}
+                        {% for item in cart_items %}
+                            {% set product = item.product %}
+                            {% set subtotal = product.pricePerUnit * item.quantity %}
+                            {% set total = total + subtotal %}
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="h-10 w-10 flex-shrink-0 bg-slate-100 rounded flex items-center justify-center overflow-hidden">
+                                            {% if product.picture %}
+                                                <img class="h-10 w-10 object-cover" src="/uploads/products/{{ product.picture }}" alt="">
+                                            {% else %}
+                                                <span class="text-lg">🌾</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-slate-900">{{ product.productName }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                                    {{ product.pricePerUnit }} TND
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                                    {{ item.quantity }} kg
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">
+                                    {{ subtotal }} TND
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                
+                <div class="bg-slate-50 px-6 py-4 border-t border-slate-200">
+                    <div class="flex justify-between items-center text-lg font-semibold text-slate-900">
+                        <span>Total:</span>
+                        <span>{{ total }} TND</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Checkout Form -->
+        <div class="lg:col-span-1">
+            <div class="rounded-xl border border-slate-200 bg-white overflow-hidden shadow sticky top-6">
+                <div class="bg-slate-50 px-6 py-4 border-b border-slate-200">
+                    <h2 class="text-lg font-semibold text-slate-900">Delivery Details</h2>
+                </div>
+                
+                <div class="p-6">
+                    {{ form_start(form, {'attr': {'class': 'space-y-4'}}) }}
+                    
+                    <div>
+                        {{ form_label(form.deliveryAddress, 'Delivery Address', {'label_attr': {'class': 'block text-sm font-medium text-slate-700 mb-1'}}) }}
+                        {{ form_widget(form.deliveryAddress) }}
+                        {% if form.deliveryAddress.vars.errors|length %}
+                            <div class="mt-1 text-sm text-red-600">
+                                {% for error in form.deliveryAddress.vars.errors %}
+                                    {{ error.message }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        {{ form_label(form.paymentMethod, 'Payment Method', {'label_attr': {'class': 'block text-sm font-medium text-slate-700 mb-1'}}) }}
+                        {{ form_widget(form.paymentMethod) }}
+                        {% if form.paymentMethod.vars.errors|length %}
+                            <div class="mt-1 text-sm text-red-600">
+                                {% for error in form.paymentMethod.vars.errors %}
+                                    {{ error.message }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="pt-4">
+                        <button type="submit" class="w-full rounded-lg bg-green-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-green-700">
+                            Confirm Order
+                        </button>
+                    </div>
+
+                    <div class="pt-2">
+                        <a href="{{ path('cart_index') }}" class="block w-full text-center rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-slate-50">
+                            Back to Cart
+                        </a>
+                    </div>
+
+                    {{ form_end(form) }}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -84,9 +84,9 @@
                 <div class="text-lg font-semibold text-slate-900">
                     Total: {{ cart_total }} TND
                 </div>
-                <button class="rounded-lg bg-green-600 px-6 py-2 text-sm font-semibold text-white transition hover:bg-green-700">
+                <a href="{{ path('cart_checkout') }}" class="rounded-lg bg-green-600 px-6 py-2 text-sm font-semibold text-white transition hover:bg-green-700">
                     Proceed to Checkout
-                </button>
+                </a>
             </div>
         </div>
     {% endif %}

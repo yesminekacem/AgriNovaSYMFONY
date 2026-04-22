@@ -3,7 +3,10 @@
 namespace App\Controller;
 
 use App\Entity\Cart;
+use App\Entity\Orders;
+use App\Entity\OrderItems;
 use App\Entity\ProductListing;
+use App\Form\CheckoutType;
 use App\Repository\CartRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -92,5 +95,79 @@ class CartController extends AbstractController
         $this->addFlash('success', 'Item removed from cart.');
 
         return $this->redirectToRoute('cart_index');
+    }
+
+    #[Route('/checkout', name: 'cart_checkout', methods: ['GET', 'POST'])]
+    public function checkout(Request $request, CartRepository $cartRepository, EntityManagerInterface $em): Response
+    {
+        $user = $this->getUser();
+        $userId = (string)$user->getEmail();
+        
+        // Get cart items
+        $cartItems = $cartRepository->findBy(['userId' => $userId]);
+        
+        if (empty($cartItems)) {
+            $this->addFlash('warning', 'Your cart is empty.');
+            return $this->redirectToRoute('cart_index');
+        }
+        
+        // Create form
+        $form = $this->createForm(CheckoutType::class);
+        $form->handleRequest($request);
+        
+        if ($form->isSubmitted() && $form->isValid()) {
+            // Calculate total price
+            $totalPrice = 0;
+            foreach ($cartItems as $cartItem) {
+                $totalPrice += $cartItem->getProduct()->getPricePerUnit() * $cartItem->getQuantity();
+            }
+            
+            // Create order
+            $order = new Orders();
+            $order->setUserId($userId);
+            $order->setDeliveryAddress($form->get('deliveryAddress')->getData());
+            $order->setPaymentMethod($form->get('paymentMethod')->getData());
+            $order->setOrderDate(new \DateTime());
+            $order->setStatus('Pending');
+            $order->setTotalPrice($totalPrice);
+            $order->setCreatedAt(new \DateTime());
+            
+            $em->persist($order);
+            $em->flush();
+            
+            // Create order items
+            foreach ($cartItems as $cartItem) {
+                $product = $cartItem->getProduct();
+                $pricePerUnit = $product->getPricePerUnit();
+                $quantity = $cartItem->getQuantity();
+                $subtotal = $pricePerUnit * $quantity;
+                
+                $orderItem = new OrderItems();
+                $orderItem->setOrder($order);
+                $orderItem->setProduct($product);
+                $orderItem->setProductName($product->getProductName());
+                $orderItem->setQuantity($quantity);
+                $orderItem->setPricePerUnit($pricePerUnit);
+                $orderItem->setSubtotal($subtotal);
+                
+                $em->persist($orderItem);
+            }
+            
+            // Clear cart
+            foreach ($cartItems as $cartItem) {
+                $em->remove($cartItem);
+            }
+            
+            $em->flush();
+            
+            $this->addFlash('success', 'Order created successfully! Order ID: ' . $order->getId());
+            
+            return $this->redirectToRoute('cart_index');
+        }
+        
+        return $this->render('cart/checkout.html.twig', [
+            'form' => $form,
+            'cart_items' => $cartItems,
+        ]);
     }
 }
