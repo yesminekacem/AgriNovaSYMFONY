@@ -182,6 +182,57 @@ class AgriAiCopilotService
             ];
         }
 
+        $apiErrorMessage = (string) ($payload['error']['message'] ?? '');
+        if ($apiErrorMessage !== '' && $this->shouldRetryGroqAsJsonObject($apiErrorMessage)) {
+            return $this->requestGroqJsonObjectBrief($dashboardSnapshot);
+        }
+
+        return $this->buildSuccessfulResult($this->extractGroqOutputText($payload));
+    }
+
+    private function requestGroqJsonObjectBrief(array $dashboardSnapshot): array
+    {
+        try {
+            $payload = $this->httpClient->request('POST', self::GROQ_CHAT_ENDPOINT, [
+                'headers' => [
+                    'Authorization' => 'Bearer '.$this->getGroqApiKey(),
+                    'Content-Type' => 'application/json',
+                ],
+                'json' => [
+                    'model' => $this->getGroqModel(),
+                    'messages' => [
+                        [
+                            'role' => 'system',
+                            'content' => $this->buildSystemPrompt().' Return only a valid JSON object. Do not add markdown, comments, or extra text.',
+                        ],
+                        [
+                            'role' => 'user',
+                            'content' => $this->buildGroqJsonObjectPrompt($dashboardSnapshot),
+                        ],
+                    ],
+                    'response_format' => [
+                        'type' => 'json_object',
+                    ],
+                    'temperature' => 0.2,
+                    'max_completion_tokens' => 700,
+                ],
+                'timeout' => 25,
+                'no_proxy' => '*',
+            ])->toArray(false);
+        } catch (ExceptionInterface|\Throwable) {
+            return [
+                'status' => 'error',
+                'error' => 'The AI brief could not be generated right now. Please try again in a moment.',
+            ];
+        }
+
+        if (isset($payload['error']['message'])) {
+            return [
+                'status' => 'error',
+                'error' => (string) $payload['error']['message'],
+            ];
+        }
+
         return $this->buildSuccessfulResult($this->extractGroqOutputText($payload));
     }
 
@@ -226,6 +277,29 @@ class AgriAiCopilotService
     private function buildUserPrompt(array $dashboardSnapshot): string
     {
         return "Build an executive JSON brief for this dashboard snapshot.\nFocus on inventory efficiency, rental bottlenecks, risk, and growth opportunities.\nKeep list items short and concrete.\n\nDashboard snapshot:\n".json_encode($dashboardSnapshot, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+    }
+
+    private function buildGroqJsonObjectPrompt(array $dashboardSnapshot): string
+    {
+        return <<<PROMPT
+Return a single valid JSON object with exactly these keys:
+- headline: string
+- summary: string
+- priority: one of "Low", "Moderate", "High", "Critical"
+- confidence: integer from 0 to 100
+- risks: array of 1 to 3 short strings
+- actions: array of 1 to 3 short strings
+- opportunities: array of 1 to 3 short strings
+
+Rules:
+- No markdown
+- No explanation outside JSON
+- No extra keys
+- Use empty-safe practical values if data is limited
+
+Dashboard snapshot:
+PROMPT
+        ."\n".json_encode($dashboardSnapshot, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     }
 
     private function getBriefSchema(): array
@@ -363,5 +437,14 @@ class AgriAiCopilotService
         }
 
         return $normalized;
+    }
+
+    private function shouldRetryGroqAsJsonObject(string $message): bool
+    {
+        $message = strtolower($message);
+
+        return str_contains($message, 'failed to validate json')
+            || str_contains($message, 'failed_generation')
+            || str_contains($message, 'generated json does not match the expected schema');
     }
 }
