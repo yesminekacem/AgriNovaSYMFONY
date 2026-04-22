@@ -377,6 +377,7 @@ public function addComment(
     Request $request,
     PostRepository $postRepository,
     CommentRepository $commentRepository,
+    NotificationsRepository $notificationsRepository,
     EntityManagerInterface $entityManager,
     GroqModerationService $groqModerationService,
     HubInterface $hub
@@ -449,7 +450,22 @@ public function addComment(
     $comment->setCreatedAt(new \DateTime());
 
     $entityManager->persist($comment);
-    $entityManager->flush();
+
+// create notification only if commenter is not the post owner
+if ($post->getAuthorId() !== $user->getId()) {
+    $notification = new Notifications();
+    $notification->setRecipientId($post->getAuthorId());
+    $notification->setActorId($user->getId());
+    $notification->setPostId($post->getIdPost());
+    $notification->setType('comment');
+    $notification->setMessage($user->getFullName() . ' commented on your post');
+    $notification->setIsRead(false);
+    $notification->setCreatedAt(new \DateTime());
+
+    $entityManager->persist($notification);
+}
+
+$entityManager->flush();
 
     $commentsCount = count($commentRepository->findByPost($post->getIdPost()));
 
@@ -1031,8 +1047,10 @@ private function createNotification(
     $entityManager->persist($notification);
 }
 #[Route('/notifications/json', name: 'app_notifications_json', methods: ['GET'])]
-public function getNotifications(NotificationsRepository $repo): Response
-{
+public function getNotifications(
+    NotificationsRepository $repo,
+    UserRepository $userRepository
+): Response {
     $user = $this->getUser();
 
     if (!$user) {
@@ -1042,27 +1060,112 @@ public function getNotifications(NotificationsRepository $repo): Response
     $notifications = $repo->findBy(
         ['recipientId' => $user->getId()],
         ['createdAt' => 'DESC'],
-        10
+        30
     );
+
+    $grouped = [];
+
+    foreach ($notifications as $n) {
+        $key = $n->getType() . '_' . $n->getPostId();
+
+        $actor = $userRepository->find($n->getActorId());
+        $actorName = $actor ? $actor->getFullName() : 'Someone';
+
+        if (!isset($grouped[$key])) {
+            $grouped[$key] = [
+                'type' => $n->getType(),
+                'postId' => $n->getPostId(),
+                'actors' => [],
+                'ids' => [],
+                'createdAt' => $n->getCreatedAt(),
+                'isRead' => true,
+            ];
+        }
+
+        $grouped[$key]['actors'][] = $actorName;
+        $grouped[$key]['ids'][] = $n->getId();
+
+        if ($n->getCreatedAt() > $grouped[$key]['createdAt']) {
+            $grouped[$key]['createdAt'] = $n->getCreatedAt();
+        }
+
+        if (!$n->getIsRead()) {
+            $grouped[$key]['isRead'] = false;
+        }
+    }
 
     $data = [];
 
-    foreach ($notifications as $n) {
+    foreach ($grouped as $item) {
+        $actors = array_values(array_unique($item['actors']));
+        $count = count($actors);
+
+        if ($item['type'] === 'comment') {
+            if ($count === 1) {
+                $message = $actors[0] . ' commented on your post';
+            } elseif ($count === 2) {
+                $message = $actors[0] . ' and ' . $actors[1] . ' commented on your post';
+            } else {
+                $message = $actors[0] . ' and ' . ($count - 1) . ' others commented on your post';
+            }
+        } elseif ($item['type'] === 'reaction') {
+            if ($count === 1) {
+                $message = $actors[0] . ' reacted to your post';
+            } elseif ($count === 2) {
+                $message = $actors[0] . ' and ' . $actors[1] . ' reacted to your post';
+            } else {
+                $message = $actors[0] . ' and ' . ($count - 1) . ' others reacted to your post';
+            }
+        } else {
+            $message = 'New activity on your post';
+        }
+
         $data[] = [
-            'id' => $n->getId(),
-            'message' => $n->getMessage(),
-            'isRead' => $n->getIsRead(),
-            'postId' => $n->getPostId(),
-            'createdAt' => $n->getCreatedAt()->format('Y-m-d H:i')
+            'type' => $item['type'],
+            'postId' => $item['postId'],
+            'ids' => $item['ids'],
+            'message' => $message,
+            'isRead' => $item['isRead'],
+            'createdAt' => $item['createdAt']->format('Y-m-d H:i'),
         ];
     }
 
+    usort($data, function ($a, $b) {
+        return strtotime($b['createdAt']) <=> strtotime($a['createdAt']);
+    });
+
     return $this->json([
         'success' => true,
-        'notifications' => $data
+        'notifications' => array_slice($data, 0, 10)
     ]);
 }
+#[Route('/notifications/read-group', name: 'app_notifications_read_group', methods: ['POST'])]
+public function readNotificationGroup(
+    Request $request,
+    NotificationsRepository $repo,
+    EntityManagerInterface $entityManager
+): Response {
+    $user = $this->getUser();
 
+    if (!$user) {
+        return $this->json(['success' => false], 403);
+    }
+
+    $payload = json_decode($request->getContent(), true);
+    $ids = $payload['ids'] ?? [];
+
+    foreach ($ids as $id) {
+        $notification = $repo->find($id);
+
+        if ($notification && $notification->getRecipientId() === $user->getId()) {
+            $notification->setIsRead(true);
+        }
+    }
+
+    $entityManager->flush();
+
+    return $this->json(['success' => true]);
+}
 
 #[Route('/forum/suggest-title', name: 'app_forum_suggest_title', methods: ['POST'])]
 public function suggestTitle(Request $request, HttpClientInterface $httpClient): JsonResponse

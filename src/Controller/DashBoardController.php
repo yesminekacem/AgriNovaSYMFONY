@@ -22,8 +22,6 @@ class DashBoardController extends AbstractController
         AgriAiCopilotService $agriAiCopilotService
     ): Response
     {
-        // ---- Dashboard data for crops, inventory, and rentals ----
-
         $stats = [
             [
                 'label' => 'Users',
@@ -116,7 +114,10 @@ class DashBoardController extends AbstractController
 
         $alerts = $alertService->getAlerts();
         $alertCount = count($alerts);
-        $criticalAlertCount = count(array_filter($alerts, static fn (array $alert): bool => ($alert['severity'] ?? null) === 'danger'));
+        $criticalAlertCount = count(array_filter(
+            $alerts,
+            static fn(array $alert): bool => ($alert['severity'] ?? null) === 'danger'
+        ));
 
         $operationalPulse = [
             'inventoryUtilization' => $inventoryStats['rentable'] > 0
@@ -131,6 +132,15 @@ class DashBoardController extends AbstractController
             'revenue' => (float) $rentalStats['revenue'],
         ];
 
+        // Forum category statistics block used by dashboard.html.twig
+        $categoryStats = [
+            ['name' => 'Organic Farming', 'count' => 12, 'color' => 'green'],
+            ['name' => 'Soil Management', 'count' => 8, 'color' => 'orange'],
+            ['name' => 'Irrigation', 'count' => 5, 'color' => 'green'],
+        ];
+
+        $totalPosts = array_sum(array_column($categoryStats, 'count'));
+
         $aiResult = null;
         if ($request->query->getBoolean('generateAi')) {
             $aiResult = $agriAiCopilotService->generateDashboardBrief([
@@ -141,7 +151,7 @@ class DashBoardController extends AbstractController
                     'total' => $alertCount,
                     'critical' => $criticalAlertCount,
                     'top' => array_map(
-                        static fn (array $alert): array => [
+                        static fn(array $alert): array => [
                             'title' => (string) ($alert['title'] ?? ''),
                             'message' => (string) ($alert['message'] ?? ''),
                             'severity' => (string) ($alert['severity'] ?? 'info'),
@@ -152,6 +162,7 @@ class DashBoardController extends AbstractController
                 'operational_pulse' => $operationalPulse,
                 'crop_yields' => $cropYields,
                 'recent_transactions' => $transactions,
+                'forum_categories' => $categoryStats,
             ]);
         }
 
@@ -167,6 +178,8 @@ class DashBoardController extends AbstractController
             'alertCount' => $alertCount,
             'criticalAlertCount' => $criticalAlertCount,
             'operationalPulse' => $operationalPulse,
+            'categoryStats' => $categoryStats,
+            'totalPosts' => $totalPosts,
             'aiResult' => $aiResult,
             'aiConfigured' => $agriAiCopilotService->isConfigured(),
             'aiProvider' => $agriAiCopilotService->getProviderLabel(),

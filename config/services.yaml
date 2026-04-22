@@ -8,8 +8,6 @@ parameters:
         api_key: '%env(FACEPP_API_KEY)%'
         api_secret: '%env(FACEPP_API_SECRET)%'
         url: '%env(FACE_API_URL)%'
-    groq_api_key: '%env(GROQ_API_KEY)%'
-    groq_model: '%env(GROQ_MODEL)%'
 
 services:
     _defaults:
@@ -32,9 +30,9 @@ services:
 
     App\Service\GroqModerationService:
         arguments:
-            $groqApiKey: '%groq_api_key%'
-            $groqModel: '%groq_model%'
-    # Face API client service
+            $groqApiKey: '%env(GROQ_API_KEY)%'
+            $groqModel: '%env(GROQ_MODEL_MODERATION)%'
+
     App\Service\FaceApiClient:
         arguments:
             $client: '@http_client'
@@ -44,5 +42,6 @@ services:
     App\Service\DiagnosisService:
         arguments:
             $apiUrl: '%env(string:DIAGNOSIS_API_URL)%'
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
