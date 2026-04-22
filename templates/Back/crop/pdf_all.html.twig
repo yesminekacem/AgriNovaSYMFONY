@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>All Crops</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: DejaVu Sans, sans-serif;
+            background: #f8faf8;
+            color: #1a1a1a;
+            padding: 40px;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 32px;
+            gap: 14px;
+        }
+
+        .logo-box {
+            background: #16a34a;
+            border-radius: 10px;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-box svg {
+            width: 26px;
+            height: 26px;
+            fill: #fff;
+        }
+
+        .brand h1 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #15803d;
+            letter-spacing: 1px;
+        }
+
+        .brand p {
+            font-size: 11px;
+            color: #6b7280;
+        }
+
+        /* Divider */
+        .divider {
+            border: none;
+            border-top: 2px solid #e5e7eb;
+            margin-bottom: 28px;
+        }
+
+        /* Section title */
+        .section-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #14532d;
+            margin-bottom: 6px;
+        }
+
+        .section-sub {
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 24px;
+        }
+
+        /* Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+        }
+
+        thead tr {
+            background: #16a34a;
+        }
+
+        thead th {
+            color: #fff;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 13px 16px;
+            text-align: left;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        tbody tr:last-child {
+            border-bottom: none;
+        }
+
+        tbody tr:nth-child(even) {
+            background: #f9fafb;
+        }
+
+        tbody td {
+            padding: 12px 16px;
+            font-size: 13px;
+            color: #374151;
+        }
+
+        td.id-cell {
+            font-weight: 700;
+            color: #16a34a;
+        }
+
+        td.name-cell {
+            font-weight: 600;
+            color: #111827;
+        }
+
+        td.variety-cell {
+            font-style: italic;
+            color: #6b7280;
+        }
+
+        /* Status badge */
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+        }
+
+        .badge-active {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .badge-harvested {
+            background: #fef9c3;
+            color: #a16207;
+        }
+
+        .badge-failed {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        /* Empty state */
+        .empty td {
+            text-align: center;
+            color: #9ca3af;
+            padding: 32px;
+            font-style: italic;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 20px;
+            font-size: 11px;
+            color: #9ca3af;
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="logo-box">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22l1-2.3A4.49 4.49 0 008 20C19 20 22 3 22 3c-1 2-8 2-13 6 0 0 3-3 7-4z"/>
+            </svg>
+        </div>
+        <div class="brand">
+            <h1>AGRINOVA</h1>
+            <p>Smart Farm Platform</p>
+        </div>
+    </div>
+
+    <hr class="divider">
+
+    <div class="section-title">Crops Report</div>
+    <div class="section-sub">Generated on {{ "now"|date("F j, Y") }} &mdash; {{ crops|length }} crop{% if crops|length != 1 %}s{% endif %} registered</div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Variety</th>
+                <th>Planting Date</th>
+                <th>Expected Harvest</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for crop in crops %}
+            <tr>
+                <td class="id-cell">{{ crop.cropId }}</td>
+                <td class="name-cell">{{ crop.name }}</td>
+                <td>{{ crop.type }}</td>
+                <td class="variety-cell">{{ crop.variety }}</td>
+                <td>{{ crop.plantingDate ? crop.plantingDate|date('Y-m-d') : '—' }}</td>
+                <td>{{ crop.expectedHarvestDate ? crop.expectedHarvestDate|date('Y-m-d') : '—' }}</td>
+                <td>
+                    {% set status = crop.status|lower %}
+                    {% if status == 'active' %}
+                        <span class="badge badge-active">● ACTIVE</span>
+                    {% elseif status == 'harvested' %}
+                        <span class="badge badge-harvested">● HARVESTED</span>
+                    {% elseif status == 'failed' %}
+                        <span class="badge badge-failed">● FAILED</span>
+                    {% else %}
+                        <span class="badge">{{ crop.status }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+        {% else %}
+            <tr class="empty"><td colspan="7">No crops found.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        <span>AgriNova &copy; {{ "now"|date("Y") }}</span>
+        <span>Showing {{ crops|length }} crop{% if crops|length != 1 %}s{% endif %}</span>
+    </div>
+
+</body>
+</html>

@@ -159,4 +159,26 @@ class Crop
         return $this;
     }
 
+    /**
+     * Compute growth progress as percentage from plantingDate → expectedHarvestDate
+     */
+    public function getGrowthProgressPercent(): int
+    {
+        try {
+            $now = new \DateTimeImmutable();
+            $start = $this->plantingDate instanceof \DateTimeImmutable ? $this->plantingDate : \DateTimeImmutable::createFromMutable($this->plantingDate);
+            $end = $this->expectedHarvestDate instanceof \DateTimeImmutable ? $this->expectedHarvestDate : \DateTimeImmutable::createFromMutable($this->expectedHarvestDate);
+
+            if ($end <= $start) {
+                return 0;
+            }
+
+            $total = $end->getTimestamp() - $start->getTimestamp();
+            $elapsed = min(max(0, $now->getTimestamp() - $start->getTimestamp()), $total);
+            return (int) round(($elapsed / $total) * 100);
+        } catch (\Throwable $e) {
+            return 0;
+        }
+    }
+
 }

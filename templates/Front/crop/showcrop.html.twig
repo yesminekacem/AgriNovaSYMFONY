@@ -8,6 +8,7 @@
 
     <h1>Crop</h1>
 
+
     <table class="table">
         <tbody>
             <tr>
@@ -57,6 +58,6 @@
 
     <a href="{{ path('app_crop_edit', {'crop_id': crop.cropId}) }}">edit</a>
 
-    {{ include('crop/_delete_form.html.twig') }}
+    {{ include('Back/crop/_delete_formcrop.html.twig', {crop: crop}) }}
 
 {% endblock %}

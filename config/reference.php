@@ -1511,6 +1511,22 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     generate_final_classes?: bool|Param, // Default: true
  *     generate_final_entities?: bool|Param, // Default: false
  * }
+ * @psalm-type KnpSnappyConfig = array{
+ *     temporary_folder?: scalar|Param|null,
+ *     process_timeout?: int|Param, // Generator process timeout in seconds.
+ *     pdf?: array{
+ *         enabled?: bool|Param, // Default: true
+ *         binary?: scalar|Param|null, // Default: "wkhtmltopdf"
+ *         options?: array<string, scalar|Param|null>,
+ *         env?: list<scalar|Param|null>,
+ *     },
+ *     image?: array{
+ *         enabled?: bool|Param, // Default: true
+ *         binary?: scalar|Param|null, // Default: "wkhtmltoimage"
+ *         options?: array<string, scalar|Param|null>,
+ *         env?: list<scalar|Param|null>,
+ *     },
+ * }
  * @psalm-type ConfigType = array{
  *     imports?: ImportsConfig,
  *     parameters?: ParametersConfig,
@@ -1524,6 +1540,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     twig_extra?: TwigExtraConfig,
  *     security?: SecurityConfig,
  *     monolog?: MonologConfig,
+ *     knp_snappy?: KnpSnappyConfig,
  *     "when@dev"?: array{
  *         imports?: ImportsConfig,
  *         parameters?: ParametersConfig,
@@ -1540,6 +1557,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         security?: SecurityConfig,
  *         monolog?: MonologConfig,
  *         maker?: MakerConfig,
+ *         knp_snappy?: KnpSnappyConfig,
  *     },
  *     "when@prod"?: array{
  *         imports?: ImportsConfig,
@@ -1554,6 +1572,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         twig_extra?: TwigExtraConfig,
  *         security?: SecurityConfig,
  *         monolog?: MonologConfig,
+ *         knp_snappy?: KnpSnappyConfig,
  *     },
  *     "when@test"?: array{
  *         imports?: ImportsConfig,
@@ -1569,6 +1588,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         twig_extra?: TwigExtraConfig,
  *         security?: SecurityConfig,
  *         monolog?: MonologConfig,
+ *         knp_snappy?: KnpSnappyConfig,
  *     },
  *     ...<string, ExtensionType|array{ // extra keys must follow the when@%env% pattern or match an extension alias
  *         imports?: ImportsConfig,

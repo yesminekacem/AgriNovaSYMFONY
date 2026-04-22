@@ -65,7 +65,7 @@ class CropType extends AbstractType
             ])
             ->add('imageFile', FileType::class, [
                 'label'    => false,
-                'mapped'   => false,  // not a Doctrine column
+                'mapped'   => false,  
                 'required' => false,
                 'attr'     => ['accept' => 'image/*'],
                 'constraints' => [
