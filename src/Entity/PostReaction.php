@@ -10,6 +10,11 @@ use Doctrine\ORM\Mapping as ORM;
 class PostReaction
 {
 
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
+    private ?int $id = null;
+
     #[ORM\ManyToOne(targetEntity: Post::class)]
     #[ORM\JoinColumn(name: 'id_post', referencedColumnName: 'id_post', nullable: false)]
     private ?Post $idPost = null;
@@ -24,6 +29,11 @@ class PostReaction
     #[ORM\Column(type: 'datetime', nullable: true)]
     private ?\DateTimeInterface $createdAt = null;
 
+
+    public function getId(): ?int
+    {
+        return $this->id;
+    }
 
     public function getIdPost(): ?Post
     {

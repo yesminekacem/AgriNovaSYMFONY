@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\CartRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: CartRepository::class)]
 #[ORM\Table(name: 'cart')]
@@ -23,6 +24,12 @@ class Cart
     private ?ProductListing $product = null;
 
     #[ORM\Column(type: 'integer')]
+    #[Assert\NotBlank(message: "Quantity is required.")]
+    #[Assert\Positive(message: "Quantity must be a positive number.")]
+    #[Assert\Expression(
+        "this.getQuantity() <= this.getProduct().getQuantity()",
+        message: "Requested quantity exceeds available stock."
+    )]
     private int $quantity;
 
     #[ORM\Column(type: 'datetime')]

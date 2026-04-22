@@ -1,0 +1,58 @@
+{% set current_route = app.request.attributes.get('_route') %}
+
+<!-- Marketplace Navigation -->
+<div class="mb-8">
+    <nav class="flex space-x-1 bg-white rounded-xl p-1 border border-slate-200 shadow-sm">
+        <a href="{{ path('product_marketplace') }}"
+           class="flex-1 px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 text-center
+           {% if current_route == 'product_marketplace' %}
+               bg-green-600 text-white shadow-sm
+           {% else %}
+               text-slate-600 hover:text-slate-900 hover:bg-slate-50
+           {% endif %}">
+            <svg class="w-4 h-4 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+            </svg>
+            Marketplace
+        </a>
+
+        <a href="{{ path('product_manage') }}"
+           class="flex-1 px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 text-center
+           {% if current_route == 'product_manage' %}
+               bg-green-600 text-white shadow-sm
+           {% else %}
+               text-slate-600 hover:text-slate-900 hover:bg-slate-50
+           {% endif %}">
+            <svg class="w-4 h-4 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            Manage Products
+        </a>
+
+        <a href="{{ path('cart_index') }}"
+           class="flex-1 px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 text-center
+           {% if current_route == 'cart_index' %}
+               bg-green-600 text-white shadow-sm
+           {% else %}
+               text-slate-600 hover:text-slate-900 hover:bg-slate-50
+           {% endif %}">
+            <svg class="w-4 h-4 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.1 5H19M7 13l-1.1 5M7 13l2.5-2.5M17 18a2 2 0 100 4 2 2 0 000-4zm-10 0a2 2 0 100 4 2 2 0 000-4z"></path>
+            </svg>
+            Cart
+        </a>
+
+        <a href="#"
+           class="flex-1 px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 text-center
+           {% if current_route starts with 'order' %}
+               bg-green-600 text-white shadow-sm
+           {% else %}
+               text-slate-600 hover:text-slate-900 hover:bg-slate-50
+           {% endif %}">
+            <svg class="w-4 h-4 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            Orders
+        </a>
+    </nav>
+</div>
