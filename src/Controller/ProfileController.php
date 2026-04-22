@@ -72,10 +72,10 @@ class ProfileController extends AbstractController
             }
 
             // Face enrollment (file upload or camera base64)
-            if ($formType === 'face') {
+            if ($formType === 'face_enroll') {
                 /** @var UploadedFile|null $face */
                 $face = $request->files->get('face_image');
-                $faceBase64 = trim((string) $request->request->get('face_image_base64', '')) ?: null;
+                $faceBase64 = trim((string) $request->request->get('face_image', '')) ?: null;
 
                 if ($face instanceof UploadedFile || $faceBase64) {
                     try {

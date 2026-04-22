@@ -2,6 +2,7 @@
 
 namespace App\Security;
 
+use App\Entity\User;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -20,6 +21,18 @@ class LoginSuccessHandler implements AuthenticationSuccessHandlerInterface
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token): Response
     {
+        $user = $token->getUser();
+        if ($user instanceof User && !$user->isVerified()) {
+            $session = $request->getSession();
+            if ($session) {
+                $session->remove('_security_main');
+                $session->getFlashBag()->add('error', 'Please verify your email before signing in.');
+            }
+
+            $url = $this->urlGenerator->generate('app_verify_email', ['email' => $user->getEmail()]);
+            return new RedirectResponse($url);
+        }
+
         // If the security system stored a target path (user tried to access a protected page), redirect there first
         $session = $request->getSession();
         if ($session && $session->has('_security_main')) {
