@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\ProductListingRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: ProductListingRepository::class)]
 #[ORM\Table(name: 'product_listing')]
@@ -19,24 +20,34 @@ class ProductListing
     private string $userId;
 
     #[ORM\Column(type: 'string', length: 100)]
+    #[Assert\NotBlank(message: "Product name is required")]
+    #[Assert\Regex(pattern: '/^[a-zA-Z\s]+$/', message: "Product name must contain only letters and spaces")]
     private string $productName;
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
+    #[Assert\NotBlank(message: "Price per unit is required")]
+    #[Assert\Positive(message: "Price must be positive")]
     private float $pricePerUnit;
 
     #[ORM\Column(type: 'integer')]
+    #[Assert\NotBlank(message: "Quantity is required")]
+    #[Assert\Positive(message: "Quantity must be a positive number")]
     private int $quantity;
 
     #[ORM\Column(type: 'string', nullable: true)]
     private ?string $status = null;
 
     #[ORM\Column(type: 'text', nullable: true, length: 65535)]
+    #[Assert\NotBlank(message: "Description is required")]
+    #[Assert\Regex(pattern: '/^[a-zA-Z\s]+$/', message: "Description must contain only letters and spaces")]
     private ?string $description = null;
 
     #[ORM\Column(type: 'string', nullable: true, length: 255)]
     private ?string $picture = null;
 
     #[ORM\Column(type: 'string', nullable: true, length: 50)]
+    #[Assert\NotBlank(message: "Availability is required")]
+    #[Assert\Choice(choices: ['Fruits', 'Grains', 'Vegetables'], message: "Availability must be one of: Fruits, Grains, Vegetables")]
     private ?string $category = null;
 
 
