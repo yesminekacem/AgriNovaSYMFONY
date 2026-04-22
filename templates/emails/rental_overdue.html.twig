@@ -1,0 +1,108 @@
+{% extends 'emails/base.html.twig' %}
+
+{% block subject %}URGENT: Rental #{{ rental.id }} is Overdue{% endblock %}
+
+{% block content %}
+{% set ownerContact = rental.inventory and rental.inventory.ownerContact ? rental.inventory.ownerContact : 'Not provided' %}
+
+<div class="danger-box">
+    <h2 style="margin-top: 0; color: #dc2626;">Overdue rental alert</h2>
+    <p style="margin-bottom: 0;"><strong>Action required immediately</strong></p>
+</div>
+
+<p>Hello {{ rental.renterName }},</p>
+
+<p>Our records indicate that your rental is now <strong>{{ daysOverdue }} day(s) overdue</strong>.</p>
+
+<div class="danger-box">
+    <h3 style="margin-top: 0; color: #dc2626;">Overdue summary</h3>
+    <table>
+        <tr>
+            <th>Rental ID</th>
+            <td>#{{ rental.id }}</td>
+        </tr>
+        <tr>
+            <th>Current Status</th>
+            <td><strong style="color: #dc2626;">{{ rental.rentalStatus }}</strong></td>
+        </tr>
+        <tr>
+            <th>Item</th>
+            <td>{{ rental.displayItemName }}</td>
+        </tr>
+        <tr>
+            <th>Item Type</th>
+            <td>{{ rental.inventory.itemType }}</td>
+        </tr>
+        <tr>
+            <th>Due Date</th>
+            <td style="color: #dc2626; font-weight: bold;">{{ rental.endDate|date('M d, Y') }}</td>
+        </tr>
+        <tr>
+            <th>Days Overdue</th>
+            <td style="color: #dc2626; font-weight: bold; font-size: 1.2em;">{{ daysOverdue }} day(s)</td>
+        </tr>
+        <tr>
+            <th>Current Late Fee</th>
+            <td style="color: #dc2626; font-weight: bold;">${{ rental.lateFee|number_format(2) }}</td>
+        </tr>
+    </table>
+</div>
+
+<h3 style="color: #374151; margin-top: 25px;">Rental details</h3>
+<table>
+    <tr>
+        <th>Owner</th>
+        <td>{{ rental.ownerName }}</td>
+    </tr>
+    <tr>
+        <th>Owner Contact</th>
+        <td>{{ ownerContact }}</td>
+    </tr>
+    <tr>
+        <th>Renter</th>
+        <td>{{ rental.renterName }}</td>
+    </tr>
+    <tr>
+        <th>Renter Contact</th>
+        <td>{{ rental.renterContact }}</td>
+    </tr>
+    <tr>
+        <th>Payment Status</th>
+        <td>{{ rental.paymentStatus }}</td>
+    </tr>
+    <tr>
+        <th>Rental Period</th>
+        <td>{{ rental.startDate|date('M d, Y') }} - {{ rental.endDate|date('M d, Y') }}</td>
+    </tr>
+    <tr>
+        <th>Original Duration</th>
+        <td>{{ rental.totalDays }} day(s)</td>
+    </tr>
+    <tr>
+        <th>Daily Rate</th>
+        <td>${{ rental.dailyRate|number_format(2) }}</td>
+    </tr>
+    <tr>
+        <th>Original Total</th>
+        <td>${{ rental.totalCost|number_format(2) }}</td>
+    </tr>
+    <tr>
+        <th>Late Fee Rate</th>
+        <td>${{ (rental.dailyRate * 0.5)|number_format(2) }}/day</td>
+    </tr>
+    <tr style="background-color: #fee2e2; font-weight: bold;">
+        <th>Total Owed (with late fees)</th>
+        <td style="color: #dc2626;">${{ (rental.totalCost + rental.lateFee)|number_format(2) }}</td>
+    </tr>
+</table>
+
+<p><strong>Please return the item immediately to avoid additional late fees.</strong></p>
+
+<center>
+    <a href="{{ url('rental_show', {id: rental.id}) }}" class="button" style="background-color: #dc2626;">View Rental & Arrange Return</a>
+</center>
+
+<p>If you are experiencing issues or need to extend your rental, please contact us as soon as possible.</p>
+
+<p>Best regards,<br><strong>The AgriNova Team</strong></p>
+{% endblock %}

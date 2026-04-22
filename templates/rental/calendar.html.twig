@@ -1,0 +1,98 @@
+{% extends base_template|default('base.html.twig') %}
+
+{% block title %}Rental Calendar{% endblock %}
+
+{% block stylesheets %}
+<link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/main.min.css' rel='stylesheet' />
+<style>
+    .calendar-container {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        margin: 20px;
+    }
+    #calendar {
+        height: 600px;
+    }
+    .fc-event {
+        cursor: pointer;
+        border: none;
+        border-radius: 4px;
+        font-size: 0.85em;
+        padding: 2px 6px;
+    }
+    .legend {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+    }
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 0.9em;
+    }
+    .legend-color {
+        width: 16px;
+        height: 16px;
+        border-radius: 4px;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="text-2xl font-bold text-gray-800">
+            <span class="text-green-600">\</span> Rental Calendar
+        </h1>
+        <a href="{{ path('rental_index') }}" class="btn btn-outline-secondary">
+            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+            Back to Rentals
+        </a>
+    </div>
+
+    <div class="legend">
+        <div class="legend-item"><div class="legend-color" style="background: #f59e0b;"></div> Pending</div>
+        <div class="legend-item"><div class="legend-color" style="background: #3b82f6;"></div> Approved</div>
+        <div class="legend-item"><div class="legend-color" style="background: #10b981;"></div> Active</div>
+        <div class="legend-item"><div class="legend-color" style="background: #6366f1;"></div> Returned</div>
+        <div class="legend-item"><div class="legend-color" style="background: #22c55e;"></div> Completed</div>
+        <div class="legend-item"><div class="legend-color" style="background: #ef4444;"></div> Cancelled</div>
+        <div class="legend-item"><div class="legend-color" style="background: #dc2626;"></div> Disputed</div>
+    </div>
+
+    <div class="calendar-container">
+        <div id="calendar"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const calendarEl = document.getElementById('calendar');
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,listWeek'
+        },
+        events: '{{ path('calendar_events') }}',
+        eventClick: function(info) {
+            window.location.href = info.event.extendedProps.url;
+        },
+        eventMouseEnter: function(info) {
+            info.el.title = info.event.extendedProps.item + ' - ' + info.event.extendedProps.status;
+        }
+    });
+    calendar.render();
+});
+</script>
+{% endblock %}

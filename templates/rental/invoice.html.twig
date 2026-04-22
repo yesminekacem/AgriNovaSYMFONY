@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Invoice #{{ invoiceNumber }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #333;
+            margin: 40px;
+        }
+        .invoice-header {
+            border-bottom: 3px solid #22c55e;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .invoice-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #22c55e;
+            margin-bottom: 5px;
+        }
+        .invoice-meta {
+            color: #666;
+            font-size: 12px;
+        }
+        .section {
+            margin-bottom: 25px;
+        }
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #22c55e;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            text-align: left;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        th {
+            background: #f9fafb;
+            font-weight: bold;
+            color: #374151;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .total-row {
+            font-weight: bold;
+            background: #f0fdf4;
+        }
+        .grand-total {
+            font-size: 18px;
+            color: #22c55e;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .status-pending { background: #fef3c7; color: #92400e; }
+        .status-approved { background: #dbeafe; color: #1e40af; }
+        .status-active { background: #d1fae5; color: #065f46; }
+        .status-returned { background: #e0e7ff; color: #3730a3; }
+        .status-completed { background: #dcfce7; color: #166534; }
+        .footer {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="invoice-header">
+        <div class="invoice-title">AGRINOVA</div>
+        <div style="display: flex; justify-content: space-between; margin-top: 15px;">
+            <div>
+                <strong>Rental Invoice</strong><br>
+                <span class="invoice-meta">#{{ invoiceNumber }}</span>
+            </div>
+            <div class="text-right">
+                <strong>Date:</strong> {{ invoiceDate|date('F d, Y') }}<br>
+                <span class="status-badge status-{{ rental.rentalStatus|lower }}">{{ rental.rentalStatus }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; margin-bottom: 30px;">
+        <div class="section" style="flex: 1;">
+            <div class="section-title">Renter Information</div>
+            <strong>{{ rental.renterName }}</strong><br>
+            Contact: {{ rental.renterContact }}<br>
+            {% if rental.renterAddress %}
+                Address: {{ rental.renterAddress }}
+            {% endif %}
+        </div>
+        <div class="section" style="flex: 1;">
+            <div class="section-title">Owner Information</div>
+            <strong>{{ rental.ownerName }}</strong><br>
+            Item: {{ rental.displayItemName }}<br>
+            Rental Period: {{ rental.startDate|date('M d, Y') }} - {{ rental.endDate|date('M d, Y') }}
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Rental Details</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Description</th>
+                    <th class="text-right">Days</th>
+                    <th class="text-right">Rate/Day</th>
+                    <th class="text-right">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>{{ rental.displayItemName }} - {{ rental.inventory.itemType }}</td>
+                    <td class="text-right">{{ rental.totalDays }}</td>
+                    <td class="text-right">${{ rental.dailyRate|number_format(2) }}</td>
+                    <td class="text-right">${{ (rental.totalDays * rental.dailyRate)|number_format(2) }}</td>
+                </tr>
+                {% if rental.requiresDelivery and rental.deliveryFee > 0 %}
+                <tr>
+                    <td>Delivery Service</td>
+                    <td class="text-right">-</td>
+                    <td class="text-right">-</td>
+                    <td class="text-right">${{ rental.deliveryFee|number_format(2) }}</td>
+                </tr>
+                {% endif %}
+                {% if rental.lateFee > 0 %}
+                <tr style="color: #dc2626;">
+                    <td>Late Return Fee</td>
+                    <td class="text-right">-</td>
+                    <td class="text-right">-</td>
+                    <td class="text-right">${{ rental.lateFee|number_format(2) }}</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Payment Summary</div>
+        <table style="width: 50%; margin-left: auto;">
+            <tr>
+                <td>Subtotal:</td>
+                <td class="text-right">${{ (rental.totalCost - rental.lateFee - rental.deliveryFee)|number_format(2) }}</td>
+            </tr>
+            {% if rental.deliveryFee > 0 %}
+            <tr>
+                <td>Delivery:</td>
+                <td class="text-right">${{ rental.deliveryFee|number_format(2) }}</td>
+            </tr>
+            {% endif %}
+            {% if rental.lateFee > 0 %}
+            <tr>
+                <td>Late Fee:</td>
+                <td class="text-right" style="color: #dc2626;">${{ rental.lateFee|number_format(2) }}</td>
+            </tr>
+            {% endif %}
+            {% if rental.securityDeposit > 0 %}
+            <tr>
+                <td>Security Deposit:</td>
+                <td class="text-right">${{ rental.securityDeposit|number_format(2) }}</td>
+            </tr>
+            {% endif %}
+            <tr class="total-row grand-total">
+                <td>Total:</td>
+                <td class="text-right">${{ rental.totalCost|number_format(2) }}</td>
+            </tr>
+        </table>
+    </div>
+
+    {% if rental.pickupCondition or rental.returnCondition %}
+    <div class="section">
+        <div class="section-title">Condition Notes</div>
+        {% if rental.pickupCondition %}
+            <p><strong>Pickup:</strong> {{ rental.pickupCondition }}</p>
+        {% endif %}
+        {% if rental.returnCondition %}
+            <p><strong>Return:</strong> {{ rental.returnCondition }}</p>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="footer">
+        <p>Thank you for choosing AgriNova for your equipment rental needs.</p>
+        <p>For questions about this invoice, please contact support.</p>
+    </div>
+</body>
+</html>

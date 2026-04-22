@@ -123,16 +123,22 @@
                     {{ form_row(form.quantity) }}
                     {{ form_row(form.unitPrice) }}
                     {{ form_row(form.purchaseDate) }}
-                    {{ form_row(form.ownerName) }}
-                    {{ form_row(form.ownerContact) }}
                     <div class="md:col-span-2">{{ form_row(form.description) }}</div>
                     {{ form_row(form.isRentable) }}
                     {{ form_row(form.rentalPricePerDay) }}
-                    {{ form_row(form.rentalStatus) }}
                     {{ form_row(form.totalUsageHours) }}
                     {{ form_row(form.lastMaintenanceDate) }}
                     {{ form_row(form.nextMaintenanceDate) }}
                     {{ form_row(form.imagePath) }}
+                    {% if form.ownerName is defined %}
+                        {{ form_row(form.ownerName) }}
+                    {% endif %}
+                    {% if form.ownerContact is defined %}
+                        {{ form_row(form.ownerContact) }}
+                    {% endif %}
+                    {% if form.rentalStatus is defined %}
+                        {{ form_row(form.rentalStatus) }}
+                    {% endif %}
                 </div>
 
                 {{ form_rest(form) }}

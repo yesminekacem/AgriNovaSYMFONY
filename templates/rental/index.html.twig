@@ -41,10 +41,106 @@
                     {% else %}
                         <a href="{{ path('inventory_index') }}" class="inline-flex items-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">Inventory</a>
                     {% endif %}
+                    <a href="{{ path('calendar_index') }}" class="inline-flex items-center rounded-xl border border-purple-200 bg-purple-50 px-4 py-2 text-sm font-semibold text-purple-700 transition hover:bg-purple-100">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        Calendar
+                    </a>
                     <a href="{{ path('rental_export_csv', {search: search, status: status, paymentStatus: paymentStatus, overdue: overdueOnly ? 1 : 0, inventory: inventoryItem ? inventoryItem.id : null}) }}" class="inline-flex items-center rounded-xl border border-green-200 bg-green-50 px-4 py-2 text-sm font-semibold text-green-700 transition hover:bg-green-100">Export CSV</a>
                     <a href="{{ path('rental_history_index') }}" class="inline-flex items-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800">Rental history</a>
+                    <a href="#rental-api-tools" class="inline-flex items-center rounded-xl border border-sky-200 bg-sky-50 px-4 py-2 text-sm font-semibold text-sky-700 transition hover:bg-sky-100">
+                        Map API
+                    </a>
                 </div>
             </div>
+        </section>
+
+        <section id="rental-api-tools" class="rental-surface p-6">
+            <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                    <p class="text-sm font-semibold uppercase tracking-[0.2em] text-green-700">Rental API Tool</p>
+                    <h2 class="mt-2 text-2xl font-bold text-slate-900">Delivery and pickup map lookup</h2>
+                    <p class="mt-2 max-w-3xl text-sm text-slate-500">
+                        Search any pickup point, renter address, or delivery area and display it on an OpenStreetMap map.
+                    </p>
+                </div>
+            </div>
+
+            <form method="get" class="mt-6 grid gap-4 md:grid-cols-[minmax(0,1fr)_auto_auto]">
+                <input type="hidden" name="search" value="{{ search }}">
+                <input type="hidden" name="status" value="{{ status }}">
+                <input type="hidden" name="paymentStatus" value="{{ paymentStatus }}">
+                {% if overdueOnly %}
+                    <input type="hidden" name="overdue" value="1">
+                {% endif %}
+                {% if inventoryItem and inventoryItem.id %}
+                    <input type="hidden" name="inventory" value="{{ inventoryItem.id }}">
+                {% endif %}
+                <input type="hidden" name="loadMap" value="1">
+                <input
+                    type="text"
+                    name="mapQuery"
+                    value="{{ mapQuery }}"
+                    placeholder="Enter a renter address, farm, city, or pickup point"
+                    class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-green-500 focus:ring-4 focus:ring-green-100"
+                >
+                <button class="inline-flex items-center justify-center rounded-xl bg-sky-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-800">
+                    Load Map API
+                </button>
+                {% if loadMap %}
+                    <a href="{{ inventoryItem and inventoryItem.id ? path('rental_index', {inventory: inventoryItem.id, search: search, status: status, paymentStatus: paymentStatus, overdue: overdueOnly ? 1 : 0}) : path('rental_index', {search: search, status: status, paymentStatus: paymentStatus, overdue: overdueOnly ? 1 : 0}) }}#rental-api-tools" class="inline-flex items-center justify-center rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+                        Reset API
+                    </a>
+                {% endif %}
+            </form>
+
+            {% if loadMap and mapQuery is not empty and locationLookup %}
+                <div class="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(360px,420px)]">
+                    <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_14px_32px_rgba(20,83,45,0.08)]">
+                        <iframe
+                            src="{{ locationLookup.mapEmbedUrl }}"
+                            class="h-[360px] w-full border-0"
+                            loading="lazy"
+                            referrerpolicy="no-referrer-when-downgrade"
+                            title="Rental location map"
+                        ></iframe>
+                    </div>
+                    <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_14px_32px_rgba(20,83,45,0.08)]">
+                        <p class="text-xs font-semibold uppercase tracking-[0.14em] text-sky-700">Resolved location</p>
+                        <h3 class="mt-2 text-xl font-bold text-slate-900">{{ locationLookup.displayName }}</h3>
+                        <dl class="mt-5 space-y-4 text-sm text-slate-600">
+                            <div>
+                                <dt class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Latitude</dt>
+                                <dd class="mt-1 font-semibold text-slate-900">{{ locationLookup.latitude }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Longitude</dt>
+                                <dd class="mt-1 font-semibold text-slate-900">{{ locationLookup.longitude }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Category</dt>
+                                <dd class="mt-1 font-semibold text-slate-900">{{ locationLookup.category ?: 'Not provided' }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Type</dt>
+                                <dd class="mt-1 font-semibold text-slate-900">{{ locationLookup.type ?: 'Not provided' }}</dd>
+                            </div>
+                        </dl>
+                        <a href="{{ locationLookup.mapOpenUrl }}" target="_blank" rel="noreferrer" class="mt-6 inline-flex items-center rounded-xl border border-sky-200 bg-sky-50 px-4 py-2 text-sm font-semibold text-sky-700 transition hover:bg-sky-100">
+                            Open in OpenStreetMap
+                        </a>
+                    </div>
+                </div>
+            {% elseif loadMap and mapQuery is not empty %}
+                <div class="mt-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+                    No location match was found for this search. Try a fuller address or a city name.
+                </div>
+            {% else %}
+                <div class="mt-5 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                    Click the <strong>Map API</strong> button above, then search an address to preview its location before delivery or pickup.
+                </div>
+            {% endif %}
         </section>
 
         {% if inventoryItem and inventoryItem.id %}
@@ -68,7 +164,10 @@
             <form method="get" class="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
                 <div class="xl:col-span-2">
                     <label class="mb-2 block text-sm font-semibold text-slate-700">Search</label>
-                    <input type="text" name="search" value="{{ search }}" placeholder="Search by renter, owner, item or contact" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-green-500 focus:ring-4 focus:ring-green-100">
+                    {{ include('components/search_autocomplete.html.twig', {
+                        searchUrl: path('search_rental'),
+                        placeholder: 'Search by renter, owner, item or contact...'
+                    }) }}
                 </div>
                 <div>
                     <label class="mb-2 block text-sm font-semibold text-slate-700">Rental status</label>

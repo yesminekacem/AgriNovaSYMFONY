@@ -77,8 +77,83 @@
                     <a href="{{ path('inventory_export_csv', {search: search, type: type, condition: condition, rentable: rentable, status: status}) }}" class="inline-flex items-center rounded-xl border border-green-200 bg-green-50 px-4 py-2 text-sm font-semibold text-green-700 transition hover:bg-green-100">
                         Export CSV
                     </a>
+                    <a href="#inventory-api-tools" class="inline-flex items-center rounded-xl border border-sky-200 bg-sky-50 px-4 py-2 text-sm font-semibold text-sky-700 transition hover:bg-sky-100">
+                        Weather API
+                    </a>
                 </div>
             </div>
+        </section>
+
+        <section id="inventory-api-tools" class="inventory-surface p-6">
+            <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                    <p class="text-sm font-semibold uppercase tracking-[0.2em] text-green-700">Inventory API Tool</p>
+                    <h2 class="mt-2 text-2xl font-bold text-slate-900">Outdoor maintenance weather</h2>
+                    <p class="mt-2 max-w-3xl text-sm text-slate-500">
+                        Use live weather data before moving equipment, scheduling maintenance, or planning field logistics.
+                    </p>
+                </div>
+            </div>
+
+            <form method="get" class="mt-6 grid gap-4 md:grid-cols-[minmax(0,1fr)_auto_auto]">
+                <input type="hidden" name="search" value="{{ search }}">
+                <input type="hidden" name="type" value="{{ type }}">
+                <input type="hidden" name="condition" value="{{ condition }}">
+                <input type="hidden" name="status" value="{{ status }}">
+                <input type="hidden" name="rentable" value="{{ rentable }}">
+                <input type="hidden" name="loadWeather" value="1">
+                <input
+                    type="text"
+                    name="weatherCity"
+                    value="{{ weatherCity }}"
+                    placeholder="Enter a city or farm area"
+                    class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-green-500 focus:ring-4 focus:ring-green-100"
+                >
+                <button class="inline-flex items-center justify-center rounded-xl bg-sky-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-800">
+                    Load Weather API
+                </button>
+                {% if loadWeather %}
+                    <a href="{{ path('inventory_index', {search: search, type: type, condition: condition, status: status, rentable: rentable}) }}#inventory-api-tools" class="inline-flex items-center justify-center rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+                        Reset API
+                    </a>
+                {% endif %}
+            </form>
+
+            {% if loadWeather and weatherCity is not empty and maintenanceWeather %}
+                <div class="mt-6 space-y-5">
+                    <div class="rounded-2xl border border-blue-100 bg-blue-50 p-4">
+                        <p class="text-xs font-semibold uppercase tracking-[0.14em] text-blue-700">Resolved location</p>
+                        <p class="mt-2 text-lg font-bold text-slate-900">
+                            {{ maintenanceWeather.location.name }}{% if maintenanceWeather.location.admin1 %}, {{ maintenanceWeather.location.admin1 }}{% endif %}{% if maintenanceWeather.location.country %}, {{ maintenanceWeather.location.country }}{% endif %}
+                        </p>
+                        <p class="mt-2 text-sm text-slate-600">
+                            Current: {{ maintenanceWeather.current.temperature ?? 'N/A' }}°C, rain {{ maintenanceWeather.current.precipitation ?? 0 }} mm, wind {{ maintenanceWeather.current.wind ?? 'N/A' }} km/h
+                        </p>
+                    </div>
+
+                    <div class="grid gap-4 md:grid-cols-3">
+                        {% for day in maintenanceWeather.days %}
+                            {% set riskClass = day.risk == 'High' ? 'border-red-200 bg-red-50 text-red-700' : (day.risk == 'Moderate' ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700') %}
+                            <div class="rounded-2xl border p-4 {{ riskClass }}">
+                                <p class="text-xs font-semibold uppercase tracking-[0.14em]">{{ day.date|date('D d M') }}</p>
+                                <p class="mt-3 text-lg font-bold">{{ day.tempMax ?? 'N/A' }}° / {{ day.tempMin ?? 'N/A' }}°</p>
+                                <p class="mt-2 text-sm">Rain: {{ day.rainMm ?? 0 }} mm</p>
+                                <p class="mt-1 text-sm">Rain chance: {{ day.rainProbability ?? 0 }}%</p>
+                                <p class="mt-1 text-sm">Wind max: {{ day.windMax ?? 'N/A' }} km/h</p>
+                                <p class="mt-3 text-sm font-semibold">Outdoor risk: {{ day.risk }}</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% elseif loadWeather and weatherCity is not empty %}
+                <div class="mt-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+                    No weather result was found for this location. Try a clearer city or region name.
+                </div>
+            {% else %}
+                <div class="mt-5 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                    Click the <strong>Weather API</strong> button above, then enter a city and load the forecast when you need it.
+                </div>
+            {% endif %}
         </section>
 
         <section class="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
@@ -118,8 +193,10 @@
             <form method="get" class="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
                 <div class="xl:col-span-2">
                     <label class="mb-2 block text-sm font-semibold text-slate-700">Search</label>
-                    <input type="text" name="search" value="{{ search }}" placeholder="Search by name, owner, contact or type"
-                           class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-green-500 focus:ring-4 focus:ring-green-100">
+                    {{ include('components/search_autocomplete.html.twig', {
+                        searchUrl: path('search_inventory'),
+                        placeholder: 'Search by name, owner, contact or type...'
+                    }) }}
                 </div>
                 <div>
                     <label class="mb-2 block text-sm font-semibold text-slate-700">Type</label>
