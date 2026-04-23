@@ -22,4 +22,16 @@ class PostRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+public function countPostsByCategory(): array
+{
+    return $this->createQueryBuilder('p')
+        ->select('p.category AS name, COUNT(p.idPost) AS count')
+        ->where('p.category IS NOT NULL')
+        ->andWhere('p.category != :empty')
+        ->setParameter('empty', '')
+        ->groupBy('p.category')
+        ->orderBy('count', 'DESC')
+        ->getQuery()
+        ->getArrayResult();
+}
 }

@@ -224,6 +224,7 @@ public function new(
 
     return $this->redirectToRoute('app_forum');
 }
+
 #[Route('/forum/update/{id}', name: 'app_forum_update', methods: ['POST'])]
 public function update(
     int $id,
@@ -240,31 +241,77 @@ public function update(
     if (!$post) {
         return $this->json([
             'success' => false,
-            'message' => 'Post not found'
+            'message' => 'Post not found',
         ], 404);
     }
 
     if (!$this->getUser() || $post->getAuthorId() !== $this->getUser()->getId()) {
         return $this->json([
             'success' => false,
-            'message' => 'Unauthorized'
+            'message' => 'Unauthorized',
         ], 403);
     }
 
-    $title = trim((string) $request->request->get('title'));
-    $category = trim((string) $request->request->get('category'));
-    $content = trim((string) $request->request->get('content'));
+    $title = trim((string) $request->request->get('title', ''));
+    $category = trim((string) $request->request->get('category', ''));
+    $content = trim((string) $request->request->get('content', ''));
+    $existingImage = trim((string) $request->request->get('existingImage', ''));
+    $imageFile = $request->files->get('image');
 
-    if (!$title || !$category || !$content) {
+    if ($title === '' || $category === '' || $content === '') {
         return $this->json([
             'success' => false,
-            'message' => 'All fields are required'
+            'message' => 'All fields are required',
         ], 400);
     }
 
     $post->setTitle($title);
     $post->setCategory($category);
     $post->setContent($content);
+
+    // Keep old image by default
+    if ($existingImage !== '') {
+        $existingFilename = basename($existingImage);
+        $post->setImagePath($existingFilename);
+    }
+
+    // Replace image only if a new one is uploaded
+    if ($imageFile instanceof UploadedFile) {
+        $allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        $mimeType = $imageFile->getMimeType();
+
+        if (!in_array($mimeType, $allowedMimeTypes, true)) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Only JPG, PNG, and WebP images are allowed.',
+            ], 400);
+        }
+
+        if ($imageFile->getSize() > 5 * 1024 * 1024) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Image size must not exceed 5 MB.',
+            ], 400);
+        }
+
+        $uploadDir = $this->getParameter('kernel.project_dir') . '/public/Front/images/Forum';
+        if (!is_dir($uploadDir)) {
+            @mkdir($uploadDir, 0775, true);
+        }
+
+        $extension = $imageFile->guessExtension() ?: 'jpg';
+        $newFilename = uniqid('forum_', true) . '.' . $extension;
+
+        try {
+            $imageFile->move($uploadDir, $newFilename);
+            $post->setImagePath($newFilename);
+        } catch (\Throwable $e) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Failed to upload image.',
+            ], 500);
+        }
+    }
 
     $entityManager->flush();
 
@@ -278,28 +325,43 @@ public function update(
         $userReaction = $existingReaction ? $existingReaction->getReaction() : null;
     }
 
+    $imagePath = $post->getImagePath()
+        ? 'Front/images/Forum/' . $post->getImagePath()
+        : null;
+
     $updatedPostData = [
         'id' => $post->getIdPost(),
+        'idPost' => $post->getIdPost(),
         'title' => $post->getTitle(),
         'author' => $post->getAuthor(),
         'authorId' => $post->getAuthorId(),
         'category' => $post->getCategory() ?: 'Organic Farming',
         'content' => $post->getContent(),
         'createdAt' => $this->timeAgo($post->getCreatedAt()),
-        'image' => $post->getImagePath()
-            ? 'Front/images/Forum/' . $post->getImagePath()
-            : null,
+        'imagePath' => $imagePath,
         'profileImage' => $postUser && $postUser->getProfileImage()
             ? 'uploads/profile_images/' . $postUser->getProfileImage()
             : null,
         'commentsCount' => count($comments),
         'totalReactions' => $totalReactions,
         'userReaction' => $userReaction,
+        'comments' => array_map(function ($comment) {
+            return [
+                'id' => $comment->getId(),
+                'author' => $comment->getAuthorName(),
+                'authorId' => $comment->getUser() ? $comment->getUser()->getId() : null,
+                'content' => $comment->getContent(),
+                'createdAt' => $this->timeAgo($comment->getCreatedAt()),
+                'profileImage' => $comment->getUser() && $comment->getUser()->getProfileImage()
+                    ? 'uploads/profile_images/' . $comment->getUser()->getProfileImage()
+                    : null,
+            ];
+        }, $comments),
     ];
 
     $payload = [
         'type' => 'post_updated',
-        'post' => $updatedPostData
+        'post' => $updatedPostData,
     ];
 
     $hub->publish(new Update(
@@ -315,13 +377,12 @@ public function update(
     if ($request->isXmlHttpRequest()) {
         return $this->json([
             'success' => true,
-            'post' => $updatedPostData
+            'post' => $updatedPostData,
         ]);
     }
 
     return $this->redirectToRoute('app_forum_index');
 }
-
 #[Route('/forum/delete/{id}', name: 'app_forum_delete', methods: ['POST'])]
 public function delete(
     int $id,

@@ -101,11 +101,13 @@
                         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                         {{ post.author }} · {{ post.createdAt ? post.createdAt|time_ago : 'No date' }}
                     </div>
-             {% if post.imagePath %}
-    <img src="{{ asset(post.imagePath) }}"
-         style="width:100%; max-height:160px; object-fit:cover; border-radius:10px; margin-bottom:10px;">
+            {% if post.imagePath %}
+    <img
+        class="post-main-image"
+        src="{{ asset(post.imagePath) }}"
+        style="width:100%; max-height:160px; object-fit:cover; border-radius:10px; margin-bottom:10px;"
+    >
 {% endif %}
-
                     <div class="post-excerpt" onclick="openViewModal({{ post.idPost }})">
                         {{ post.content|length > 180 ? post.content|slice(0, 180) ~ '...' : post.content }}
                     </div>
@@ -397,7 +399,7 @@
         <div class="modal">
             <button class="modal-close" onclick="closeModal('editPostModal')">✕</button>
             <h2>✏️ Edit Post</h2>
-            <form method="post" id="editPostForm" novalidate>
+            <form method="post" id="editPostForm" enctype="multipart/form-data" novalidate>
                 <div class="form-field">
                     <label>Title</label>
                     <input type="text" name="title" id="editTitle" required>
@@ -416,6 +418,11 @@
                     <label>Content</label>
                     <textarea name="content" id="editContent" required></textarea>
                 </div>
+                <div class="form-field">
+    <label>Post Image</label>
+    <input type="file" name="image" id="editImage" accept="image/*">
+</div>
+<input type="hidden" name="existingImage" id="editExistingImage">
                 <button type="submit" class="btn-submit-post">Save Changes</button>
             </form>
         </div>
