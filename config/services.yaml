@@ -4,10 +4,10 @@ parameters:
     profile_images_directory: '%kernel.project_dir%/public/uploads/profile_images'
     # Face API configuration (wrapped in a parameter so it can be replaced in env or services)
     face_api_options:
-        provider: '%env(FACE_API_PROVIDER)%'
-        api_key: '%env(FACEPP_API_KEY)%'
-        api_secret: '%env(FACEPP_API_SECRET)%'
-        url: '%env(FACE_API_URL)%'
+        provider: '%env(FACE_API_PROVIDER_2)%'
+        api_key: '%env(FACEPP_API_KEY_2)%'
+        api_secret: '%env(FACEPP_API_SECRET_2)%'
+        url: '%env(FACE_API_URL_2)%'
     paypal_client_id: '%env(PAYPAL_CLIENT_ID)%'
 
 services:
@@ -44,6 +44,7 @@ services:
         arguments:
             $client: '@http_client'
             $options: '%face_api_options%'
+            $faceLogger: '@monolog.logger.face_id'
         public: false
 
     App\Service\DiagnosisService:

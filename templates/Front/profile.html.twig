@@ -6,26 +6,27 @@
     <link rel="stylesheet" href="{{ asset('Front/css/profile.css') }}">
     <style>
         /* Critical fallback styles for profile page (applied inline if external CSS fails) */
-        :root{--accent:#2d7a45;--muted:#6b7280;--bg:#f3f6f7;--card:#fff;--info-bg:#f9fafb}
+        :root{--accent:#2d7a45;--muted:#6b7280;--bg:#f3f6f7;--card:#fff;--card-soft:rgba(255,255,255,.94);--border-strong:rgba(32,83,49,.18);--border-soft:rgba(32,83,49,.10);--info-bg:#f9fafb}
         body{background:var(--bg)!important;font-family:Inter, system-ui, Arial, sans-serif}
-        .profile-page{max-width:1200px;margin:1.2rem auto;padding:0 12px}
-        .profile-header{display:flex;gap:20px;align-items:flex-start}
-        .profile-card{width:230px;background:var(--card);border-radius:12px;padding:18px;box-shadow:0 6px 22px rgba(20,60,30,0.06);display:flex;flex-direction:column;align-items:center;gap:12px}
-        .avatar-large img, .avatar-large .avatar{width:120px;height:120px;border-radius:999px;object-fit:cover;border:6px solid #fff}
+        .profile-page{max-width:none;width:100%;margin:0;padding:0}
+        .profile-header{display:flex;gap:18px;align-items:stretch;width:100%}
+        .profile-card{width:230px;background:var(--card-soft);border:1px solid var(--border-strong);border-radius:14px;padding:18px;box-shadow:0 16px 34px rgba(16,50,31,0.14),0 4px 10px rgba(16,50,31,0.08);display:flex;flex-direction:column;align-items:center;gap:12px;backdrop-filter:blur(2px)}
+        .avatar-large img, .avatar-large .avatar{width:120px;height:120px;border-radius:999px;object-fit:cover;border:6px solid rgba(255,255,255,.95);box-shadow:0 10px 24px rgba(10,30,10,0.16)}
         .username{margin:0;font-weight:700;color:#123}
         .role-badge{background:#e6f5ea;color:var(--accent);font-weight:700;padding:6px 10px;border-radius:999px;font-size:12px}
         .change-photo{background:#fff;border:1px solid #e6f0e6;padding:8px 12px;border-radius:8px;cursor:pointer}
-        .profile-top-right{flex:1;display:flex;flex-direction:column;gap:12px}
-        .welcome-banner{background:linear-gradient(90deg,#1e6b33,#2d7a45);color:#fff;padding:18px;border-radius:12px}
+        .profile-top-right{flex:1;display:flex;flex-direction:column;gap:14px;min-width:0}
+        .welcome-banner{background:linear-gradient(90deg,#1e6b33,#2d7a45);color:#fff;padding:18px;border-radius:14px;border:1px solid rgba(255,255,255,.24);box-shadow:0 14px 30px rgba(20,80,40,0.24), inset 0 1px 0 rgba(255,255,255,.2)}
         .info-cards{display:flex;gap:12px}
-        .info-card{flex:1;background:var(--card);padding:14px;border-radius:10px}
-        .card-section{background:var(--card);border-radius:12px;padding:0;overflow:hidden;margin-top:18px}
-        .card-header{padding:16px 20px;border-bottom:1px solid #f1f5f4}
+        .info-card{flex:1;background:var(--card-soft);padding:14px;border-radius:12px;border:1px solid var(--border-soft);box-shadow:0 10px 22px rgba(20,40,20,0.10)}
+        .card-section{background:var(--card-soft);border:1px solid var(--border-soft);border-radius:14px;padding:0;overflow:hidden;margin-top:16px;box-shadow:0 12px 26px rgba(20,40,20,0.10)}
+        .card-header{padding:16px 20px;border-bottom:1px solid rgba(25,72,43,.15);background:rgba(45,122,69,.06)}
         .card-body{padding:18px 20px}
         .row{display:flex;gap:18px}
         .col{flex:1}
         .col label{display:block;font-size:13px;color:#344;margin-bottom:6px}
-        .col input{width:100%;padding:12px;border-radius:10px;border:1px solid #eef;background:var(--info-bg)}
+        .col input{width:100%;padding:12px;border-radius:10px;border:1px solid rgba(39,90,57,.18);background:var(--info-bg);box-shadow:inset 0 1px 0 rgba(255,255,255,.9)}
+        .col input:focus{outline:none;border-color:rgba(45,122,69,.45);box-shadow:0 0 0 3px rgba(45,122,69,.14)}
         .actions-row{display:flex;align-items:center}
         .spacer{flex:1}
         .btn{display:inline-block;padding:10px 14px;border-radius:10px;border:none;cursor:pointer}
@@ -40,24 +41,25 @@
     <style>
         /* Emergency inline styles with high specificity to force layout if external CSS fails */
         .profile-page, .profile-page * { box-sizing: border-box !important; }
-        .profile-page { max-width:1200px !important; margin:1.2rem auto !important; padding:0 12px !important; font-family:Inter, system-ui, Arial, sans-serif !important; background: none !important; }
-        .profile-header{display:flex !important; gap:20px !important; align-items:flex-start !important}
-        .profile-card{width:230px !important; background:#fff !important; border-radius:12px !important; padding:18px !important; box-shadow:0 6px 22px rgba(20,60,30,0.06) !important; display:flex !important; flex-direction:column !important; align-items:center !important; gap:12px !important}
-        .avatar-large img, .avatar-large .avatar{width:120px !important; height:120px !important; border-radius:999px !important; object-fit:cover !important; border:6px solid #fff !important}
+        .profile-page { max-width:none !important; width:100% !important; margin:0 !important; padding:0 !important; font-family:Inter, system-ui, Arial, sans-serif !important; background: none !important; }
+        .profile-header{display:flex !important; gap:18px !important; align-items:stretch !important; width:100% !important}
+        .profile-card{width:230px !important; background:rgba(255,255,255,.94) !important; border:1px solid rgba(32,83,49,.18) !important; border-radius:14px !important; padding:18px !important; box-shadow:0 16px 34px rgba(16,50,31,0.14),0 4px 10px rgba(16,50,31,0.08) !important; display:flex !important; flex-direction:column !important; align-items:center !important; gap:12px !important; backdrop-filter:blur(2px) !important}
+        .avatar-large img, .avatar-large .avatar{width:120px !important; height:120px !important; border-radius:999px !important; object-fit:cover !important; border:6px solid rgba(255,255,255,.95) !important; box-shadow:0 10px 24px rgba(10,30,10,0.16) !important}
         .username{margin:0 !important; font-weight:700 !important; color:#123 !important}
         .role-badge{background:#e6f5ea !important; color:#2d7a45 !important; font-weight:700 !important; padding:6px 10px !important; border-radius:999px !important; font-size:12px !important}
         .change-photo{background:#fff !important; border:1px solid #e6f0e6 !important; padding:8px 12px !important; border-radius:8px !important; cursor:pointer !important}
-        .profile-top-right{flex:1 !important; display:flex !important; flex-direction:column !important; gap:12px !important}
-        .welcome-banner{background:linear-gradient(90deg,#1e6b33,#2d7a45) !important; color:#fff !important; padding:18px !important; border-radius:12px !important}
+        .profile-top-right{flex:1 !important; display:flex !important; flex-direction:column !important; gap:14px !important; min-width:0 !important}
+        .welcome-banner{background:linear-gradient(90deg,#1e6b33,#2d7a45) !important; color:#fff !important; padding:18px !important; border-radius:14px !important; border:1px solid rgba(255,255,255,.24) !important; box-shadow:0 14px 30px rgba(20,80,40,0.24), inset 0 1px 0 rgba(255,255,255,.2) !important}
         .info-cards{display:flex !important; gap:12px !important}
-        .info-card{flex:1 !important; background:#fff !important; padding:14px !important; border-radius:10px !important}
-        .card-section{background:#fff !important; border-radius:12px !important; padding:0 !important; overflow:hidden !important; margin-top:18px !important}
-        .card-header{padding:16px 20px !important; border-bottom:1px solid #f1f5f4 !important}
+        .info-card{flex:1 !important; background:rgba(255,255,255,.94) !important; padding:14px !important; border-radius:12px !important; border:1px solid rgba(32,83,49,.10) !important; box-shadow:0 10px 22px rgba(20,40,20,0.10) !important}
+        .card-section{background:rgba(255,255,255,.94) !important; border:1px solid rgba(32,83,49,.10) !important; border-radius:14px !important; padding:0 !important; overflow:hidden !important; margin-top:16px !important; box-shadow:0 12px 26px rgba(20,40,20,0.10) !important}
+        .card-header{padding:16px 20px !important; border-bottom:1px solid rgba(25,72,43,.15) !important; background:rgba(45,122,69,.06) !important}
         .card-body{padding:18px 20px !important}
         .row{display:flex !important; gap:18px !important}
         .col{flex:1 !important}
         .col label{display:block !important; font-size:13px !important; color:#344 !important; margin-bottom:6px !important}
-        .col input{width:100% !important; padding:12px !important; border-radius:10px !important; border:1px solid #eef !important; background:#f9fafb !important}
+        .col input{width:100% !important; padding:12px !important; border-radius:10px !important; border:1px solid rgba(39,90,57,.18) !important; background:#f9fafb !important; box-shadow:inset 0 1px 0 rgba(255,255,255,.9) !important}
+        .col input:focus{outline:none !important; border-color:rgba(45,122,69,.45) !important; box-shadow:0 0 0 3px rgba(45,122,69,.14) !important}
         .actions-row{display:flex !important; align-items:center !important}
         .spacer{flex:1 !important}
         .btn{display:inline-block !important; padding:10px 14px !important; border-radius:10px !important; border:none !important; cursor:pointer !important}
@@ -144,7 +146,7 @@
                         <input type="hidden" name="form_type" value="face_remove">
                         <button type="submit" class="btn btn-secondary-blue">Remove Face Enrollment</button>
                     </form>
-                    <p style="margin-top:12px">To login using Face ID, go to <a href="{{ path('app_login_face') }}">Face Login</a> or use the camera widget below.</p>
+                    <p style="margin-top:12px">To login using Face ID, use the Face ID option on the <a href="{{ path('app_login') }}">Sign In</a> page.</p>
                 {% else %}
                     <p>Face ID is not enrolled. Click the button below to enroll.</p>
                     <form method="post" action="{{ path('app_profile') }}" enctype="multipart/form-data" id="face-enrollment-form">

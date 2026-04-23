@@ -123,7 +123,7 @@ class VerificationController extends AbstractController
 
     private function sendCodeEmail(MailerInterface $mailer, string $to, string $code, string $subject, string $prefix): void
     {
-        $from = $_ENV['MAILER_FROM'] ?? (string) getenv('MAILER_FROM') ?: 'no-reply@agrinova.local';
+        $from = $_ENV['MAILER_FROM_2'] ?? (string) getenv('MAILER_FROM_2') ?: 'no-reply@agrinova.local';
         $email = (new Email())
             ->from(Address::create($from))
             ->to($to)

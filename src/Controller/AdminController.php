@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Knp\Snappy\Pdf;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -21,6 +22,79 @@ class AdminController extends AbstractController
         return $this->render('Front/admin_users.html.twig', [
             'users' => $users,
         ]);
+    }
+
+    #[Route('/admin/users/export/pdf', name: 'admin_users_pdf', methods: ['GET'])]
+    public function exportPdf(Request $request, UserRepository $userRepository, Pdf $knpSnappy): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+
+        $search = trim((string) $request->query->get('search', ''));
+        $role = strtoupper(trim((string) $request->query->get('role', '')));
+        $blocked = strtolower(trim((string) $request->query->get('blocked', '')));
+
+        $users = $this->filterUsers($userRepository->findAll(), $search, $role, $blocked);
+
+        $html = $this->renderView('Front/admin_users_pdf.html.twig', [
+            'users' => $users,
+            'search' => $search,
+            'role' => $role,
+            'blocked' => $blocked,
+            'generatedAt' => new \DateTimeImmutable(),
+        ]);
+
+        $pdf = $knpSnappy->getOutputFromHtml($html, [
+            'encoding' => 'utf-8',
+            'page-size' => 'A4',
+            'orientation' => 'Landscape',
+            'margin-top' => 8,
+            'margin-bottom' => 8,
+            'margin-left' => 8,
+            'margin-right' => 8,
+        ]);
+
+        return new Response($pdf, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="admin-users.pdf"',
+        ]);
+    }
+
+    private function filterUsers(array $users, string $search, string $role, string $blocked): array
+    {
+        return array_values(array_filter($users, static function ($user) use ($search, $role, $blocked): bool {
+            if ($search !== '') {
+                $haystacks = [
+                    strtolower((string) $user->getEmail()),
+                    strtolower((string) ($user->getFullName() ?? '')),
+                    (string) $user->getId(),
+                ];
+                $needle = strtolower($search);
+                $found = false;
+                foreach ($haystacks as $value) {
+                    if (str_contains($value, $needle)) {
+                        $found = true;
+                        break;
+                    }
+                }
+                if (!$found) {
+                    return false;
+                }
+            }
+
+            if ($role !== '' && strtoupper((string) $user->getRole()) !== $role) {
+                return false;
+            }
+
+            if ($blocked === 'blocked' && !$user->isBanned()) {
+                return false;
+            }
+
+            if ($blocked === 'unblocked' && $user->isBanned()) {
+                return false;
+            }
+
+            return true;
+        }));
     }
 
     #[Route('/admin/users/{id}/delete', name: 'admin_user_delete', methods: ['POST'])]

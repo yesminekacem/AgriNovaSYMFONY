@@ -112,11 +112,11 @@ class RentalNotificationService
 
     private function getFromAddress(): string
     {
-        return $_ENV['MAILER_FROM_ADDRESS'] ?? 'noreply@agrinova.com';
+        return $_ENV['MAILER_FROM_ADDRESS_2'] ?? 'noreply@agrinova.com';
     }
 
     private function getFromName(): string
     {
-        return $_ENV['MAILER_FROM_NAME'] ?? 'AgriNova Rentals';
+        return $_ENV['MAILER_FROM_NAME_2'] ?? 'AgriNova Rentals';
     }
 }
