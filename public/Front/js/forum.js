@@ -197,8 +197,7 @@ items += `
             <span>${escapeHtml(post.createdAt)}</span>
         </div>
 
-        ${post.imagePath ? `<img src="/${post.imagePath}" style="width:100%; max-height:250px; object-fit:cover; border-radius:12px; margin-bottom:1rem;">` : ''}
-
+       ${post.imagePath ? `<img src="${normalizeImagePath(post.imagePath)}" style="width:100%; max-height:250px; object-fit:cover; border-radius:12px; margin-bottom:1rem;">` : ''}
         <div class="view-modal-body">${escapeHtml(post.content)}</div>
 
 <div class="translate-section" style="margin-top:16px;">
@@ -287,7 +286,11 @@ items += `
 
     document.getElementById('viewModal').classList.add('open');
 }
-
+function normalizeImagePath(path) {
+    if (!path) return '';
+    if (path.startsWith('http://') || path.startsWith('https://')) return path;
+    return path.startsWith('/') ? path : '/' + path;
+}
   
 /* ── Helpers ── */
 function escapeHtml(str) {
@@ -328,6 +331,7 @@ function openEditModal(id) {
     document.getElementById('editTitle').value = post.title;
     document.getElementById('editCategory').value = post.category;
     document.getElementById('editContent').value = post.content;
+    document.getElementById('editExistingImage').value = post.imagePath || '';
     document.getElementById('editPostForm').action = `/forum/update/${postId}`;
 
     closeModal('viewModal');
@@ -983,9 +987,9 @@ function insertPostCard(post) {
         ? `<img src="/${post.profileImage}" alt="${escapeHtml(post.author)}">`
         : escapeHtml(post.author).slice(0, 2).toUpperCase();
 
-    const imageHtml = post.image
-        ? `<img src="/${post.image}" style="width:100%; max-height:160px; object-fit:cover; border-radius:10px; margin-bottom:10px;">`
-        : '';
+   const imageHtml = post.imagePath
+    ? `<img src="${normalizeImagePath(post.imagePath)}" style="width:100%; max-height:160px; object-fit:cover; border-radius:10px; margin-bottom:10px;">`
+    : '';
 
     const reactionLabel = formatReactionLabel(post.userReaction);
 
@@ -1100,20 +1104,21 @@ if (!oldCard) return;
     const commentsCount = oldCard.querySelector('.comments-count');
     if (commentsCount) commentsCount.textContent = `💬 ${post.commentsCount || 0}`;
 
-    const postImage = oldCard.querySelector('img[style*="max-height:160px"]');
-    if (post.image && !postImage) {
-        const excerptEl = oldCard.querySelector('.post-excerpt');
-        if (excerptEl) {
-            excerptEl.insertAdjacentHTML(
-                'beforebegin',
-                `<img src="/${post.image}" style="width:100%; max-height:160px; object-fit:cover; border-radius:10px; margin-bottom:10px;">`
-            );
-        }
-    } else if (!post.image && postImage) {
-        postImage.remove();
-    } else if (post.image && postImage) {
-        postImage.src = `/${post.image}`;
+   const postImage = oldCard.querySelector('.post-main-image');
+
+if (post.imagePath && !postImage) {
+    const excerptEl = oldCard.querySelector('.post-excerpt');
+    if (excerptEl) {
+        excerptEl.insertAdjacentHTML(
+            'beforebegin',
+            `<img class="post-main-image" src="${normalizeImagePath(post.imagePath)}" style="width:100%; max-height:160px; object-fit:cover; border-radius:10px; margin-bottom:10px;">`
+        );
     }
+} else if (!post.imagePath && postImage) {
+    postImage.remove();
+} else if (post.imagePath && postImage) {
+    postImage.src = normalizeImagePath(post.imagePath);
+}
 }
 async function confirmDeleteComment() {
     if (!deleteCommentUrl) return;
