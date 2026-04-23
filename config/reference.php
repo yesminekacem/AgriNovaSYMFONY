@@ -1588,7 +1588,6 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     endroid_qr_code?: EndroidQrCodeConfig,
  *     knp_paginator?: KnpPaginatorConfig,
  *     mercure?: MercureConfig,
- *     endroid_qr_code?: EndroidQrCodeConfig,
  *     "when@dev"?: array{
  *         imports?: ImportsConfig,
  *         parameters?: ParametersConfig,
@@ -1609,8 +1608,6 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         endroid_qr_code?: EndroidQrCodeConfig,
  *         knp_paginator?: KnpPaginatorConfig,
  *         mercure?: MercureConfig,
- *         endroid_qr_code?: EndroidQrCodeConfig,
- *         knp_snappy?: KnpSnappyConfig,
  *     },
  *     "when@prod"?: array{
  *         imports?: ImportsConfig,
@@ -1625,10 +1622,10 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         twig_extra?: TwigExtraConfig,
  *         security?: SecurityConfig,
  *         monolog?: MonologConfig,
+ *         knp_snappy?: KnpSnappyConfig,
+ *         endroid_qr_code?: EndroidQrCodeConfig,
  *         knp_paginator?: KnpPaginatorConfig,
  *         mercure?: MercureConfig,
- *         endroid_qr_code?: EndroidQrCodeConfig,
- *         knp_snappy?: KnpSnappyConfig,
  *     },
  *     "when@test"?: array{
  *         imports?: ImportsConfig,

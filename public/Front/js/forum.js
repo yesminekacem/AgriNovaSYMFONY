@@ -197,7 +197,7 @@ items += `
             <span>${escapeHtml(post.createdAt)}</span>
         </div>
 
-        ${post.image ? `<img src="/${post.image}" style="width:100%; max-height:250px; object-fit:cover; border-radius:12px; margin-bottom:1rem;">` : ''}
+        ${post.imagePath ? `<img src="/${post.imagePath}" style="width:100%; max-height:250px; object-fit:cover; border-radius:12px; margin-bottom:1rem;">` : ''}
 
         <div class="view-modal-body">${escapeHtml(post.content)}</div>
 
