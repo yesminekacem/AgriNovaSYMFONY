@@ -6,6 +6,7 @@ use App\Entity\Cart;
 use App\Entity\Orders;
 use App\Entity\OrderItems;
 use App\Entity\ProductListing;
+use App\Entity\User;
 use App\Form\CheckoutType;
 use App\Repository\CartRepository;
 use App\Service\PayPalService;
@@ -25,6 +26,7 @@ class CartController extends AbstractController
     public function index(CartRepository $cartRepository): Response
     {
         $user = $this->getUser();
+        assert($user instanceof User);
         $cartItems = $cartRepository->findBy(['userId' => (string)$user->getEmail()]);
 
         return $this->render('cart/index.html.twig', [
@@ -45,6 +47,7 @@ class CartController extends AbstractController
         $quantity = (int)$request->request->get('quantity', 1);
 
         $user = $this->getUser();
+        assert($user instanceof User);
         $userId = (string)$user->getEmail();
 
         // Check if item is already in cart
@@ -86,7 +89,8 @@ class CartController extends AbstractController
     public function remove(Cart $cartItem, EntityManagerInterface $em): Response
     {
         $user = $this->getUser();
-        
+        assert($user instanceof User);
+
         if ($cartItem->getUserId() !== (string)$user->getEmail()) {
             throw $this->createAccessDeniedException('You cannot modify this cart item.');
         }
@@ -103,8 +107,9 @@ class CartController extends AbstractController
     public function checkout(Request $request, CartRepository $cartRepository, EntityManagerInterface $em, PayPalService $paypal): Response
     {
         $user = $this->getUser();
+        assert($user instanceof User);
         $userId = (string)$user->getEmail();
-        
+
         // Get cart items
         $cartItems = $cartRepository->findBy(['userId' => $userId]);
         
@@ -121,9 +126,12 @@ class CartController extends AbstractController
             // Calculate total price
             $totalPrice = 0;
             foreach ($cartItems as $cartItem) {
-                $totalPrice += $cartItem->getProduct()->getPricePerUnit() * $cartItem->getQuantity();
+                $product = $cartItem->getProduct();
+                if ($product !== null) {
+                    $totalPrice += $product->getPricePerUnit() * $cartItem->getQuantity();
+                }
             }
-            
+
             // Create order
             $order = new Orders();
             $order->setUserId($userId);
@@ -138,17 +146,20 @@ class CartController extends AbstractController
             $lng = $request->request->get('delivery_lng');
             $order->setDeliveryLat($lat !== '' && $lat !== null ? (float) $lat : null);
             $order->setDeliveryLng($lng !== '' && $lng !== null ? (float) $lng : null);
-            
+
             $em->persist($order);
             $em->flush();
-            
+
             // Create order items
             foreach ($cartItems as $cartItem) {
                 $product = $cartItem->getProduct();
+                if ($product === null) {
+                    continue;
+                }
                 $pricePerUnit = $product->getPricePerUnit();
                 $quantity = $cartItem->getQuantity();
                 $subtotal = $pricePerUnit * $quantity;
-                
+
                 $orderItem = new OrderItems();
                 $orderItem->setOrder($order);
                 $orderItem->setProduct($product);
@@ -156,7 +167,7 @@ class CartController extends AbstractController
                 $orderItem->setQuantity($quantity);
                 $orderItem->setPricePerUnit($pricePerUnit);
                 $orderItem->setSubtotal($subtotal);
-                
+
                 $em->persist($orderItem);
             }
             
@@ -183,7 +194,9 @@ class CartController extends AbstractController
     #[Route('/paypal/create-order', name: 'cart_paypal_create_order', methods: ['POST'])]
     public function paypalCreateOrder(CartRepository $cartRepository, PayPalService $paypal): JsonResponse
     {
-        $userId     = (string) $this->getUser()->getEmail();
+        $currentUser = $this->getUser();
+        assert($currentUser instanceof User);
+        $userId     = (string) $currentUser->getEmail();
         $cartItems  = $cartRepository->findBy(['userId' => $userId]);
 
         if (empty($cartItems)) {
@@ -192,7 +205,10 @@ class CartController extends AbstractController
 
         $total = 0.0;
         foreach ($cartItems as $item) {
-            $total += $item->getProduct()->getPricePerUnit() * $item->getQuantity();
+            $product = $item->getProduct();
+            if ($product !== null) {
+                $total += $product->getPricePerUnit() * $item->getQuantity();
+            }
         }
 
         $paypalOrderId = $paypal->createOrder($total);
@@ -205,10 +221,11 @@ class CartController extends AbstractController
     #[Route('/paypal/capture', name: 'cart_paypal_capture', methods: ['POST'])]
     public function paypalCapture(Request $request, CartRepository $cartRepository, EntityManagerInterface $em, PayPalService $paypal): JsonResponse
     {
-        $data      = json_decode($request->getContent(), true);
-        $ppOrderId = $data['orderID'] ?? null;
+        $decoded   = json_decode($request->getContent(), true);
+        $data      = is_array($decoded) ? $decoded : [];
+        $ppOrderId = (string)($data['orderID'] ?? '');
 
-        if (!$ppOrderId) {
+        if ($ppOrderId === '') {
             return new JsonResponse(['error' => 'Missing PayPal orderID'], 400);
         }
 
@@ -218,7 +235,9 @@ class CartController extends AbstractController
             return new JsonResponse(['error' => 'Payment not completed by PayPal'], 400);
         }
 
-        $userId    = (string) $this->getUser()->getEmail();
+        $currentUser = $this->getUser();
+        assert($currentUser instanceof User);
+        $userId    = (string) $currentUser->getEmail();
         $cartItems = $cartRepository->findBy(['userId' => $userId]);
 
         if (empty($cartItems)) {
@@ -227,12 +246,15 @@ class CartController extends AbstractController
 
         $total = 0.0;
         foreach ($cartItems as $item) {
-            $total += $item->getProduct()->getPricePerUnit() * $item->getQuantity();
+            $product = $item->getProduct();
+            if ($product !== null) {
+                $total += $product->getPricePerUnit() * $item->getQuantity();
+            }
         }
 
         $order = new Orders();
         $order->setUserId($userId);
-        $order->setDeliveryAddress($data['deliveryAddress'] ?? '');
+        $order->setDeliveryAddress((string)($data['deliveryAddress'] ?? ''));
         $order->setPaymentMethod('paypal');
         $order->setOrderDate(new \DateTime());
         $order->setStatus('Pending');
@@ -249,6 +271,9 @@ class CartController extends AbstractController
 
         foreach ($cartItems as $cartItem) {
             $product   = $cartItem->getProduct();
+            if ($product === null) {
+                continue;
+            }
             $orderItem = new OrderItems();
             $orderItem->setOrder($order);
             $orderItem->setProduct($product);

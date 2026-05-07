@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Post;
 use App\Entity\Comment;
+use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Repository\PostRepository;
 use App\Repository\CommentRepository;
@@ -82,9 +83,9 @@ foreach ($commentsData as $commentData) {
     }
 }
 $userReaction = null;
-
-if ($this->getUser()) {
-    $existingReaction = $postReactionRepository->findUserReaction($post, $this->getUser());
+$indexUser = $this->getUser();
+if ($indexUser instanceof User) {
+    $existingReaction = $postReactionRepository->findUserReaction($post, $indexUser);
     $userReaction = $existingReaction ? $existingReaction->getReaction() : null;
 }
 
@@ -128,7 +129,7 @@ public function new(
 ): Response {
     $user = $this->getUser();
 
-    if (!$user) {
+    if (!$user instanceof User) {
         $this->addFlash('error', 'You must be logged in.');
         return $this->redirectToRoute('app_login');
     }
@@ -144,8 +145,8 @@ public function new(
     $post->setContent($content);
     $post->setStatus('ACTIVE');
     $post->setCreatedAt(new \DateTime());
-    $post->setAuthor($user->getFullName());
-    $post->setAuthorId($user->getId());
+    $post->setAuthor($user->getFullName() ?? '');
+    $post->setAuthorId((int)$user->getId());
     $post->setImagePath(null);
 
     $errors = $validator->validate($post);
@@ -159,7 +160,7 @@ public function new(
     }
 
     if ($imageFile) {
-        $newFilename = uniqid() . '.' . $imageFile->guessExtension();
+        $newFilename = uniqid() . '.' . ($imageFile->guessExtension() ?? 'bin');
 
         try {
             $imageFile->move(
@@ -197,7 +198,7 @@ public function update(
 
     $user = $this->getUser();
 
-    if (!$user) {
+    if (!$user instanceof User) {
         $this->addFlash('error', 'You must be logged in.');
         return $this->redirectToRoute('app_login');
     }
@@ -245,11 +246,10 @@ public function delete(int $id, PostRepository $postRepository, EntityManagerInt
 
     $user = $this->getUser();
 
-    if (!$user) {
+    if (!$user instanceof User) {
         $this->addFlash('error', 'You must be logged in.');
         return $this->redirectToRoute('app_login');
     }
-
 
     $entityManager->remove($post);
     $entityManager->flush();
@@ -276,7 +276,7 @@ public function addComment(
 
     $user = $this->getUser();
 
-    if (!$user) {
+    if (!$user instanceof User) {
         $this->addFlash('error', 'You must be logged in.');
         return $this->redirectToRoute('app_login');
     }
@@ -286,8 +286,8 @@ public function addComment(
     $comment = new Comment();
     $comment->setIdPost($post);
     $comment->setContent($content);
-    $comment->setAuthor($user->getFullName());
-    $comment->setAuthorId($user->getId());
+    $comment->setAuthor($user->getFullName() ?? '');
+    $comment->setAuthorId((int)$user->getId());
     $comment->setLikes(0);
     $comment->setCreatedAt(new \DateTime());
 
@@ -344,7 +344,7 @@ public function updateComment(
 
     $user = $this->getUser();
 
-    if (!$user) {
+    if (!$user instanceof User) {
         $this->addFlash('error', 'You must be logged in.');
         return $this->redirectToRoute('app_login');
     }
@@ -399,7 +399,7 @@ public function react(
 ): Response {
     $user = $this->getUser();
 
-    if (!$user) {
+    if (!$user instanceof User) {
         return $this->json(['success' => false], 403);
     }
 
@@ -412,7 +412,7 @@ public function react(
     $reaction = strtoupper(trim($request->request->get('reaction', '')));
     $allowed = ['LIKE','LOVE','HAHA','WOW','SAD','ANGRY'];
 
-    if (!in_array($reaction, $allowed)) {
+    if (!in_array($reaction, $allowed, true)) {
         return $this->json(['success' => false], 400);
     }
 

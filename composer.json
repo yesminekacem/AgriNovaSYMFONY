@@ -7,17 +7,15 @@
         "php": ">=8.2",
         "ext-ctype": "*",
         "ext-iconv": "*",
+        "ahmed-bhs/doctrine-doctor": "1.0",
         "doctrine/doctrine-bundle": "^2.18",
         "doctrine/doctrine-migrations-bundle": "^3.7",
         "doctrine/orm": "^3.6",
-        "dompdf/dompdf": ">=3.1.5",
-        "endroid/qr-code-bundle": "^6.0",
-        "dompdf/dompdf": ">=3.1.5",
+        "dompdf/dompdf": "^3.1",
         "endroid/qr-code-bundle": ">=6",
         "knplabs/knp-paginator-bundle": "^6.10",
         "knplabs/knp-snappy": ">=1.6",
         "knplabs/knp-snappy-bundle": "^1.10.6",
-        "dompdf/dompdf": "^3.1",
         "phpdocumentor/reflection-docblock": "^6.0",
         "phpstan/phpdoc-parser": "^2.3",
         "symfony/asset": "7.4.*",
@@ -52,7 +50,8 @@
         "symfony/web-link": "7.4.*",
         "symfony/yaml": "7.4.*",
         "twig/extra-bundle": "^2.12|^3.0",
-        "twig/twig": "^2.12|^3.0"
+        "twig/twig": "^2.12|^3.0",
+        "webmozart/assert": "1.11"
     },
     "config": {
         "allow-plugins": {
@@ -107,6 +106,7 @@
         }
     },
     "require-dev": {
+        "phpstan/phpstan": "*",
         "phpunit/phpunit": "^11.5",
         "symfony/browser-kit": "7.4.*",
         "symfony/css-selector": "7.4.*",

@@ -4,10 +4,12 @@ namespace App\Controller;
 
 use App\Entity\Post;
 use App\Entity\Comment;
+use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Repository\PostRepository;
 use App\Repository\CommentRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -84,8 +86,9 @@ public function index(
         $totalReactions = $postReactionRepository->countByPost($post);
 
         $userReaction = null;
-        if ($this->getUser()) {
-            $existingReaction = $postReactionRepository->findUserReaction($post, $this->getUser());
+        $indexUser = $this->getUser();
+        if ($indexUser instanceof User) {
+            $existingReaction = $postReactionRepository->findUserReaction($post, $indexUser);
             $userReaction = $existingReaction ? $existingReaction->getReaction() : null;
         }
 
@@ -114,7 +117,7 @@ public function index(
 
 $unreadCount = 0;
 
-if ($user) {
+if ($user instanceof User) {
     $unreadCount = count(
         $notificationsRepository->findUnreadByRecipient($user->getId())
     );
@@ -145,7 +148,7 @@ public function new(
 
     $user = $this->getUser();
 
-    if (!$user) {
+    if (!$user instanceof User) {
         $this->addFlash('error', 'You must be logged in.');
         return $this->redirectToRoute('app_login');
     }
@@ -156,8 +159,8 @@ public function new(
     $post->setContent($content);
     $post->setStatus('ACTIVE');
     $post->setCreatedAt(new \DateTime());
-    $post->setAuthor($user->getFullName());
-    $post->setAuthorId($user->getId());
+    $post->setAuthor($user->getFullName() ?? '');
+    $post->setAuthorId((int)$user->getId());
     $post->setImagePath(null);
 
     $imageFile = $request->files->get('image');
@@ -166,8 +169,8 @@ public function new(
     if ($generatedImage) {
         $post->setImagePath('uploads/generated/' . $generatedImage);
 
-    } elseif ($imageFile) {
-        $newFilename = uniqid() . '.' . $imageFile->guessExtension();
+    } elseif ($imageFile instanceof UploadedFile) {
+        $newFilename = uniqid() . '.' . ($imageFile->guessExtension() ?? 'bin');
 
         $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/posts';
 
@@ -245,7 +248,8 @@ public function update(
         ], 404);
     }
 
-    if (!$this->getUser() || $post->getAuthorId() !== $this->getUser()->getId()) {
+    $currentUser = $this->getUser();
+    if (!$currentUser instanceof User || $post->getAuthorId() !== $currentUser->getId()) {
         return $this->json([
             'success' => false,
             'message' => 'Unauthorized',
@@ -320,8 +324,9 @@ public function update(
     $totalReactions = $postReactionRepository->countByPost($post);
 
     $userReaction = null;
-    if ($this->getUser()) {
-        $existingReaction = $postReactionRepository->findUserReaction($post, $this->getUser());
+    $viewerUser = $this->getUser();
+    if ($viewerUser instanceof User) {
+        $existingReaction = $postReactionRepository->findUserReaction($post, $viewerUser);
         $userReaction = $existingReaction ? $existingReaction->getReaction() : null;
     }
 
@@ -345,16 +350,14 @@ public function update(
         'commentsCount' => count($comments),
         'totalReactions' => $totalReactions,
         'userReaction' => $userReaction,
-        'comments' => array_map(function ($comment) {
+        'comments' => array_map(function (Comment $comment): array {
             return [
-                'id' => $comment->getId(),
-                'author' => $comment->getAuthorName(),
-                'authorId' => $comment->getUser() ? $comment->getUser()->getId() : null,
+                'id' => $comment->getIdComment(),
+                'author' => $comment->getAuthor(),
+                'authorId' => $comment->getAuthorId(),
                 'content' => $comment->getContent(),
                 'createdAt' => $this->timeAgo($comment->getCreatedAt()),
-                'profileImage' => $comment->getUser() && $comment->getUser()->getProfileImage()
-                    ? 'uploads/profile_images/' . $comment->getUser()->getProfileImage()
-                    : null,
+                'profileImage' => null,
             ];
         }, $comments),
     ];
@@ -487,7 +490,7 @@ public function addComment(
 
     $user = $this->getUser();
 
-    if (!$user) {
+    if (!$user instanceof User) {
         if ($request->isXmlHttpRequest()) {
             return $this->json([
                 'success' => false,
@@ -505,8 +508,8 @@ public function addComment(
     $cleanContent = $this->censorText($content);
     $comment->setContent($cleanContent);
 
-    $comment->setAuthor($user->getFullName());
-    $comment->setAuthorId($user->getId());
+    $comment->setAuthor($user->getFullName() ?? '');
+    $comment->setAuthorId((int)$user->getId());
     $comment->setLikes(0);
     $comment->setCreatedAt(new \DateTime());
 
@@ -516,10 +519,10 @@ public function addComment(
 if ($post->getAuthorId() !== $user->getId()) {
     $notification = new Notifications();
     $notification->setRecipientId($post->getAuthorId());
-    $notification->setActorId($user->getId());
-    $notification->setPostId($post->getIdPost());
+    $notification->setActorId((int)$user->getId());
+    $notification->setPostId((int)$post->getIdPost());
     $notification->setType('comment');
-    $notification->setMessage($user->getFullName() . ' commented on your post');
+    $notification->setMessage(($user->getFullName() ?? '') . ' commented on your post');
     $notification->setIsRead(false);
     $notification->setCreatedAt(new \DateTime());
 
@@ -587,22 +590,24 @@ public function deleteComment(
     $entityManager->remove($comment);
     $entityManager->flush();
 
-    $commentsCount = count($commentRepository->findByPost($post->getIdPost()));
+    if ($post !== null) {
+        $commentsCount = count($commentRepository->findByPost($post->getIdPost()));
 
-    $payload = [
-        'type' => 'comment_deleted',
-        'postId' => $post->getIdPost(),
-        'commentId' => $id,
-        'commentsCount' => $commentsCount,
-    ];
+        $payload = [
+            'type' => 'comment_deleted',
+            'postId' => $post->getIdPost(),
+            'commentId' => $id,
+            'commentsCount' => $commentsCount,
+        ];
 
-    try {
-        $hub->publish(new Update(
-            sprintf('http://127.0.0.1/forum/posts/%d', $post->getIdPost()),
-            json_encode($payload)
-        ));
-    } catch (\Throwable $e) {
-        // do nothing, don't crash
+        try {
+            $hub->publish(new Update(
+                sprintf('http://127.0.0.1/forum/posts/%d', $post->getIdPost()),
+                json_encode($payload)
+            ));
+        } catch (\Throwable $e) {
+            // do nothing, don't crash
+        }
     }
 
     if ($request->isXmlHttpRequest()) {
@@ -653,24 +658,26 @@ public function updateComment(
 
     $post = $comment->getIdPost();
 
-    $payload = [
-        'type' => 'comment_updated',
-        'postId' => $post->getIdPost(),
-        'comment' => [
-            'id' => $comment->getIdComment(),
-            'author' => $comment->getAuthor(),
-            'authorId' => $comment->getAuthorId(),
-            'content' => $comment->getContent(),
-            'createdAt' => $this->timeAgo($comment->getCreatedAt()),
-        ]
-    ];
+    if ($post !== null) {
+        $payload = [
+            'type' => 'comment_updated',
+            'postId' => $post->getIdPost(),
+            'comment' => [
+                'id' => $comment->getIdComment(),
+                'author' => $comment->getAuthor(),
+                'authorId' => $comment->getAuthorId(),
+                'content' => $comment->getContent(),
+                'createdAt' => $this->timeAgo($comment->getCreatedAt()),
+            ]
+        ];
 
-    try {
-        $hub->publish(new Update(
-            sprintf('http://127.0.0.1/forum/posts/%d', $post->getIdPost()),
-            json_encode($payload)
-        ));
-    } catch (\Throwable $e) {
+        try {
+            $hub->publish(new Update(
+                sprintf('http://127.0.0.1/forum/posts/%d', $post->getIdPost()),
+                json_encode($payload)
+            ));
+        } catch (\Throwable $e) {
+        }
     }
 
     if ($request->isXmlHttpRequest()) {
@@ -709,7 +716,7 @@ public function react(
 ): JsonResponse {
     $user = $this->getUser();
 
-    if (!$user) {
+    if (!$user instanceof User) {
         return $this->json([
             'success' => false,
             'message' => 'You must be logged in.'
@@ -801,7 +808,7 @@ try {
 
     $entityManager->persist($newReaction);
     $postOwnerId = $post->getAuthorId();
-$actorId = $this->getUser()->getId();
+    $actorId = (int)$user->getId();
 
 // ❌ Do not notify yourself
 if ($postOwnerId !== $actorId) {
@@ -809,9 +816,9 @@ if ($postOwnerId !== $actorId) {
     $notification = new Notifications();
     $notification->setRecipientId($postOwnerId);
     $notification->setActorId($actorId);
-    $notification->setPostId($post->getIdPost());
+    $notification->setPostId((int)$post->getIdPost());
     $notification->setType('reaction');
-    $notification->setMessage($this->getUser()->getFullName() . ' reacted to your post.');
+    $notification->setMessage(($user->getFullName() ?? '') . ' reacted to your post.');
     $notification->setIsRead(false);
     $notification->setCreatedAt(new \DateTime());
 
@@ -848,7 +855,8 @@ private function censorText(string $text): string
 
     foreach ($badWords as $word) {
         $pattern = '/\b' . preg_quote($word, '/') . '\b/i';
-        $text = preg_replace($pattern, str_repeat('*', strlen($word)), $text);
+        $replaced = preg_replace($pattern, str_repeat('*', strlen($word)), $text);
+        $text = $replaced ?? $text;
     }
 
     return $text;
@@ -1114,7 +1122,7 @@ public function getNotifications(
 ): Response {
     $user = $this->getUser();
 
-    if (!$user) {
+    if (!$user instanceof User) {
         return $this->json(['success' => false], 403);
     }
 
@@ -1158,7 +1166,8 @@ public function getNotifications(
     $data = [];
 
     foreach ($grouped as $item) {
-        $actors = array_values(array_unique($item['actors']));
+        $actorsArr = is_array($item['actors']) ? $item['actors'] : [];
+        $actors = array_values(array_unique($actorsArr));
         $count = count($actors);
 
         if ($item['type'] === 'comment') {
@@ -1187,12 +1196,12 @@ public function getNotifications(
             'ids' => $item['ids'],
             'message' => $message,
             'isRead' => $item['isRead'],
-            'createdAt' => $item['createdAt']->format('Y-m-d H:i'),
+            'createdAt' => $item['createdAt'] instanceof \DateTimeInterface ? $item['createdAt']->format('Y-m-d H:i') : '',
         ];
     }
 
-    usort($data, function ($a, $b) {
-        return strtotime($b['createdAt']) <=> strtotime($a['createdAt']);
+    usort($data, static function (array $a, array $b): int {
+        return strtotime((string)($b['createdAt'] ?? '')) <=> strtotime((string)($a['createdAt'] ?? ''));
     });
 
     return $this->json([
@@ -1208,12 +1217,13 @@ public function readNotificationGroup(
 ): Response {
     $user = $this->getUser();
 
-    if (!$user) {
+    if (!$user instanceof User) {
         return $this->json(['success' => false], 403);
     }
 
-    $payload = json_decode($request->getContent(), true);
-    $ids = $payload['ids'] ?? [];
+    $decoded = json_decode($request->getContent(), true);
+    $payload = is_array($decoded) ? $decoded : [];
+    $ids = is_array($payload['ids'] ?? null) ? $payload['ids'] : [];
 
     foreach ($ids as $id) {
         $notification = $repo->find($id);
@@ -1318,7 +1328,7 @@ public function fixGrammar(Request $request, HttpClientInterface $httpClient): J
         ]);
     }
 
-    $apiKey = $_ENV['GROQ_API_KEY'];
+    $apiKey = $_ENV['GROQ_API_KEY'] ?? $_SERVER['GROQ_API_KEY'] ?? null;
 
     $prompt = <<<PROMPT
 Correct the grammar, spelling, and clarity of this text.

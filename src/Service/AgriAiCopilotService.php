@@ -52,7 +52,7 @@ class AgriAiCopilotService
                 'status' => 'not_configured',
                 'error' => sprintf(
                     'Add your %s key in .env.local to enable the live AI brief.',
-                    $apiKey = $_ENV['GROQ_API_KEY'] ?? $_SERVER['GROQ_API_KEY'] ?? null,
+                    $this->getProviderLabel(),
                 ),
                 'provider' => $this->getProviderLabel(),
                 'model' => $this->getModel(),

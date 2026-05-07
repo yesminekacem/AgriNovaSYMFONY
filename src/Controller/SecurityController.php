@@ -7,6 +7,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 use Symfony\Component\HttpFoundation\Request;
+use App\Entity\User;
 use App\Service\FaceApiClient;
 use App\Repository\UserRepository;
 use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
@@ -229,8 +230,8 @@ class SecurityController extends AbstractController
         $session = $request->getSession();
         $user = $this->getUser();
         $data = [
-            'isAuthenticated' => $user ? true : false,
-            'userId' => $user ? $user->getId() : null,
+            'isAuthenticated' => $user !== null,
+            'userId' => $user instanceof User ? $user->getId() : null,
             'sessionId' => $session ? $session->getId() : null,
         ];
         return new JsonResponse($data);

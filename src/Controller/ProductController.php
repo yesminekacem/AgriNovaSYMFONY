@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\ProductListing;
+use App\Entity\User;
 use App\Form\ProductType;
 use App\Repository\ProductListingRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -37,7 +38,8 @@ final class ProductController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $product->setUserId((string)$this->getUser()->getEmail());
+            $currentUser = $this->getUser();
+            $product->setUserId($currentUser instanceof User ? (string)$currentUser->getEmail() : '');
             
             // Handle file upload
             $imageFile = $form->get('picture')->getData();

@@ -5,12 +5,13 @@ namespace App\Service;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\Task;
+use App\Entity\Crop;
 use App\Repository\CropRepository;
 
 class AITaskGenerator
 {
-    private $client;
-    private $em;
+    private HttpClientInterface $client;
+    private EntityManagerInterface $em;
 
     public function __construct(
         HttpClientInterface $client,
@@ -22,7 +23,7 @@ class AITaskGenerator
     }
 
     // Returns array of task strings — does NOT save
-    public function generateTasksPreview($crop): array
+    public function generateTasksPreview(Crop $crop): array
     {
         $cropName = $crop->getName();
         $stage    = $crop->getGrowthStage();
@@ -38,6 +39,10 @@ class AITaskGenerator
         $data  = $response->toArray();
         $lines = preg_split('/\r\n|\r|\n/', $data['response']);
 
+        if ($lines === false) {
+            return [];
+        }
+
         $tasks = [];
         foreach ($lines as $line) {
             $line = trim($line);
@@ -50,7 +55,7 @@ class AITaskGenerator
     }
 
     // Saves only the tasks the user selected
-    public function saveSelectedTasks($crop, array $taskNames): void
+    public function saveSelectedTasks(Crop $crop, array $taskNames): void
     {
         foreach ($taskNames as $name) {
             $name = trim($name);

@@ -44,7 +44,12 @@ class Orders
     #[ORM\Column(type: 'float', nullable: true, precision: 22)]
     private ?float $deliveryLng = null;
 
-    #[ORM\OneToMany(targetEntity: OrderItems::class, mappedBy: 'order', cascade: ['persist', 'remove'])]
+    /**
+     * Workshop Doctor Doctrine: composition relation. orphanRemoval=true ensures
+     * an OrderItem is deleted when removed from this collection (it cannot exist
+     * without an Orders entity).
+     */
+    #[ORM\OneToMany(targetEntity: OrderItems::class, mappedBy: 'order', cascade: ['persist', 'remove'], orphanRemoval: true)]
     private Collection $orderItems;
 
     public function __construct()

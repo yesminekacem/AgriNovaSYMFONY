@@ -143,6 +143,9 @@ final class RentalController extends AbstractController
 
         $response = new StreamedResponse(function () use ($rentals): void {
             $handle = fopen('php://output', 'wb');
+            if ($handle === false) {
+                return;
+            }
             fputcsv($handle, ['ID', 'Inventory Item', 'Owner', 'Renter', 'Contact', 'Start', 'End', 'Status', 'Payment', 'Total Cost']);
 
             foreach ($rentals as $rental) {

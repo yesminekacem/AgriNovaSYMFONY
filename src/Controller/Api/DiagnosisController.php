@@ -42,7 +42,7 @@ public function diagnose(Request $request): JsonResponse
         mkdir($targetDir, 0755, true); // 0755 is safer than 0777
     }
 
-    $filename = uniqid('img_', true) . '.' . $file->guessExtension();
+    $filename = uniqid('img_', true) . '.' . ($file->guessExtension() ?? 'bin');
 
     try {
         $file->move($targetDir, $filename);

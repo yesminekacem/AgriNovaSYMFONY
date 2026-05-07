@@ -40,7 +40,7 @@ class LoginSuccessHandler implements AuthenticationSuccessHandlerInterface
             $targetKey = '_security.main.target_path';
             if ($session->has($targetKey)) {
                 $targetPath = $session->get($targetKey);
-                if ($targetPath) {
+                if (is_string($targetPath) && $targetPath !== '') {
                     return new RedirectResponse($targetPath);
                 }
             }
