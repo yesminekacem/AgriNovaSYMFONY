@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\User;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -40,7 +41,8 @@ class AdminController extends AbstractController
         }
 
         // Prevent deleting yourself
-        if ($this->getUser() && $this->getUser()->getId() === $user->getId()) {
+        $currentUser = $this->getUser();
+        if ($currentUser instanceof User && $currentUser->getId() === $user->getId()) {
             $this->addFlash('error', 'You cannot delete your own account.');
             return $this->redirectToRoute('admin_users');
         }
@@ -91,7 +93,8 @@ class AdminController extends AbstractController
         }
 
         // Prevent demoting yourself
-        if ($this->getUser() && $this->getUser()->getId() === $user->getId()) {
+        $currentUser = $this->getUser();
+        if ($currentUser instanceof User && $currentUser->getId() === $user->getId()) {
             $this->addFlash('error', 'You cannot demote your own account.');
             return $this->redirectToRoute('admin_users');
         }

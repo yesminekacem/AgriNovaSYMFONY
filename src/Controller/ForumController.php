@@ -2,11 +2,12 @@
 
 namespace App\Controller;
 
-use App\Entity\Post;
 use App\Entity\Comment;
-use Doctrine\ORM\EntityManagerInterface;
+use App\Entity\Post;
+use App\Entity\User;
 use App\Repository\PostRepository;
 use App\Repository\CommentRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -80,14 +81,13 @@ final class ForumController extends AbstractController
         $post->setStatus('ACTIVE');
         $post->setCreatedAt(new \DateTime());
         $user = $this->getUser();
+        if (!$user instanceof User) {
+            $this->addFlash('error', 'You must be logged in.');
+            return $this->redirectToRoute('app_login');
+        }
 
-if (!$user) {
-    $this->addFlash('error', 'You must be logged in.');
-    return $this->redirectToRoute('app_login'); // or your login route
-}
-
-$post->setAuthor($user->getUserIdentifier()); // username/email
-$post->setAuthorId($user->getId());
+        $post->setAuthor($user->getUserIdentifier());
+        $post->setAuthorId($user->getId());
         $post->setImagePath(null);
 
         if ($imageFile) {
@@ -188,15 +188,14 @@ $post->setAuthorId($user->getId());
         $comment = new Comment();
         $comment->setIdPost($post);
         $comment->setContent($content);
-      $user = $this->getUser();
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            $this->addFlash('error', 'You must be logged in.');
+            return $this->redirectToRoute('app_login');
+        }
 
-if (!$user) {
-    $this->addFlash('error', 'You must be logged in.');
-    return $this->redirectToRoute('app_login');
-}
-
-$comment->setAuthor($user->getUserIdentifier());
-$comment->setAuthorId($user->getId());
+        $comment->setAuthor($user->getUserIdentifier());
+        $comment->setAuthorId($user->getId());
 
         $comment->setLikes(0);
         $comment->setCreatedAt(new \DateTime());

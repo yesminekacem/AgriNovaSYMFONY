@@ -12,5 +12,6 @@ class DevController extends AbstractController
     {
         // DevController removed/disabled. The profile-preview route has been intentionally disabled.
         // If you need it again for debugging, recreate a controller or re-enable the route.
+        return new Response('Profile preview disabled.', Response::HTTP_NOT_FOUND);
     }
 }

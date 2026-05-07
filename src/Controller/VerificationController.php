@@ -29,7 +29,7 @@ class VerificationController extends AbstractController
         }
 
         // Build expected token: HMAC of email + stored password hash with APP_SECRET
-        $appSecret = $_ENV['APP_SECRET'] ?? getenv('APP_SECRET') ?? 'dev_secret';
+        $appSecret = $this->resolveAppSecret();
         $expected = hash_hmac('sha256', $user->getEmail() . ':' . $user->getPassword(), $appSecret);
 
         if (!hash_equals($expected, $token)) {
@@ -44,5 +44,19 @@ class VerificationController extends AbstractController
 
         $this->addFlash('success', 'Your email has been verified. You can now sign in.');
         return $this->redirectToRoute('app_login');
+    }
+
+    private function resolveAppSecret(): string
+    {
+        $appSecret = getenv('APP_SECRET');
+        if (is_string($appSecret) && $appSecret !== '') {
+            return $appSecret;
+        }
+
+        if (array_key_exists('APP_SECRET', $_ENV) && is_string($_ENV['APP_SECRET']) && $_ENV['APP_SECRET'] !== '') {
+            return $_ENV['APP_SECRET'];
+        }
+
+        return 'dev_secret';
     }
 }

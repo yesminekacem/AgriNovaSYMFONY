@@ -313,7 +313,12 @@ private function transitionRental(
     }
 
     $this->prepareRental($rental);
-    $this->syncInventoryStatus($rental, $entityManager->getRepository(Rental::class));
+    $rentalRepository = $entityManager->getRepository(Rental::class);
+    if (!$rentalRepository instanceof RentalRepository) {
+        throw new \LogicException('Expected the rental repository service.');
+    }
+
+    $this->syncInventoryStatus($rental, $rentalRepository);
     $this->logHistory($entityManager, $rental, $actionType, $historyMessage);
     $entityManager->flush();
 
@@ -327,7 +332,7 @@ private function getAllowedTransitions(): array
 {
     return [
         'APPROVED'   => ['PENDING'],
-        'ACTIVATED'  => ['APPROVED'],
+        'ACTIVE'     => ['APPROVED'],
         'RETURNED'   => ['ACTIVE'],
         'COMPLETED'  => ['RETURNED'],
         'CANCELLED'  => ['PENDING', 'APPROVED'],
@@ -411,7 +416,7 @@ private function getAllowedTransitions(): array
 
         if ($previousInventory instanceof Inventory && $previousInventory === $currentInventory && $previousStatus === 'ACTIVE'
             && $rental->getRentalStatus() !== 'ACTIVE'
-            && !in_array($currentInventory?->getRentalStatus(), ['MAINTENANCE', 'RETIRED'], true)
+            && !in_array($currentInventory->getRentalStatus(), ['MAINTENANCE', 'RETIRED'], true)
             && !$rentalRepository->hasBlockingRentalForInventory($previousInventory, $rental->getId())) {
             $this->setInventoryAvailable($previousInventory);
         }

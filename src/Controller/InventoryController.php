@@ -237,7 +237,7 @@ final class InventoryController extends AbstractController
             return;
         }
 
-        $userEmail = strtolower(trim($user->getEmail() ?? ''));
+        $userEmail = strtolower(trim($user->getEmail()));
         $ownerContact = strtolower(trim((string) $inventory->getOwnerContact()));
         $isOwnerUser = $inventory->getOwner() !== null && $inventory->getOwner()->getId() === $user->getId();
 

@@ -115,7 +115,7 @@ class RegistrationController extends AbstractController
             $em->flush();
 
             // Generate a stateless verification token (HMAC) so we do not need an extra DB column.
-            $appSecret = $_ENV['APP_SECRET'] ?? getenv('APP_SECRET') ?? 'dev_secret';
+            $appSecret = $this->resolveAppSecret();
             $token = hash_hmac('sha256', $email . ':' . $hashed, $appSecret);
 
             $verificationUrl = $urlGenerator->generate('app_verify_email', ['email' => $email, 'token' => $token], UrlGeneratorInterface::ABSOLUTE_URL);
@@ -130,5 +130,19 @@ class RegistrationController extends AbstractController
             'formValues' => $formValues,
             'formErrors' => $formErrors,
         ]);
+    }
+
+    private function resolveAppSecret(): string
+    {
+        $appSecret = getenv('APP_SECRET');
+        if (is_string($appSecret) && $appSecret !== '') {
+            return $appSecret;
+        }
+
+        if (array_key_exists('APP_SECRET', $_ENV) && is_string($_ENV['APP_SECRET']) && $_ENV['APP_SECRET'] !== '') {
+            return $_ENV['APP_SECRET'];
+        }
+
+        return 'dev_secret';
     }
 }

@@ -21,8 +21,8 @@ class LoginSuccessHandler implements AuthenticationSuccessHandlerInterface
     public function onAuthenticationSuccess(Request $request, TokenInterface $token): Response
     {
         // If the security system stored a target path (user tried to access a protected page), redirect there first
-        $session = $request->getSession();
-        if ($session && $session->has('_security_main')) {
+        if ($request->hasSession()) {
+            $session = $request->getSession();
             // Symfony stores the target path under _security.<firewall_name>.target_path in some versions
             $targetKey = '_security.main.target_path';
             if ($session->has($targetKey)) {

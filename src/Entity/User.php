@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Serializer\Attribute\Ignore;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: \App\Repository\UserRepository::class)]
@@ -29,6 +30,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      * @var string The hashed password
      */
     #[ORM\Column(type: 'string')]
+    #[Ignore]
     private string $password;
 
     #[ORM\Column(type: 'string', length: 100, nullable: true)]
@@ -88,7 +90,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function getRoles(): array
     {
         // Map legacy single role string to Symfony roles array
-        $r = strtoupper($this->role ?? 'USER');
+        $r = strtoupper($this->role);
         $roles = ['ROLE_USER'];
         if ($r === 'ADMIN' || $r === 'ROLE_ADMIN') {
             array_unshift($roles, 'ROLE_ADMIN');
@@ -124,7 +126,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->password;
     }
 
-    public function setPassword(string $password): self
+    public function setPassword(#[\SensitiveParameter] string $password): self
     {
         $this->password = $password;
 
