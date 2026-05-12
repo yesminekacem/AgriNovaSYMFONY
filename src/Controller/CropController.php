@@ -47,7 +47,7 @@ final class CropController extends AbstractController
             if ($imageFile) {
                 $originalFilename = pathinfo($imageFile->getClientOriginalName(), PATHINFO_FILENAME);
                 $safeFilename = $slugger->slug($originalFilename);
-                $newFilename = $safeFilename.'-'.uniqid().'.'.$imageFile->guessExtension();
+                $newFilename = $safeFilename.'-'.uniqid().'.'.($imageFile->guessExtension() ?? 'bin');
                 $imageFile->move(
                     $this->getParameter('kernel.project_dir').'/public/cropsimages',
                     $newFilename
@@ -97,7 +97,7 @@ final class CropController extends AbstractController
             if ($imageFile) {
                 $originalFilename = pathinfo($imageFile->getClientOriginalName(), PATHINFO_FILENAME);
                 $safeFilename = $slugger->slug($originalFilename);
-                $newFilename = $safeFilename.'-'.uniqid().'.'.$imageFile->guessExtension();
+                $newFilename = $safeFilename.'-'.uniqid().'.'.($imageFile->guessExtension() ?? 'bin');
                 $imageFile->move(
                     $this->getParameter('kernel.project_dir').'/public/cropsimages',
                     $newFilename

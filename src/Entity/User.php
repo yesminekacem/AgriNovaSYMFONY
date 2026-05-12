@@ -8,7 +8,8 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Validator\Constraints as Assert;
-
+use Symfony\Component\Serializer\Annotation\Ignore;
+use Symfony\Component\HttpKernel\Attribute\SensitiveParameter;
 #[ORM\Entity(repositoryClass: \App\Repository\UserRepository::class)]
 #[ORM\Table(name: 'user')]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
@@ -27,8 +28,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     /**
      * @var string The hashed password
+     *
+     * Workshop Doctor Doctrine: prevent the password from being serialized
+     * (sensitive data exposure). #[Ignore] hides the property from the
+     * Symfony serializer and Twig dumps.
      */
     #[ORM\Column(type: 'string')]
+    #[Ignore]
     private string $password;
 
     #[ORM\Column(type: 'string', length: 100, nullable: true)]
@@ -127,7 +133,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->password;
     }
 
-    public function setPassword(string $password): self
+    /**
+     * Workshop Doctor Doctrine: #[SensitiveParameter] prevents the password
+     * from being shown in stack traces or logs.
+     */
+    public function setPassword(#[SensitiveParameter] string $password): self
     {
         $this->password = $password;
 

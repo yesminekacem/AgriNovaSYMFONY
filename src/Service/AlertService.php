@@ -71,7 +71,7 @@ class AlertService
                 'message' => sprintf(
                     '%s requires maintenance by %s',
                     $item->getItemName(),
-                    $item->getNextMaintenanceDate()->format('M d, Y')
+                    $item->getNextMaintenanceDate()?->format('M d, Y') ?? ''
                 ),
                 'link' => 'inventory_show',
                 'linkParams' => ['id' => $item->getId()],
@@ -98,9 +98,9 @@ class AlertService
         }
 
         // Sort by severity (danger > warning > info)
-        usort($alerts, function($a, $b) {
+        usort($alerts, static function (array $a, array $b): int {
             $severityOrder = ['danger' => 0, 'warning' => 1, 'info' => 2];
-            return $severityOrder[$a['severity']] - $severityOrder[$b['severity']];
+            return ($severityOrder[$a['severity']] ?? 2) - ($severityOrder[$b['severity']] ?? 2);
         });
 
         return $alerts;
@@ -113,6 +113,6 @@ class AlertService
 
     public function getCriticalAlertCount(): int
     {
-        return count(array_filter($this->getAlerts(), fn($a) => $a['severity'] === 'danger'));
+        return count(array_filter($this->getAlerts(), static fn(array $a): bool => $a['severity'] === 'danger'));
     }
 }

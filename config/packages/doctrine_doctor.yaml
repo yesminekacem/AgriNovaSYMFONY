@@ -1,0 +1,15 @@
+doctrine_doctor:
+    enabled: true
+
+    profiler:
+        show_debug_info: '%kernel.debug%'
+        show_in_toolbar: '%kernel.debug%'
+
+    analysis:
+        exclude_third_party_entities: true
+        exclude_paths:
+            - 'vendor/'
+
+    debug:
+        enabled: false
+        internal_logging: false

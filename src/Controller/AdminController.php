@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\User;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Knp\Snappy\Pdf;
@@ -59,9 +60,10 @@ class AdminController extends AbstractController
         ]);
     }
 
+    /** @param array<User> $users */
     private function filterUsers(array $users, string $search, string $role, string $blocked): array
     {
-        return array_values(array_filter($users, static function ($user) use ($search, $role, $blocked): bool {
+        return array_values(array_filter($users, static function (User $user) use ($search, $role, $blocked): bool {
             if ($search !== '') {
                 $haystacks = [
                     strtolower((string) $user->getEmail()),
@@ -114,7 +116,8 @@ class AdminController extends AbstractController
         }
 
         // Prevent deleting yourself
-        if ($this->getUser() && $this->getUser()->getId() === $user->getId()) {
+        $currentUser = $this->getUser();
+        if ($currentUser instanceof User && $currentUser->getId() === $user->getId()) {
             $this->addFlash('error', 'You cannot delete your own account.');
             return $this->redirectToRoute('admin_users');
         }
@@ -165,7 +168,8 @@ class AdminController extends AbstractController
         }
 
         // Prevent demoting yourself
-        if ($this->getUser() && $this->getUser()->getId() === $user->getId()) {
+        $currentUser = $this->getUser();
+        if ($currentUser instanceof User && $currentUser->getId() === $user->getId()) {
             $this->addFlash('error', 'You cannot demote your own account.');
             return $this->redirectToRoute('admin_users');
         }

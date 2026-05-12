@@ -15,6 +15,7 @@ use Symfony\Component\Routing\Attribute\Route;
 use App\Repository\CropRepository;
 use App\Repository\OrdersRepository;
 use App\Repository\ProductListingRepository;
+use App\Entity\OrderItems;
 
 class DashBoardController extends AbstractController
 {
@@ -90,14 +91,8 @@ foreach ($latestOrders as $order) {
     // Default
     $productName = 'No items';
 
-    if ($firstItem) {
-        // Try to detect method automatically
-        if (method_exists($firstItem, 'getProduct')) {
-            $product = $firstItem->getProduct();
-            $productName = $product ? $product->getProductName() : 'Unknown product';
-        } elseif (method_exists($firstItem, 'getProductName')) {
-            $productName = $firstItem->getProductName();
-        }
+    if ($firstItem instanceof OrderItems) {
+        $productName = $firstItem->getProductName() ?? 'Unknown product';
     }
 
     $transactions[] = [
@@ -226,16 +221,4 @@ $totalPosts = array_sum(array_column($categoryStats, 'count'));
             'aiModel' => $agriAiCopilotService->getModel(),
         ]);
     }
-public function countPostsByCategory(): array
-{
-    return $this->createQueryBuilder('p')
-        ->select('COALESCE(c.name, :uncategorized) AS name, COUNT(p.id) AS count')
-        ->leftJoin('p.category', 'c')
-        ->setParameter('uncategorized', 'Uncategorized')
-        ->groupBy('c.id')
-        ->orderBy('count', 'DESC')
-        ->getQuery()
-        ->getArrayResult();
-}
-
 }

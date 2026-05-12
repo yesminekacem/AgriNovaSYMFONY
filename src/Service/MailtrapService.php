@@ -16,7 +16,7 @@ class MailtrapService
         $this->mailtrap = MailtrapClient::initSendingEmails(apiKey: $apiKey);
     }
 
-    public function sendEmail(string $to, string $subject, string $text, string $html = null): array
+    public function sendEmail(string $to, string $subject, string $text, ?string $html = null): array
     {
         $email = (new MailtrapEmail())
             ->from(new Address('noreply@agrinova.com', 'AgriNova System'))

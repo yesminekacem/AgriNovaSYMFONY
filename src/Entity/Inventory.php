@@ -42,7 +42,13 @@ class Inventory
     #[Assert\Positive(message: 'Quantity must be greater than 0.')]
     private ?int $quantity = 1;
 
-    #[ORM\Column(name: 'unit_price')]
+    /**
+     * Workshop Doctor Doctrine: money fields must use the decimal SQL type with
+     * an explicit precision/scale. PHP property is kept ?float for backward
+     * compatibility with controllers/forms; the value is rounded to 2 decimals
+     * before persistence by the setter.
+     */
+    #[ORM\Column(name: 'unit_price', type: Types::DECIMAL, precision: 10, scale: 2)]
     #[Assert\NotNull(message: 'Unit price is required.')]
     #[Assert\PositiveOrZero(message: 'Unit price cannot be negative.')]
     private ?float $unitPrice = 0.0;
@@ -58,7 +64,8 @@ class Inventory
     #[ORM\Column(name: 'is_rentable')]
     private bool $isRentable = false;
 
-    #[ORM\Column(name: 'rental_price_per_day', nullable: true)]
+    // Workshop Doctor Doctrine: decimal column with explicit precision/scale.
+    #[ORM\Column(name: 'rental_price_per_day', type: Types::DECIMAL, precision: 10, scale: 2, nullable: true)]
     #[Assert\PositiveOrZero(message: 'Rental price per day cannot be negative.')]
     private ?float $rentalPricePerDay = 0.0;
 
@@ -153,12 +160,14 @@ class Inventory
 
     public function getUnitPrice(): ?float
     {
-        return $this->unitPrice;
+        // Workshop Doctor Doctrine: DECIMAL column => Doctrine returns string,
+        // we cast to float for arithmetic backward compatibility.
+        return $this->unitPrice !== null ? (float) $this->unitPrice : null;
     }
 
     public function setUnitPrice(?float $unitPrice): static
     {
-        $this->unitPrice = $unitPrice;
+        $this->unitPrice = $unitPrice !== null ? (float) round($unitPrice, 2) : null;
 
         return $this;
     }
@@ -201,12 +210,12 @@ class Inventory
 
     public function getRentalPricePerDay(): ?float
     {
-        return $this->rentalPricePerDay;
+        return $this->rentalPricePerDay !== null ? (float) $this->rentalPricePerDay : null;
     }
 
     public function setRentalPricePerDay(?float $rentalPricePerDay): static
     {
-        $this->rentalPricePerDay = $rentalPricePerDay;
+        $this->rentalPricePerDay = $rentalPricePerDay !== null ? (float) round($rentalPricePerDay, 2) : null;
 
         return $this;
     }

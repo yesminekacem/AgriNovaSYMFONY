@@ -45,7 +45,8 @@ class AITaskController extends AbstractController
         }
 
         $body = json_decode($request->getContent(), true);
-        $tasks = $body['tasks'] ?? [];
+        $rawTasks = is_array($body) ? ($body['tasks'] ?? []) : [];
+        $tasks = is_array($rawTasks) ? $rawTasks : [];
 
         if (empty($tasks)) {
             return $this->json(['error' => 'No tasks selected'], 400);

@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\ProductListing;
+use App\Entity\User;
 use App\Form\ProductType;
 use App\Repository\OrdersRepository;
 use App\Repository\ProductListingRepository;
@@ -52,7 +53,8 @@ class AdminMarketplaceController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $product->setUserId((string) $this->getUser()->getEmail());
+            $currentUser = $this->getUser();
+            $product->setUserId($currentUser instanceof User ? $currentUser->getEmail() : '');
 
             $imageFile = $form->get('picture')->getData();
             if ($imageFile) {

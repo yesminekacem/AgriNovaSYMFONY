@@ -31,7 +31,7 @@ class FaceApiClient
     {
         if ($fileOrBase64 instanceof UploadedFile) {
             $contents = file_get_contents($fileOrBase64->getPathname());
-            return base64_encode($contents);
+            return $contents !== false ? base64_encode($contents) : '';
         }
 
         if (is_string($fileOrBase64)) {
@@ -140,11 +140,11 @@ class FaceApiClient
                     if ($enrolledBase64 === null) {
                         // enrolledPath is a file path: read and base64 encode
                         $bytes = file_get_contents($enrolledPath);
-                        $enrolledBase64 = base64_encode($bytes);
+                        $enrolledBase64 = $bytes !== false ? base64_encode($bytes) : '';
                     }
                     if ($probeBase64 === null && $probePath && is_file($probePath)) {
                         $bytes = file_get_contents($probePath);
-                        $probeBase64 = base64_encode($bytes);
+                        $probeBase64 = $bytes !== false ? base64_encode($bytes) : '';
                     }
 
                     $response = $this->client->request('POST', $url, [
@@ -157,12 +157,19 @@ class FaceApiClient
                     ]);
                 } else {
                     // Default behavior: send as multipart files
+                    $fp1 = fopen($enrolledPath, 'r');
+                    $fp2 = fopen($probePath, 'r');
+                    if ($fp1 === false || $fp2 === false) {
+                        if ($fp1 !== false) { fclose($fp1); }
+                        if ($fp2 !== false) { fclose($fp2); }
+                        throw new \RuntimeException('Could not open image files for face comparison');
+                    }
                     $response = $this->client->request('POST', $url, [
                         'body' => [
                             'api_key' => $apiKey,
                             'api_secret' => $apiSecret,
-                            'image_file1' => fopen($enrolledPath, 'r'),
-                            'image_file2' => fopen($probePath, 'r'),
+                            'image_file1' => $fp1,
+                            'image_file2' => $fp2,
                         ],
                     ]);
                 }

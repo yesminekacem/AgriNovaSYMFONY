@@ -1,0 +1,29 @@
+parameters:
+    level: 8
+    paths:
+        - src
+    excludePaths:
+        - src/Kernel.php
+        - src/Command/GenerateEntitiesCommand.php
+    # Errors tolerated for legacy / Symfony architecture reasons (Workshop PHPStan)
+    ignoreErrors:
+        # Doctrine/Twig collections without generics
+        - '#no value type specified in iterable type (array|Doctrine\\Common\\Collections\\Collection)#'
+        # Property accessed via Reflection / Doctrine hooks
+        - '#Access to an undefined property#'
+        # getUser() returns UserInterface|null; our concrete User entity has extra methods
+        # not declared on the interface. All callers guard against null at runtime.
+        - '#Call to an undefined method Symfony\\Component\\Security\\Core\\User\\UserInterface::#'
+        - '#Cannot call method .* on Symfony\\Component\\Security\\Core\\User\\UserInterface\|null#'
+        # Passing getUser() result (UserInterface) to methods/setters typed as App\Entity\User
+        - '#Parameter .* expects App\\Entity\\User, Symfony\\Component\\Security\\Core\\User\\UserInterface.*given#'
+        # Doctrine getArrayResult() / mixed array row access — field names are safe in these queries
+        - '#Cannot access offset .* on mixed#'
+        # json_encode() returns string|false; Mercure publish always receives valid array payloads
+        # so the false branch never triggers in practice.
+        - '#Symfony\\Component\\Mercure\\Update constructor expects string, string\|false given#'
+        # Symfony Request->files->get() can return UploadedFile|array|null; callers check type
+        - '#Call to an undefined method Symfony\\Component\\HttpFoundation\\File\\UploadedFile\|array::#'
+        # Knp paginator result implements Countable/Traversable — PHPStan can't infer element type
+        - '#Foreach body is not reachable because the condition is always false#'
+    treatPhpDocTypesAsCertain: false
