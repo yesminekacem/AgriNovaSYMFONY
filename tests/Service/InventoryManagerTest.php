@@ -50,7 +50,7 @@ final class InventoryManagerTest extends TestCase
         self::assertContains('Rentable items need a rental price greater than 0.', $this->manager->validateBusinessRules($inventory));
     }
 
-    public function testMaintenanceDatesMustStayChronological(): void
+    public function testMaintenanceDatesMustStayChronological(): voidt
     {
         $inventory = $this->makeInventory(
             quantity: 4,
