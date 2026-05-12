@@ -5,11 +5,13 @@ namespace App\Repository;
 use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Component\Security\Core\User\PasswordUpgraderInterface;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 
 /**
  * @extends ServiceEntityRepository<User>
  */
-class UserRepository extends ServiceEntityRepository
+class UserRepository extends ServiceEntityRepository implements PasswordUpgraderInterface
 {
     public function __construct(ManagerRegistry $registry)
     {
@@ -37,5 +39,20 @@ class UserRepository extends ServiceEntityRepository
             ->andWhere("u.faceData <> ''")
             ->getQuery()
             ->getResult();
+    }
+
+    /**
+     * Upgrade the hashed password of a user (called automatically on successful login
+     * when the password needs rehashing according to the configured hasher).
+     */
+    public function upgradePassword(PasswordAuthenticatedUserInterface $user, string $newHashedPassword): void
+    {
+        if (!$user instanceof User) {
+            return;
+        }
+
+        $user->setPassword($newHashedPassword);
+        $this->_em->persist($user);
+        $this->_em->flush();
     }
 }
