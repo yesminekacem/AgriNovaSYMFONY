@@ -51,8 +51,8 @@ class Crop
     #[Assert\NotBlank(message: "Status is required")]
     private string $status;
 
-    #[ORM\Column(type: 'string', length: 255)]
-    private ?string $imagePath;
+    #[ORM\Column(type: 'string', length: 500, nullable: true)]
+    private ?string $imagePath = null;
 
 
     public function getCropId(): ?int
@@ -151,6 +151,15 @@ class Crop
     public function getImagePath(): ?string
     {
         return $this->imagePath;
+    }
+
+    public function getImageWebPath(): ?string
+    {
+        if ($this->imagePath === null || $this->imagePath === '') {
+            return null;
+        }
+
+        return 'cropsimages/' . basename(str_replace('\\', '/', $this->imagePath));
     }
 
     public function setImagePath(?string $imagePath): self

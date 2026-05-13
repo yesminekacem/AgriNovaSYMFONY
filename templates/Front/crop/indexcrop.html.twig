@@ -116,7 +116,7 @@
 
                 <div class="card-image">
                     {% if crop.imagePath %}
-                        <img src="{{ asset('cropsimages/' ~ crop.imagePath) }}" alt="{{ crop.name }}">
+                        <img src="{{ asset(crop.imageWebPath) }}" alt="{{ crop.name }}">
                     {% else %}
                         <div class="card-image-placeholder">🌱</div>
                     {% endif %}

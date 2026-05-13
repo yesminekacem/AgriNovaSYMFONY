@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Repository\InventoryRepository;
+use App\Repository\PostRepository;
 use App\Repository\RentalRepository;
 use App\Service\AgriAiCopilotService;
 use App\Service\AlertService;
@@ -17,6 +18,7 @@ class DashBoardController extends AbstractController
     public function index(
         Request $request,
         InventoryRepository $inventoryRepository,
+        PostRepository $postRepository,
         RentalRepository $rentalRepository,
         AlertService $alertService,
         AgriAiCopilotService $agriAiCopilotService
@@ -94,6 +96,34 @@ class DashBoardController extends AbstractController
             'revenue' => $rentalRepository->getTotalRevenue(),
         ];
 
+        $forumCategoryRows = $postRepository->createQueryBuilder('p')
+            ->select('COALESCE(p.category, :defaultCategory) AS name, COUNT(p.idPost) AS count')
+            ->andWhere('p.status = :status')
+            ->setParameter('defaultCategory', 'Organic Farming')
+            ->setParameter('status', 'ACTIVE')
+            ->groupBy('name')
+            ->orderBy('count', 'DESC')
+            ->getQuery()
+            ->getArrayResult();
+
+        $totalPosts = array_sum(array_map(
+            static fn (array $row): int => (int) $row['count'],
+            $forumCategoryRows
+        ));
+
+        $categoryPalette = ['green', 'orange'];
+        $categoryStats = array_map(
+            static function (array $row, int $index) use ($categoryPalette): array {
+                return [
+                    'name' => (string) $row['name'],
+                    'count' => (int) $row['count'],
+                    'color' => $categoryPalette[$index % count($categoryPalette)],
+                ];
+            },
+            $forumCategoryRows,
+            array_keys($forumCategoryRows)
+        );
+
         $inventoryChartData = [
             'labels' => ['Available', 'Rentable', 'Rented Out', 'Low Stock'],
             'values' => [
@@ -166,6 +196,8 @@ class DashBoardController extends AbstractController
             'alerts' => $alerts,
             'alertCount' => $alertCount,
             'criticalAlertCount' => $criticalAlertCount,
+            'categoryStats' => $categoryStats,
+            'totalPosts' => $totalPosts,
             'operationalPulse' => $operationalPulse,
             'aiResult' => $aiResult,
             'aiConfigured' => $agriAiCopilotService->isConfigured(),

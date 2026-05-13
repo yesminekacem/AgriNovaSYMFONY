@@ -1511,6 +1511,23 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     generate_final_classes?: bool|Param, // Default: true
  *     generate_final_entities?: bool|Param, // Default: false
  * }
+ * @psalm-type KnpSnappyConfig = array{
+ *     temporary_folder?: scalar|Param|null,
+ *     process_timeout?: int|Param, // Generator process timeout in seconds.
+ *     pdf?: array{
+ *         enabled?: bool|Param, // Default: true
+ *         binary?: scalar|Param|null, // Default: "wkhtmltopdf"
+ *         options?: array<string, scalar|Param|null>,
+ *         env?: list<scalar|Param|null>,
+ *     },
+ *     image?: array{
+ *         enabled?: bool|Param, // Default: true
+ *         binary?: scalar|Param|null, // Default: "wkhtmltoimage"
+ *         options?: array<string, scalar|Param|null>,
+ *         env?: list<scalar|Param|null>,
+ *     },
+ * }
+ * @psalm-type EndroidQrCodeConfig = array<string, mixed>
  * @psalm-type KnpPaginatorConfig = array{
  *     default_options?: array{
  *         sort_field_name?: scalar|Param|null, // Default: "sort"
@@ -1554,23 +1571,6 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     default_cookie_lifetime?: int|Param, // Default lifetime of the cookie containing the JWT, in seconds. Defaults to the value of "framework.session.cookie_lifetime". // Default: null
  *     enable_profiler?: bool|Param, // Deprecated: The child node "enable_profiler" at path "mercure.enable_profiler" is deprecated. // Enable Symfony Web Profiler integration.
  * }
- * @psalm-type KnpSnappyConfig = array{
- *     temporary_folder?: scalar|Param|null,
- *     process_timeout?: int|Param, // Generator process timeout in seconds.
- *     pdf?: array{
- *         enabled?: bool|Param, // Default: true
- *         binary?: scalar|Param|null, // Default: "wkhtmltopdf"
- *         options?: array<string, scalar|Param|null>,
- *         env?: list<scalar|Param|null>,
- *     },
- *     image?: array{
- *         enabled?: bool|Param, // Default: true
- *         binary?: scalar|Param|null, // Default: "wkhtmltoimage"
- *         options?: array<string, scalar|Param|null>,
- *         env?: list<scalar|Param|null>,
- *     },
- * }
- * @psalm-type EndroidQrCodeConfig = array<string, mixed>
  * @psalm-type ConfigType = array{
  *     imports?: ImportsConfig,
  *     parameters?: ParametersConfig,
@@ -1584,8 +1584,8 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     twig_extra?: TwigExtraConfig,
  *     security?: SecurityConfig,
  *     monolog?: MonologConfig,
- *     endroid_qr_code?: EndroidQrCodeConfig,
  *     knp_snappy?: KnpSnappyConfig,
+ *     endroid_qr_code?: EndroidQrCodeConfig,
  *     knp_paginator?: KnpPaginatorConfig,
  *     mercure?: MercureConfig,
  *     "when@dev"?: array{
@@ -1604,10 +1604,10 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         security?: SecurityConfig,
  *         monolog?: MonologConfig,
  *         maker?: MakerConfig,
+ *         knp_snappy?: KnpSnappyConfig,
+ *         endroid_qr_code?: EndroidQrCodeConfig,
  *         knp_paginator?: KnpPaginatorConfig,
  *         mercure?: MercureConfig,
- *         endroid_qr_code?: EndroidQrCodeConfig,
- *         knp_snappy?: KnpSnappyConfig,
  *     },
  *     "when@prod"?: array{
  *         imports?: ImportsConfig,
@@ -1622,10 +1622,10 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         twig_extra?: TwigExtraConfig,
  *         security?: SecurityConfig,
  *         monolog?: MonologConfig,
+ *         knp_snappy?: KnpSnappyConfig,
+ *         endroid_qr_code?: EndroidQrCodeConfig,
  *         knp_paginator?: KnpPaginatorConfig,
  *         mercure?: MercureConfig,
- *         endroid_qr_code?: EndroidQrCodeConfig,
- *         knp_snappy?: KnpSnappyConfig,
  *     },
  *     "when@test"?: array{
  *         imports?: ImportsConfig,

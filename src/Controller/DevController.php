@@ -8,9 +8,8 @@ use Symfony\Component\HttpFoundation\Response;
 class DevController extends AbstractController
 {
     // Dev preview route removed to disable profile-preview in production/dev
-    public function profilePreview(): Response
-    {
-        // DevController removed/disabled. The profile-preview route has been intentionally disabled.
-        // If you need it again for debugging, recreate a controller or re-enable the route.
-    }
+   public function profilePreview(): Response
+{
+    return new Response('Profile preview disabled.');
+}
 }
