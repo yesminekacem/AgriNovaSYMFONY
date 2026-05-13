@@ -59,7 +59,7 @@
                             <td class="px-6 py-4">
                                 <div class="h-12 w-12 flex-shrink-0 bg-slate-100 rounded-md flex items-center justify-center overflow-hidden">
                                     {% if product.picture %}
-                                        <img src="/uploads/products/{{ product.picture }}" alt="{{ product.productName }}" class="h-full w-full object-cover">
+                                        <img src="/uploads/products/{{ product.picture|replace({'\\': '/'})|split('/')|last }}" alt="{{ product.productName }}" class="h-full w-full object-cover">
                                     {% else %}
                                         <span class="text-xl">🌾</span>
                                     {% endif %}

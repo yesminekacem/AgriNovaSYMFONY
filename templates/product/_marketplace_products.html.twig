@@ -11,7 +11,7 @@
                 <!-- Product Image -->
                 <div class="mb-4 h-48 bg-slate-100 rounded-lg flex items-center justify-center overflow-hidden">
                     {% if product.picture %}
-                        <img src="/uploads/products/{{ product.picture }}" alt="{{ product.productName }}" class="w-full h-full object-cover">
+                        <img src="/uploads/products/{{ product.picture|replace({'\\': '/'})|split('/')|last }}" alt="{{ product.productName }}" class="w-full h-full object-cover">
                     {% else %}
                         <div class="text-4xl">🌾</div>
                     {% endif %}
