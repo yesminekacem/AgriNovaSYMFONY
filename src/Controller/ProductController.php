@@ -135,28 +135,28 @@ final class ProductController extends AbstractController
 
     private function handleImageUpload(UploadedFile $file): string
     {
-        // Get the extension from the original filename
         $extension = pathinfo($file->getClientOriginalName(), PATHINFO_EXTENSION);
-        
-        // Allowed image extensions
+
         $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-        
-        // Validate and sanitize extension
         if (!in_array(strtolower($extension), $allowedExtensions)) {
-            $extension = 'jpg'; // Default to jpg if extension is invalid
+            $extension = 'jpg';
         }
-        
-        // Generate a unique filename
+
         $newFilename = md5(uniqid()) . '.' . strtolower($extension);
-        
-        // Move the file to the uploads directory
-        $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/products';
+
+        $uploadDir = $this->getParameter('kernel.project_dir')
+            . DIRECTORY_SEPARATOR . 'public'
+            . DIRECTORY_SEPARATOR . 'uploads'
+            . DIRECTORY_SEPARATOR . 'products';
+
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0755, true);
         }
-        
+
         $file->move($uploadDir, $newFilename);
-        
-        return $newFilename;
+
+        // Return the full absolute path so Java can load it directly.
+        // Twig templates extract the filename from this path for the web URL.
+        return $uploadDir . DIRECTORY_SEPARATOR . $newFilename;
     }
 }

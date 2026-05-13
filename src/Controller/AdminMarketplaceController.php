@@ -68,6 +68,13 @@ class AdminMarketplaceController extends AbstractController
             return $this->redirectToRoute('admin_marketplace_products');
         }
 
+        // Show validation errors as flash messages so they are visible on the page
+        if ($form->isSubmitted() && !$form->isValid()) {
+            foreach ($form->getErrors(true) as $error) {
+                $this->addFlash('error', $error->getOrigin()->getName() . ': ' . $error->getMessage());
+            }
+        }
+
         return $this->render('Back/marketplace/product_form.html.twig', [
             'form'    => $form,
             'product' => $product,
@@ -224,7 +231,7 @@ class AdminMarketplaceController extends AbstractController
         }
 
         $filename  = md5(uniqid()) . '.' . strtolower($extension);
-        $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/products';
+        $uploadDir = $this->getParameter('kernel.project_dir') . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'products';
 
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0755, true);
@@ -232,10 +239,9 @@ class AdminMarketplaceController extends AbstractController
 
         $file->move($uploadDir, $filename);
 
-        // Store the ABSOLUTE path so Java (and Symfony) can locate the file
-        // without any additional path construction. Symfony extracts the
-        // filename from this path when building the web-accessible URL.
-        return realpath($uploadDir . '/' . $filename);
+        // Return the full absolute path so Java can load it directly.
+        // Twig templates extract the filename from this path for the web URL.
+        return $uploadDir . DIRECTORY_SEPARATOR . $filename;
     }
 
     /**
