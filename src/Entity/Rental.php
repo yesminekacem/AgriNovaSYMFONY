@@ -55,7 +55,8 @@ class Rental
     #[ORM\Column(name: 'actual_return_date', type: Types::DATE_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $actualReturnDate = null;
 
-    #[ORM\Column(name: 'daily_rate')]
+    // Workshop Doctor Doctrine: decimal column with explicit precision/scale
+    #[ORM\Column(name: 'daily_rate', type: Types::DECIMAL, precision: 10, scale: 2)]
     #[Assert\NotNull(message: 'Daily rate is required.')]
     #[Assert\PositiveOrZero(message: 'Daily rate cannot be negative.')]
     private ?float $dailyRate = 0.0;
@@ -63,19 +64,19 @@ class Rental
     #[ORM\Column(name: 'total_days', nullable: true)]
     private ?int $totalDays = 0;
 
-    #[ORM\Column(name: 'total_cost', nullable: true)]
+    #[ORM\Column(name: 'total_cost', type: Types::DECIMAL, precision: 10, scale: 2, nullable: true)]
     private ?float $totalCost = 0.0;
 
-    #[ORM\Column(name: 'security_deposit', nullable: true)]
+    #[ORM\Column(name: 'security_deposit', type: Types::DECIMAL, precision: 10, scale: 2, nullable: true)]
     private ?float $securityDeposit = 0.0;
 
-    #[ORM\Column(name: 'late_fee', nullable: true)]
+    #[ORM\Column(name: 'late_fee', type: Types::DECIMAL, precision: 10, scale: 2, nullable: true)]
     private ?float $lateFee = 0.0;
 
     #[ORM\Column(name: 'requires_delivery', nullable: true)]
     private ?bool $requiresDelivery = false;
 
-    #[ORM\Column(name: 'delivery_fee', nullable: true)]
+    #[ORM\Column(name: 'delivery_fee', type: Types::DECIMAL, precision: 10, scale: 2, nullable: true)]
     #[Assert\PositiveOrZero(message: 'Delivery fee cannot be negative.')]
     private ?float $deliveryFee = 0.0;
 

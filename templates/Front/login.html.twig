@@ -258,6 +258,8 @@
             </form>
 <div class="card-footer">
     Don't have an account? <a href="{{ path('app_register') }}">Sign up</a>
+    <br>
+    Forgot password? <a href="{{ path('app_forgot_password') }}">Reset it here</a>
 </div>
 
             <div style="text-align:center;margin-top:12px">
@@ -273,7 +275,7 @@
         <div class="face-panel">
             <button id="faceCancelBtn" class="face-cancel-btn" style="float:right">✕</button>
             <h3 style="margin:0 0 10px">Face Login</h3>
-            <div class="face-camera-widget" data-detect-url="{{ path('app_login_face_detect') }}" data-select-url="{{ path('app_login_face_select') }}">
+            <div class="face-camera-widget" data-detect-url="{{ path('app_login_face_detect') }}">
                 <form class="face-detect-form" action="{{ path('app_login_face_detect') }}" method="post">
                     <video class="face-video" autoplay playsinline></video>
                     <canvas class="face-canvas" style="display:none"></canvas>
@@ -300,10 +302,10 @@
                 // ensure widget is visible, then start detection
                 try{
                     widget.style.display = 'block';
-                    if(widget.__faceControls) widget.__faceControls.start({detect:true});
+                    if(widget.__faceControls) widget.__faceControls.start({detect:false});
                     else {
                         // in case widget not yet initialized, wait a short time
-                        setTimeout(()=>{ if(widget.__faceControls) widget.__faceControls.start({detect:true}); }, 200);
+                        setTimeout(()=>{ if(widget.__faceControls) widget.__faceControls.start({detect:false}); }, 200);
                     }
                 }catch(e){console.error(e)}
             }

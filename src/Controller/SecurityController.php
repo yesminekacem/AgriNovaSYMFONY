@@ -7,6 +7,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 use Symfony\Component\HttpFoundation\Request;
+use App\Entity\User;
 use App\Service\FaceApiClient;
 use App\Repository\UserRepository;
 use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
@@ -17,9 +18,17 @@ use Symfony\Component\Security\Http\Event\InteractiveLoginEvent;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Security\Http\Authentication\UserAuthenticatorInterface;
 use App\Security\LoginFormAuthenticator;
+use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 class SecurityController extends AbstractController
 {
+    public function __construct(
+        #[Autowire(service: 'monolog.logger.face_id')]
+        private readonly LoggerInterface $faceLogger,
+    ) {
+    }
+
     #[Route('/login', name: 'app_login')]
     public function login(AuthenticationUtils $authenticationUtils): Response
     {
@@ -42,59 +51,10 @@ class SecurityController extends AbstractController
     }
 
     #[Route('/login/face', name: 'app_login_face', methods: ['GET','POST'])]
-    public function faceLogin(Request $request, FaceApiClient $faceApiClient, UserRepository $userRepository, TokenStorageInterface $tokenStorage, EventDispatcherInterface $dispatcher): Response
+    public function faceLogin(): Response
     {
-        $user = $this->getUser();
-        if ($user) {
-            // already logged in
-            return $this->redirectToRoute('app_profile');
-        }
-
-        if ($request->isMethod('POST')) {
-            $email = trim((string) $request->request->get('email', ''));
-            $probeFile = $request->files->get('face_image');
-            $probeBase64 = trim((string) $request->request->get('face_image_base64', '')) ?: null;
-            $probe = $probeFile ?? $probeBase64;
-
-            if (!$email || !$probe) {
-                $this->addFlash('error', 'Email and face image (camera capture or upload) are required.');
-                return $this->redirectToRoute('app_login_face');
-            }
-
-            $candidate = $userRepository->findOneBy(['email' => $email]);
-            $enrolledData = $candidate ? $candidate->getFaceData() : null;
-            if (!$candidate || !$candidate->isFaceEnrolled() || !$enrolledData) {
-                $this->addFlash('error', 'No enrolled face found for that email.');
-                return $this->redirectToRoute('app_login_face');
-            }
-
-            // enrolledData is expected to be a base64 string (stored in face_data).
-            $result = $faceApiClient->verify($probe, $enrolledData);
-            // Accept if provider returned a confidence > threshold. Face++ typical thresholds: 60-80; choose 70
-            $threshold = 70.0;
-            $score = $result['score'] ?? null;
-
-            if ($result['success'] && $score !== null && (float)$score >= $threshold) {
-                // programmatically authenticate the user
-                $token = new UsernamePasswordToken($candidate, 'main', $candidate->getRoles());
-                $tokenStorage->setToken($token);
-                $session = $request->getSession();
-                if ($session) {
-                    $session->set('_security_main', serialize($token));
-                }
-                // Dispatch interactive login event so other listeners can react
-                $event = new InteractiveLoginEvent($request, $token);
-                $dispatcher->dispatch($event, 'security.interactive_login');
-
-                $this->addFlash('success', 'Face recognized. Logged in.');
-                return $this->redirectToRoute('app_profile');
-            }
-
-            $this->addFlash('error', 'Face not recognized.');
-            return $this->redirectToRoute('app_login_face');
-        }
-
-        return $this->render('Front/face_login.html.twig');
+        $this->faceLogger->info('Legacy /login/face endpoint hit; redirecting to /login.');
+        return $this->redirectToRoute('app_login');
     }
 
     #[Route('/login/face/detect', name: 'app_login_face_detect', methods: ['POST'])]
@@ -105,65 +65,49 @@ class SecurityController extends AbstractController
         TokenStorageInterface $tokenStorage,
         EventDispatcherInterface $dispatcher
     ): Response {
+        $this->faceLogger->info('Face login detection started.');
         $faceBase64 = $request->request->get('face_image_base64');
         if (!$faceBase64) {
+            $this->faceLogger->warning('Face login detection failed: missing face_image_base64 payload.');
             return new JsonResponse(['success' => false, 'message' => 'No face data provided.'], 400);
         }
 
-        // Compare the probe image against all enrolled users' face data
-        $threshold = 70.0; // confidence threshold
+        // Compare the probe image against all enrolled users' face data using strict provider-only matching.
+        $threshold = 78.0;
+        $minWinningGap = 6.0;
         $probe = $faceBase64;
         $candidates = [];
 
         $users = $userRepository->findAllWithFaceData();
+        $this->faceLogger->info('Loaded enrolled users for face matching.', ['count' => count($users)]);
         if (count($users) === 0) {
+            $this->faceLogger->warning('Face login detection aborted: no enrolled faces in database.');
             return new JsonResponse(['success' => false, 'code' => 'no_enrolled', 'message' => 'No enrolled faces available.']);
         }
 
         foreach ($users as $u) {
             $enrolled = $u->getFaceData();
-            if (!$enrolled) continue;
-            $result = $faceApiClient->verify($probe, $enrolled);
-            $score = $result['score'] ?? null;
-
-            // If face API returned a positive match use it
-            if ($result['success'] && $score !== null && (float)$score >= $threshold) {
-                $candidates[] = ['user' => $u, 'score' => (float)$score];
+            if (!$enrolled) {
                 continue;
             }
 
-            // Fallback: if external API not configured or returned error, try a simple similarity heuristic
-            // Decode base64 (strip any data URI prefix)
-            $decodedProbe = $probe;
-            if (str_starts_with($decodedProbe, 'data:')) {
-                $parts = explode(',', $decodedProbe, 2);
-                $decodedProbe = $parts[1] ?? '';
-            }
-            $decodedEnrolled = $enrolled;
-            if (str_starts_with($decodedEnrolled, 'data:')) {
-                $parts = explode(',', $decodedEnrolled, 2);
-                $decodedEnrolled = $parts[1] ?? '';
-            }
+            $result = $faceApiClient->verify($probe, $enrolled);
+            $score = $result['score'] ?? null;
+            $this->faceLogger->debug('Face comparison finished.', [
+                'userId' => $u->getId(),
+                'success' => (bool) ($result['success'] ?? false),
+                'score' => $score,
+            ]);
 
-            $binaryProbe = base64_decode($decodedProbe, true);
-            $binaryEnrolled = base64_decode($decodedEnrolled, true);
-
-            if ($binaryProbe !== false && $binaryEnrolled !== false) {
-                // Use similar_text percentage as a naive similarity metric
-                $percent = 0.0;
-                // To avoid huge memory usage convert to shorter representation: use substrings or hashes
-                // We'll compare the first N bytes and last N bytes to approximate similarity
-                $N = 2000; // compare up to first/last 2000 bytes
-                $a = substr($binaryProbe, 0, $N) . substr($binaryProbe, max(0, strlen($binaryProbe) - $N), $N);
-                $b = substr($binaryEnrolled, 0, $N) . substr($binaryEnrolled, max(0, strlen($binaryEnrolled) - $N), $N);
-                similar_text($a, $b, $percent);
-                if ($percent >= 60.0) {
-                    $candidates[] = ['user' => $u, 'score' => $percent];
-                }
+            if ($result['success'] && $score !== null && (float)$score >= $threshold) {
+                $candidates[] = ['user' => $u, 'score' => (float)$score];
             }
         }
 
+        usort($candidates, static fn (array $a, array $b): int => $b['score'] <=> $a['score']);
+
         if (count($candidates) === 0) {
+            $this->faceLogger->info('Face login result: no matching account.');
             $accept = $request->headers->get('accept', '');
             $isAjax = $request->isXmlHttpRequest() || str_contains($accept, 'application/json');
             if ($isAjax) {
@@ -173,60 +117,70 @@ class SecurityController extends AbstractController
             return $this->redirectToRoute('app_login');
         }
 
-        if (count($candidates) === 1) {
-            // Programmatically authenticate the matched user so that redirect lands on authenticated dashboard
-            $matched = $candidates[0]['user'];
-            $token = new UsernamePasswordToken($matched, 'main', $matched->getRoles());
-            // set token in storage
-            $tokenStorage->setToken($token);
-            // store token in session so Symfony recognizes it on subsequent requests
-            $session = $request->getSession();
-            if ($session) {
-                try { if (!$session->isStarted()) { $session->start(); } } catch (\Throwable $e) { /* ignore */ }
-                $session->set('_security_main', serialize($token));
-                try { $session->save(); } catch (\Throwable $e) { /* ignore save errors */ }
+        if (count($candidates) > 1) {
+            $bestScore = $candidates[0]['score'];
+            $secondScore = $candidates[1]['score'];
+            $gap = $bestScore - $secondScore;
+
+            if ($gap < $minWinningGap) {
+                $this->faceLogger->warning('Face login result ambiguous; refusing authentication.', [
+                    'bestScore' => $bestScore,
+                    'secondScore' => $secondScore,
+                    'gap' => $gap,
+                    'requiredGap' => $minWinningGap,
+                ]);
+                $accept = $request->headers->get('accept', '');
+                $isAjax = $request->isXmlHttpRequest() || str_contains($accept, 'application/json');
+                if ($isAjax) {
+                    return new JsonResponse(['success' => false, 'code' => 'no_match', 'message' => 'No matching accounts found.']);
+                }
+                $this->addFlash('error', 'No matching accounts found.');
+                return $this->redirectToRoute('app_login');
             }
-            // Dispatch interactive login event so other listeners can react
-            $event = new InteractiveLoginEvent($request, $token);
-            $dispatcher->dispatch($event, 'security.interactive_login');
-
-            // Include debug info so client can confirm server-side session/token
-            $debug = [
-                'sessionId' => $session ? $session->getId() : null,
-                'userId' => $matched->getId(),
-                'tokenSet' => true,
-            ];
-
-            // If request expects JSON (AJAX), return JSON; otherwise perform a normal redirect so browser follows it and cookies are set.
-            $accept = $request->headers->get('accept', '');
-            $isAjax = $request->isXmlHttpRequest() || str_contains($accept, 'application/json');
-            if ($isAjax) {
-                return new JsonResponse(['success' => true, 'redirect' => $this->generateUrl('app_dashboard'), 'debug' => $debug]);
-            }
-
-            // Non-AJAX: redirect normally
-            return $this->redirect($this->generateUrl('app_dashboard'));
         }
 
-        // Multiple matches -> return list with scores (AJAX) or redirect back with a flash message (non-AJAX)
+        $matched = $candidates[0]['user'];
+        $matchedScore = $candidates[0]['score'];
+        $token = new UsernamePasswordToken($matched, 'main', $matched->getRoles());
+        $tokenStorage->setToken($token);
+        $session = $request->getSession();
+        if ($session) {
+            try {
+                if (!$session->isStarted()) {
+                    $session->start();
+                }
+            } catch (\Throwable) {
+            }
+            $session->set('_security_main', serialize($token));
+            try {
+                $session->save();
+            } catch (\Throwable) {
+            }
+        }
+
+        $event = new InteractiveLoginEvent($request, $token);
+        $dispatcher->dispatch($event, 'security.interactive_login');
+
+        $redirectRoute = in_array('ROLE_ADMIN', $matched->getRoles(), true) ? 'admin_users' : 'app_profile';
+        $debug = [
+            'sessionId' => $session ? $session->getId() : null,
+            'userId' => $matched->getId(),
+            'tokenSet' => true,
+            'score' => round($matchedScore, 2),
+        ];
+        $this->faceLogger->info('Face login success.', [
+            'userId' => $matched->getId(),
+            'score' => round($matchedScore, 2),
+            'redirectRoute' => $redirectRoute,
+        ]);
+
         $accept = $request->headers->get('accept', '');
         $isAjax = $request->isXmlHttpRequest() || str_contains($accept, 'application/json');
-        $matches = array_map(function ($c) {
-             $u = $c['user'];
-             return [
-                 'id' => $u->getId(),
-                 'fullName' => $u->getFullName(),
-                 'score' => round($c['score'], 2),
-             ];
-        }, $candidates);
-
         if ($isAjax) {
-            return new JsonResponse(['success' => true, 'matches' => $matches]);
+            return new JsonResponse(['success' => true, 'redirect' => $this->generateUrl($redirectRoute), 'debug' => $debug]);
         }
 
-        // Non-AJAX: prompt user to try normal face login page where selection can be made
-        $this->addFlash('info', 'Multiple possible matches found. Please use the Face Login page for selection.');
-        return $this->redirectToRoute('app_login_face');
+        return $this->redirectToRoute($redirectRoute);
     }
 
     #[Route('/login/face/select', name: 'app_login_face_select', methods: ['POST'])]
@@ -276,8 +230,8 @@ class SecurityController extends AbstractController
         $session = $request->getSession();
         $user = $this->getUser();
         $data = [
-            'isAuthenticated' => $user ? true : false,
-            'userId' => $user ? $user->getId() : null,
+            'isAuthenticated' => $user !== null,
+            'userId' => $user instanceof User ? $user->getId() : null,
             'sessionId' => $session ? $session->getId() : null,
         ];
         return new JsonResponse($data);

@@ -27,7 +27,7 @@ final class QrCodeController extends AbstractController
             'owner' => $inventory->getOwnerName(),
             'status' => $inventory->getRentalStatus(),
             'url' => $this->generateUrl('inventory_show', ['id' => $inventory->getId()], 0),
-        ]);
+        ]) ?: '{}';
 
         $builder = new Builder(
             writer: new SvgWriter(),
@@ -59,7 +59,7 @@ final class QrCodeController extends AbstractController
             'owner' => $inventory->getOwnerName(),
             'status' => $inventory->getRentalStatus(),
             'url' => $this->generateUrl('inventory_show', ['id' => $inventory->getId()], 0),
-        ]);
+        ]) ?: '{}';
 
         $builder = new Builder(
             writer: new SvgWriter(),

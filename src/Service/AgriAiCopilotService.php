@@ -52,7 +52,7 @@ class AgriAiCopilotService
                 'status' => 'not_configured',
                 'error' => sprintf(
                     'Add your %s key in .env.local to enable the live AI brief.',
-                    $this->getProvider() === 'groq' ? 'GROQ_API_KEY' : 'OPENAI_API_KEY'
+                    $this->getProviderLabel(),
                 ),
                 'provider' => $this->getProviderLabel(),
                 'model' => $this->getModel(),
@@ -284,12 +284,12 @@ class AgriAiCopilotService
         return $model !== '' ? $model : 'gpt-4.1-mini';
     }
 
-    private function getGroqModel(): string
-    {
-        $model = trim((string) ($_ENV['GROQ_MODEL'] ?? $_SERVER['GROQ_MODEL'] ?? ''));
+   private function getGroqModel(): string
+{
+    $model = trim((string) ($_ENV['GROQ_MODEL_GENERATION'] ?? $_SERVER['GROQ_MODEL_GENERATION'] ?? ''));
 
-        return $model !== '' ? $model : 'openai/gpt-oss-20b';
-    }
+    return $model !== '' ? $model : 'openai/gpt-oss-20b';
+}
 
     private function extractOpenAiOutputText(array $payload): ?string
     {

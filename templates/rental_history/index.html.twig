@@ -56,13 +56,29 @@
                         <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                             <div>
                                 <p class="text-sm font-semibold uppercase tracking-[0.14em] text-green-700">{{ entry.actionType }}</p>
-                                <h2 class="mt-1 text-lg font-bold text-slate-900">Rental #{{ entry.rental.id }} · {{ entry.rental.displayItemName }}</h2>
+                                {% if entry.rental %}
+    <h2 class="mt-1 text-lg font-bold text-slate-900">
+        Rental #{{ entry.rental.id }} · {{ entry.rental.displayItemName }}
+    </h2>
+{% else %}
+    <h2 class="mt-1 text-lg font-bold text-red-600">
+        Rental deleted or unavailable
+    </h2>
+{% endif %}
                                 <p class="mt-2 text-sm text-slate-600">{{ entry.actionDescription ?: 'No description provided.' }}</p>
-                                <p class="mt-2 text-xs text-slate-500">Renter: {{ entry.rental.renterName }} · Performed by {{ entry.performedBy ?: 'System' }}</p>
+                                <p class="mt-2 text-xs text-slate-500">
+    Renter: {{ entry.rental ? entry.rental.renterName : 'Unknown' }}
+    · Performed by {{ entry.performedBy ?: 'System' }}
+</p>
                             </div>
                             <div class="flex flex-col items-start gap-3 lg:items-end">
                                 <span class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ entry.actionTimestamp ? entry.actionTimestamp|date('d M Y H:i') : '' }}</span>
-                                <a href="{{ path('rental_show', {id: entry.rental.id}) }}" class="inline-flex items-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">Open rental</a>
+                                {% if entry.rental %}
+    <a href="{{ path('rental_show', {id: entry.rental.id}) }}"
+       class="inline-flex items-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+        Open rental
+    </a>
+{% endif %}
                             </div>
                         </div>
                     </article>

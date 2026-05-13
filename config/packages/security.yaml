@@ -1,6 +1,11 @@
 security:
     # https://symfony.com/doc/current/security.html#registering-the-user-hashing-passwords
     password_hashers:
+        # Use bcrypt with cost 12 for application users to match jBCrypt gensalt(12)
+        App\Entity\User:
+            algorithm: bcrypt
+            cost: 12
+        # Fallback / default for other user types
         Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
 
     # Use the database user provider

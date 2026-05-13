@@ -10,11 +10,18 @@ use App\Service\AlertService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use App\Repository\UserRepository;
+use App\Repository\PostRepository;
 use Symfony\Component\Routing\Attribute\Route;
+use App\Repository\CropRepository;
+use App\Repository\OrdersRepository;
+use App\Repository\ProductListingRepository;
+use App\Entity\OrderItems;
 
 class DashBoardController extends AbstractController
 {
     #[Route('/DashBoard', name: 'app_dashboard')]
+<<<<<<< HEAD
     public function index(
         Request $request,
         InventoryRepository $inventoryRepository,
@@ -23,62 +30,90 @@ class DashBoardController extends AbstractController
         AlertService $alertService,
         AgriAiCopilotService $agriAiCopilotService
     ): Response
+=======
+public function index(
+    Request $request,
+    InventoryRepository $inventoryRepository,
+    RentalRepository $rentalRepository,
+    AlertService $alertService,
+    AgriAiCopilotService $agriAiCopilotService,
+    PostRepository $postRepository,
+    UserRepository $userRepository,
+    CropRepository $cropRepository,
+    OrdersRepository $ordersRepository,
+    ProductListingRepository $productListingRepository
+): Response
+>>>>>>> 39fd2583a4fc43063e212db22d3d24adcad82e56
     {
-        // ---- Dashboard data for crops, inventory, and rentals ----
 
-        $stats = [
-            [
-                'label' => 'Users',
-                'value' => '1,245',
-                'change' => '+12%',
-                'icon' => 'users'
-            ],
-            [
-                'label' => 'Orders',
-                'value' => '320',
-                'change' => '+8%',
-                'icon' => 'cart'
-            ],
-            [
-                'label' => 'Products',
-                'value' => '87',
-                'change' => '+5%',
-                'icon' => 'box'
-            ],
-            [
-                'label' => 'Crops',
-                'value' => '54',
-                'change' => '+10%',
-                'icon' => 'leaf'
-            ],
-        ];
+        $totalUsers = $userRepository->count([]);
+$totalOrders = $ordersRepository->count([]);
+$totalProducts = $productListingRepository->count([]);
+$totalCrops = $cropRepository->count([]);
+      $stats = [
+    [
+        'label' => 'Users',
+        'value' => number_format($totalUsers),
+        'change' => 'Live data',
+        'icon' => 'users'
+    ],
+    [
+        'label' => 'Orders',
+        'value' => number_format($totalOrders),
+        'change' => 'Live data',
+        'icon' => 'cart'
+    ],
+    [
+        'label' => 'Products',
+        'value' => number_format($totalProducts),
+        'change' => 'Live data',
+        'icon' => 'box'
+    ],
+    [
+        'label' => 'Crops',
+        'value' => number_format($totalCrops),
+        'change' => 'Live data',
+        'icon' => 'leaf'
+    ],
+];
 
-        $cropYields = [
-            ['name' => 'Wheat', 'value' => 75, 'color' => 'green'],
-            ['name' => 'Corn', 'value' => 60, 'color' => 'orange'],
-            ['name' => 'Tomatoes', 'value' => 85, 'color' => 'green'],
-        ];
+       $crops = $cropRepository->findBy([], ['cropId' => 'DESC']);
 
-        $transactions = [
-            [
-                'customer' => 'Ali Ben Salah',
-                'product' => 'Tomatoes',
-                'amount' => '$120',
-                'time' => '2h ago'
-            ],
-            [
-                'customer' => 'Sami Trabelsi',
-                'product' => 'Wheat',
-                'amount' => '$300',
-                'time' => '5h ago'
-            ],
-            [
-                'customer' => 'Mouna Kefi',
-                'product' => 'Corn',
-                'amount' => '$210',
-                'time' => '1 day ago'
-            ],
-        ];
+$cropYields = [];
+foreach ($crops as $index => $crop) {
+    $progress = $crop->getGrowthProgressPercent();
+
+    $color = 'green';
+    if ($progress < 40) {
+        $color = 'orange';
+    }
+
+    $cropYields[] = [
+        'name' => $crop->getName(),
+        'value' => $progress,
+        'color' => $color,
+    ];
+}
+$latestOrders = $ordersRepository->findBy([], ['createdAt' => 'DESC'], 5);
+
+$transactions = [];
+foreach ($latestOrders as $order) {
+    $firstItem = $order->getOrderItems()->first();
+
+    // Default
+    $productName = 'No items';
+
+    if ($firstItem instanceof OrderItems) {
+        $productName = $firstItem->getProductName() ?? 'Unknown product';
+    }
+
+    $transactions[] = [
+        'customer' => $order->getUserId(),
+        'product' => $productName,
+        'amount' => 'TND' . number_format($order->getTotalPrice(), 2),
+        'time' => $order->getCreatedAt()?->format('M d, H:i') ?? '-',
+    ];
+}
 
         $inventoryStats = [
             'total' => $inventoryRepository->countAllItems(),
@@ -146,7 +181,10 @@ class DashBoardController extends AbstractController
 
         $alerts = $alertService->getAlerts();
         $alertCount = count($alerts);
-        $criticalAlertCount = count(array_filter($alerts, static fn (array $alert): bool => ($alert['severity'] ?? null) === 'danger'));
+        $criticalAlertCount = count(array_filter(
+            $alerts,
+            static fn(array $alert): bool => ($alert['severity'] ?? null) === 'danger'
+        ));
 
         $operationalPulse = [
             'inventoryUtilization' => $inventoryStats['rentable'] > 0
@@ -161,6 +199,23 @@ class DashBoardController extends AbstractController
             'revenue' => (float) $rentalStats['revenue'],
         ];
 
+       $rawCategoryStats = $postRepository->countPostsByCategory();
+
+$colors = ['green', 'orange', 'green', 'orange', 'green', 'orange'];
+
+$categoryStats = [];
+foreach ($rawCategoryStats as $index => $row) {
+    $categoryStats[] = [
+        'name' => $row['name'],
+        'count' => (int) $row['count'],
+        'color' => $colors[$index % count($colors)],
+    ];
+}
+
+$totalPosts = array_sum(array_column($categoryStats, 'count'));
+
+        $totalPosts = array_sum(array_column($categoryStats, 'count'));
+
         $aiResult = null;
         if ($request->query->getBoolean('generateAi')) {
             $aiResult = $agriAiCopilotService->generateDashboardBrief([
@@ -171,7 +226,7 @@ class DashBoardController extends AbstractController
                     'total' => $alertCount,
                     'critical' => $criticalAlertCount,
                     'top' => array_map(
-                        static fn (array $alert): array => [
+                        static fn(array $alert): array => [
                             'title' => (string) ($alert['title'] ?? ''),
                             'message' => (string) ($alert['message'] ?? ''),
                             'severity' => (string) ($alert['severity'] ?? 'info'),
@@ -182,6 +237,7 @@ class DashBoardController extends AbstractController
                 'operational_pulse' => $operationalPulse,
                 'crop_yields' => $cropYields,
                 'recent_transactions' => $transactions,
+                'forum_categories' => $categoryStats,
             ]);
         }
 
@@ -199,6 +255,8 @@ class DashBoardController extends AbstractController
             'categoryStats' => $categoryStats,
             'totalPosts' => $totalPosts,
             'operationalPulse' => $operationalPulse,
+            'categoryStats' => $categoryStats,
+            'totalPosts' => $totalPosts,
             'aiResult' => $aiResult,
             'aiConfigured' => $agriAiCopilotService->isConfigured(),
             'aiProvider' => $agriAiCopilotService->getProviderLabel(),

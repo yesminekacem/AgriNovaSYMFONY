@@ -197,8 +197,7 @@ items += `
             <span>${escapeHtml(post.createdAt)}</span>
         </div>
 
-        ${post.image ? `<img src="/${post.image}" style="width:100%; max-height:250px; object-fit:cover; border-radius:12px; margin-bottom:1rem;">` : ''}
-
+       ${post.imagePath ? `<img src="${normalizeImagePath(post.imagePath)}" style="width:100%; max-height:250px; object-fit:cover; border-radius:12px; margin-bottom:1rem;">` : ''}
         <div class="view-modal-body">${escapeHtml(post.content)}</div>
 
 <div class="translate-section" style="margin-top:16px;">
@@ -287,7 +286,11 @@ items += `
 
     document.getElementById('viewModal').classList.add('open');
 }
-
+function normalizeImagePath(path) {
+    if (!path) return '';
+    if (path.startsWith('http://') || path.startsWith('https://')) return path;
+    return path.startsWith('/') ? path : '/' + path;
+}
   
 /* ── Helpers ── */
 function escapeHtml(str) {
@@ -328,6 +331,7 @@ function openEditModal(id) {
     document.getElementById('editTitle').value = post.title;
     document.getElementById('editCategory').value = post.category;
     document.getElementById('editContent').value = post.content;
+    document.getElementById('editExistingImage').value = post.imagePath || '';
     document.getElementById('editPostForm').action = `/forum/update/${postId}`;
 
     closeModal('viewModal');
@@ -983,9 +987,9 @@ function insertPostCard(post) {
         ? `<img src="/${post.profileImage}" alt="${escapeHtml(post.author)}">`
         : escapeHtml(post.author).slice(0, 2).toUpperCase();
 
-    const imageHtml = post.image
-        ? `<img src="/${post.image}" style="width:100%; max-height:160px; object-fit:cover; border-radius:10px; margin-bottom:10px;">`
-        : '';
+   const imageHtml = post.imagePath
+    ? `<img src="${normalizeImagePath(post.imagePath)}" style="width:100%; max-height:160px; object-fit:cover; border-radius:10px; margin-bottom:10px;">`
+    : '';
 
     const reactionLabel = formatReactionLabel(post.userReaction);
 
@@ -1100,20 +1104,21 @@ if (!oldCard) return;
     const commentsCount = oldCard.querySelector('.comments-count');
     if (commentsCount) commentsCount.textContent = `💬 ${post.commentsCount || 0}`;
 
-    const postImage = oldCard.querySelector('img[style*="max-height:160px"]');
-    if (post.image && !postImage) {
-        const excerptEl = oldCard.querySelector('.post-excerpt');
-        if (excerptEl) {
-            excerptEl.insertAdjacentHTML(
-                'beforebegin',
-                `<img src="/${post.image}" style="width:100%; max-height:160px; object-fit:cover; border-radius:10px; margin-bottom:10px;">`
-            );
-        }
-    } else if (!post.image && postImage) {
-        postImage.remove();
-    } else if (post.image && postImage) {
-        postImage.src = `/${post.image}`;
+   const postImage = oldCard.querySelector('.post-main-image');
+
+if (post.imagePath && !postImage) {
+    const excerptEl = oldCard.querySelector('.post-excerpt');
+    if (excerptEl) {
+        excerptEl.insertAdjacentHTML(
+            'beforebegin',
+            `<img class="post-main-image" src="${normalizeImagePath(post.imagePath)}" style="width:100%; max-height:160px; object-fit:cover; border-radius:10px; margin-bottom:10px;">`
+        );
     }
+} else if (!post.imagePath && postImage) {
+    postImage.remove();
+} else if (post.imagePath && postImage) {
+    postImage.src = normalizeImagePath(post.imagePath);
+}
 }
 async function confirmDeleteComment() {
     if (!deleteCommentUrl) return;
@@ -1582,6 +1587,9 @@ function insertCropAdviceIntoContent() {
 }
 async function toggleNotifications() {
     const dropdown = document.getElementById('notificationsDropdown');
+    const list = document.getElementById('notificationsList');
+
+    if (!dropdown || !list) return;
 
     if (dropdown.style.display === 'block') {
         dropdown.style.display = 'none';
@@ -1589,40 +1597,95 @@ async function toggleNotifications() {
     }
 
     dropdown.style.display = 'block';
-
-    const list = document.getElementById('notificationsList');
-    list.innerHTML = 'Loading...';
+    list.innerHTML = `<p class="notif-empty">Loading...</p>`;
 
     try {
-        const res = await fetch('/notifications/json');
+        const res = await fetch('/notifications/json', {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+
         const data = await res.json();
 
         if (!data.success) {
-            list.innerHTML = 'Error loading notifications';
+            list.innerHTML = `<p class="notif-empty">Error loading notifications</p>`;
             return;
         }
 
-        if (data.notifications.length === 0) {
-            list.innerHTML = '<p style="color:#888;">No notifications</p>';
+        if (!data.notifications || data.notifications.length === 0) {
+            list.innerHTML = `<p class="notif-empty">No notifications</p>`;
             return;
         }
 
-        list.innerHTML = data.notifications.map(n => `
-            <div style="
-                padding:8px;
-                border-bottom:1px solid #eee;
-                cursor:pointer;
-                background:${n.isRead ? '#fff' : '#f0f9ff'};
-            "
-            onclick="openNotification(${n.id}, ${n.postId})">
-                <div style="font-size:14px;">${n.message}</div>
-                <div style="font-size:12px;color:#888;">${n.createdAt}</div>
-            </div>
-        `).join('');
+      list.innerHTML = data.notifications.map(n => `
+    <div class="notification-item ${n.isRead ? 'read' : 'unread'}"
+         onclick='openNotificationGroup(${JSON.stringify(n.ids)}, ${n.postId})'>
 
+        <div class="notification-icon">
+            ${getNotificationIcon(n.type)}
+        </div>
+
+        <div class="notification-body">
+            <p class="notification-text">${escapeHtml(n.message || '')}</p>
+            <span class="notification-time">${formatNotificationTime(n.createdAt)}</span>
+        </div>
+    </div>
+`).join('');
     } catch (e) {
-        list.innerHTML = 'Error';
+        console.error(e);
+        list.innerHTML = `<p class="notif-empty">Error loading notifications</p>`;
     }
+}
+async function openNotificationGroup(ids, postId) {
+    try {
+        await fetch('/notifications/read-group', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ ids })
+        });
+    } catch (e) {
+        console.error(e);
+    }
+
+    window.location.href = `/forum?highlightPost=${postId}`;
+}
+function getNotificationIcon(type) {
+    switch (type) {
+        case 'reaction':
+            return '❤️';
+        case 'comment':
+            return '💬';
+        case 'post':
+            return '📝';
+        case 'alert':
+            return '🚨';
+        default:
+            return '🔔';
+    }
+}
+
+function formatNotificationTime(dateString) {
+    if (!dateString) return '';
+
+    const date = new Date(dateString.replace(' ', 'T'));
+    if (isNaN(date.getTime())) return dateString;
+
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMin = Math.floor(diffMs / 60000);
+    const diffHour = Math.floor(diffMs / 3600000);
+    const diffDay = Math.floor(diffMs / 86400000);
+
+    if (diffMin < 1) return 'Just now';
+    if (diffMin < 60) return `${diffMin} min ago`;
+    if (diffHour < 24) return `${diffHour} h ago`;
+    if (diffDay < 7) return `${diffDay} d ago`;
+
+    return dateString;
 }
 async function openNotification(id, postId) {
     await fetch(`/notifications/read/${id}`, {

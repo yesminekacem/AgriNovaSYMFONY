@@ -13,13 +13,13 @@ class CommentRepository extends ServiceEntityRepository
         parent::__construct($registry, Comment::class);
     }
 
-    public function findByPost($postId)
-{
-    return $this->createQueryBuilder('c')
-        ->where('c.idPost = :postId')
-        ->setParameter('postId', $postId)
-        ->orderBy('c.createdAt', 'ASC')
-        ->getQuery()
-        ->getResult();
-}
+    public function findByPost(int $postId): array
+    {
+        return $this->createQueryBuilder('c')
+            ->where('c.idPost = :postId')
+            ->setParameter('postId', $postId)
+            ->orderBy('c.createdAt', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
 }

@@ -31,19 +31,19 @@
 
         <p class="nav-section-label">Management</p>
         <ul class="nav-list">
-            <li class="nav-item {% if app.request.attributes.get('_route') starts with 'dashboard' %}active{% endif %}">
+            <li class="nav-item">
 
             </li>
 
-            <li class="nav-item {% if app.request.attributes.get('_route') starts with 'marketplace' %}active{% endif %}">
-                <a href="#">
+            <li class="nav-item">
+                <a href="{{ path('product_marketplace') }}">
                     <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
                     </svg>
                     Marketplace
                 </a>
             </li>
-            <li class="nav-item {% if app.request.attributes.get('_route') starts with 'inventory' %}active{% endif %}">
+            <li class="nav-item">
                 <a href="{{ path('inventory_index') }}">
                     <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
@@ -51,7 +51,7 @@
                     Inventory
                 </a>
             </li>
-            <li class="nav-item {% if app.request.attributes.get('_route') starts with 'crop' %}active{% endif %}">
+            <li class="nav-item">
                 <a href="{{ path('app_crop_index') }}">
                     <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
@@ -59,7 +59,7 @@
                     Crops
                 </a>
             </li>
-            <li class="nav-item {% if app.request.attributes.get('_route') starts with 'forum' %}active{% endif %}">
+            <li class="nav-item">
                 <a href="{{ path('app_forum') }}">
                     <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
@@ -81,7 +81,7 @@
 </div>
                     <div class="user-info">
                         <p>{{ app.user ? app.user.username : 'Admin' }}</p>
-                        <span>Administrator</span>
+                        <span>farmer</span>
                     </div>
                 </div>
             </a>

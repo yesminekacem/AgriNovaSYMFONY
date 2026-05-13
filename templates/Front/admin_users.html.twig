@@ -17,16 +17,19 @@
         <div class="alert alert-success">{{ flash }}</div>
     {% endfor %}
 
-    <div class="table-controls" style="display:flex;gap:12px;align-items:center;justify-content:space-between;margin:0.6rem 0 1rem;">
-        <div style="display:flex;gap:8px;align-items:center;">
+    <div class="table-controls" style="display:flex;gap:12px;align-items:center;justify-content:space-between;margin:0.6rem 0 1rem;flex-wrap:wrap;">
+        <div class="toolbar-filters" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <label for="user-search" class="sr-only">Search users</label>
             <input id="user-search" type="search" placeholder="Search users..." style="padding:8px;border-radius:8px;border:1px solid #ddd;width:260px;">
 
+            <label for="filter-role" class="sr-only">Filter by role</label>
             <select id="filter-role" style="padding:8px;border-radius:8px;border:1px solid #ddd;">
                 <option value="">All roles</option>
                 <option value="ADMIN">Admin</option>
                 <option value="USER">User</option>
             </select>
 
+            <label for="filter-blocked" class="sr-only">Filter by blocked status</label>
             <select id="filter-blocked" style="padding:8px;border-radius:8px;border:1px solid #ddd;">
                 <option value="">All status</option>
                 <option value="blocked">Blocked</option>
@@ -34,9 +37,9 @@
             </select>
         </div>
 
-        <div style="display:flex;gap:8px;align-items:center;">
-            <button id="export-pdf" class="btn btn-outline">Export visible to PDF</button>
-            <button id="reset-filters" class="btn btn-secondary">Reset</button>
+        <div class="toolbar-actions" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <a id="export-pdf" class="btn btn-outline toolbar-btn toolbar-btn-export" data-export-url="{{ path('admin_users_pdf') }}" href="{{ path('admin_users_pdf') }}" role="button">Export visible to PDF</a>
+            <a id="reset-filters" class="btn btn-secondary toolbar-btn toolbar-btn-reset" href="{{ path('admin_users') }}" role="button">Reset</a>
         </div>
     </div>
 
@@ -112,6 +115,5 @@
 {% endblock %}
 
 {% block javascripts %}
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="{{ asset('Front/js/admin-users.js') }}"></script>
 {% endblock %}

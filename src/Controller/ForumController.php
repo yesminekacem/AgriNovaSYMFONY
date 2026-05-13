@@ -4,10 +4,12 @@ namespace App\Controller;
 
 use App\Entity\Post;
 use App\Entity\Comment;
+use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Repository\PostRepository;
 use App\Repository\CommentRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -84,8 +86,9 @@ public function index(
         $totalReactions = $postReactionRepository->countByPost($post);
 
         $userReaction = null;
-        if ($this->getUser()) {
-            $existingReaction = $postReactionRepository->findUserReaction($post, $this->getUser());
+        $indexUser = $this->getUser();
+        if ($indexUser instanceof User) {
+            $existingReaction = $postReactionRepository->findUserReaction($post, $indexUser);
             $userReaction = $existingReaction ? $existingReaction->getReaction() : null;
         }
 
@@ -114,7 +117,7 @@ public function index(
 
 $unreadCount = 0;
 
-if ($user) {
+if ($user instanceof User) {
     $unreadCount = count(
         $notificationsRepository->findUnreadByRecipient($user->getId())
     );
@@ -145,7 +148,7 @@ public function new(
 
     $user = $this->getUser();
 
-    if (!$user) {
+    if (!$user instanceof User) {
         $this->addFlash('error', 'You must be logged in.');
         return $this->redirectToRoute('app_login');
     }
@@ -156,8 +159,8 @@ public function new(
     $post->setContent($content);
     $post->setStatus('ACTIVE');
     $post->setCreatedAt(new \DateTime());
-    $post->setAuthor($user->getFullName());
-    $post->setAuthorId($user->getId());
+    $post->setAuthor($user->getFullName() ?? '');
+    $post->setAuthorId((int)$user->getId());
     $post->setImagePath(null);
 
     $imageFile = $request->files->get('image');
@@ -166,8 +169,8 @@ public function new(
     if ($generatedImage) {
         $post->setImagePath('uploads/generated/' . $generatedImage);
 
-    } elseif ($imageFile) {
-        $newFilename = uniqid() . '.' . $imageFile->guessExtension();
+    } elseif ($imageFile instanceof UploadedFile) {
+        $newFilename = uniqid() . '.' . ($imageFile->guessExtension() ?? 'bin');
 
         $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/posts';
 
@@ -224,6 +227,7 @@ public function new(
 
     return $this->redirectToRoute('app_forum');
 }
+
 #[Route('/forum/update/{id}', name: 'app_forum_update', methods: ['POST'])]
 public function update(
     int $id,
@@ -240,31 +244,78 @@ public function update(
     if (!$post) {
         return $this->json([
             'success' => false,
-            'message' => 'Post not found'
+            'message' => 'Post not found',
         ], 404);
     }
 
-    if (!$this->getUser() || $post->getAuthorId() !== $this->getUser()->getId()) {
+    $currentUser = $this->getUser();
+    if (!$currentUser instanceof User || $post->getAuthorId() !== $currentUser->getId()) {
         return $this->json([
             'success' => false,
-            'message' => 'Unauthorized'
+            'message' => 'Unauthorized',
         ], 403);
     }
 
-    $title = trim((string) $request->request->get('title'));
-    $category = trim((string) $request->request->get('category'));
-    $content = trim((string) $request->request->get('content'));
+    $title = trim((string) $request->request->get('title', ''));
+    $category = trim((string) $request->request->get('category', ''));
+    $content = trim((string) $request->request->get('content', ''));
+    $existingImage = trim((string) $request->request->get('existingImage', ''));
+    $imageFile = $request->files->get('image');
 
-    if (!$title || !$category || !$content) {
+    if ($title === '' || $category === '' || $content === '') {
         return $this->json([
             'success' => false,
-            'message' => 'All fields are required'
+            'message' => 'All fields are required',
         ], 400);
     }
 
     $post->setTitle($title);
     $post->setCategory($category);
     $post->setContent($content);
+
+    // Keep old image by default
+    if ($existingImage !== '') {
+        $existingFilename = basename($existingImage);
+        $post->setImagePath($existingFilename);
+    }
+
+    // Replace image only if a new one is uploaded
+    if ($imageFile instanceof UploadedFile) {
+        $allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        $mimeType = $imageFile->getMimeType();
+
+        if (!in_array($mimeType, $allowedMimeTypes, true)) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Only JPG, PNG, and WebP images are allowed.',
+            ], 400);
+        }
+
+        if ($imageFile->getSize() > 5 * 1024 * 1024) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Image size must not exceed 5 MB.',
+            ], 400);
+        }
+
+        $uploadDir = $this->getParameter('kernel.project_dir') . '/public/Front/images/Forum';
+        if (!is_dir($uploadDir)) {
+            @mkdir($uploadDir, 0775, true);
+        }
+
+        $extension = $imageFile->guessExtension() ?: 'jpg';
+        $newFilename = uniqid('forum_', true) . '.' . $extension;
+
+        try {
+            $imageFile->move($uploadDir, $newFilename);
+            $post->setImagePath($newFilename);
+        } catch (\Throwable $e) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Failed to upload image.',
+            ], 500);
+        }
+    }
 
     $entityManager->flush();
 
@@ -273,33 +324,47 @@ public function update(
     $totalReactions = $postReactionRepository->countByPost($post);
 
     $userReaction = null;
-    if ($this->getUser()) {
-        $existingReaction = $postReactionRepository->findUserReaction($post, $this->getUser());
+    $viewerUser = $this->getUser();
+    if ($viewerUser instanceof User) {
+        $existingReaction = $postReactionRepository->findUserReaction($post, $viewerUser);
         $userReaction = $existingReaction ? $existingReaction->getReaction() : null;
     }
 
+    $imagePath = $post->getImagePath()
+        ? 'Front/images/Forum/' . $post->getImagePath()
+        : null;
+
     $updatedPostData = [
         'id' => $post->getIdPost(),
+        'idPost' => $post->getIdPost(),
         'title' => $post->getTitle(),
         'author' => $post->getAuthor(),
         'authorId' => $post->getAuthorId(),
         'category' => $post->getCategory() ?: 'Organic Farming',
         'content' => $post->getContent(),
         'createdAt' => $this->timeAgo($post->getCreatedAt()),
-        'image' => $post->getImagePath()
-            ? 'Front/images/Forum/' . $post->getImagePath()
-            : null,
+        'imagePath' => $imagePath,
         'profileImage' => $postUser && $postUser->getProfileImage()
             ? 'uploads/profile_images/' . $postUser->getProfileImage()
             : null,
         'commentsCount' => count($comments),
         'totalReactions' => $totalReactions,
         'userReaction' => $userReaction,
+        'comments' => array_map(function (Comment $comment): array {
+            return [
+                'id' => $comment->getIdComment(),
+                'author' => $comment->getAuthor(),
+                'authorId' => $comment->getAuthorId(),
+                'content' => $comment->getContent(),
+                'createdAt' => $this->timeAgo($comment->getCreatedAt()),
+                'profileImage' => null,
+            ];
+        }, $comments),
     ];
 
     $payload = [
         'type' => 'post_updated',
-        'post' => $updatedPostData
+        'post' => $updatedPostData,
     ];
 
     $hub->publish(new Update(
@@ -315,13 +380,12 @@ public function update(
     if ($request->isXmlHttpRequest()) {
         return $this->json([
             'success' => true,
-            'post' => $updatedPostData
+            'post' => $updatedPostData,
         ]);
     }
 
     return $this->redirectToRoute('app_forum_index');
 }
-
 #[Route('/forum/delete/{id}', name: 'app_forum_delete', methods: ['POST'])]
 public function delete(
     int $id,
@@ -377,6 +441,7 @@ public function addComment(
     Request $request,
     PostRepository $postRepository,
     CommentRepository $commentRepository,
+    NotificationsRepository $notificationsRepository,
     EntityManagerInterface $entityManager,
     GroqModerationService $groqModerationService,
     HubInterface $hub
@@ -425,7 +490,7 @@ public function addComment(
 
     $user = $this->getUser();
 
-    if (!$user) {
+    if (!$user instanceof User) {
         if ($request->isXmlHttpRequest()) {
             return $this->json([
                 'success' => false,
@@ -443,13 +508,28 @@ public function addComment(
     $cleanContent = $this->censorText($content);
     $comment->setContent($cleanContent);
 
-    $comment->setAuthor($user->getFullName());
-    $comment->setAuthorId($user->getId());
+    $comment->setAuthor($user->getFullName() ?? '');
+    $comment->setAuthorId((int)$user->getId());
     $comment->setLikes(0);
     $comment->setCreatedAt(new \DateTime());
 
     $entityManager->persist($comment);
-    $entityManager->flush();
+
+// create notification only if commenter is not the post owner
+if ($post->getAuthorId() !== $user->getId()) {
+    $notification = new Notifications();
+    $notification->setRecipientId($post->getAuthorId());
+    $notification->setActorId((int)$user->getId());
+    $notification->setPostId((int)$post->getIdPost());
+    $notification->setType('comment');
+    $notification->setMessage(($user->getFullName() ?? '') . ' commented on your post');
+    $notification->setIsRead(false);
+    $notification->setCreatedAt(new \DateTime());
+
+    $entityManager->persist($notification);
+}
+
+$entityManager->flush();
 
     $commentsCount = count($commentRepository->findByPost($post->getIdPost()));
 
@@ -510,22 +590,24 @@ public function deleteComment(
     $entityManager->remove($comment);
     $entityManager->flush();
 
-    $commentsCount = count($commentRepository->findByPost($post->getIdPost()));
+    if ($post !== null) {
+        $commentsCount = count($commentRepository->findByPost($post->getIdPost()));
 
-    $payload = [
-        'type' => 'comment_deleted',
-        'postId' => $post->getIdPost(),
-        'commentId' => $id,
-        'commentsCount' => $commentsCount,
-    ];
+        $payload = [
+            'type' => 'comment_deleted',
+            'postId' => $post->getIdPost(),
+            'commentId' => $id,
+            'commentsCount' => $commentsCount,
+        ];
 
-    try {
-        $hub->publish(new Update(
-            sprintf('http://127.0.0.1/forum/posts/%d', $post->getIdPost()),
-            json_encode($payload)
-        ));
-    } catch (\Throwable $e) {
-        // do nothing, don't crash
+        try {
+            $hub->publish(new Update(
+                sprintf('http://127.0.0.1/forum/posts/%d', $post->getIdPost()),
+                json_encode($payload)
+            ));
+        } catch (\Throwable $e) {
+            // do nothing, don't crash
+        }
     }
 
     if ($request->isXmlHttpRequest()) {
@@ -576,24 +658,26 @@ public function updateComment(
 
     $post = $comment->getIdPost();
 
-    $payload = [
-        'type' => 'comment_updated',
-        'postId' => $post->getIdPost(),
-        'comment' => [
-            'id' => $comment->getIdComment(),
-            'author' => $comment->getAuthor(),
-            'authorId' => $comment->getAuthorId(),
-            'content' => $comment->getContent(),
-            'createdAt' => $this->timeAgo($comment->getCreatedAt()),
-        ]
-    ];
+    if ($post !== null) {
+        $payload = [
+            'type' => 'comment_updated',
+            'postId' => $post->getIdPost(),
+            'comment' => [
+                'id' => $comment->getIdComment(),
+                'author' => $comment->getAuthor(),
+                'authorId' => $comment->getAuthorId(),
+                'content' => $comment->getContent(),
+                'createdAt' => $this->timeAgo($comment->getCreatedAt()),
+            ]
+        ];
 
-    try {
-        $hub->publish(new Update(
-            sprintf('http://127.0.0.1/forum/posts/%d', $post->getIdPost()),
-            json_encode($payload)
-        ));
-    } catch (\Throwable $e) {
+        try {
+            $hub->publish(new Update(
+                sprintf('http://127.0.0.1/forum/posts/%d', $post->getIdPost()),
+                json_encode($payload)
+            ));
+        } catch (\Throwable $e) {
+        }
     }
 
     if ($request->isXmlHttpRequest()) {
@@ -632,7 +716,7 @@ public function react(
 ): JsonResponse {
     $user = $this->getUser();
 
-    if (!$user) {
+    if (!$user instanceof User) {
         return $this->json([
             'success' => false,
             'message' => 'You must be logged in.'
@@ -724,7 +808,7 @@ try {
 
     $entityManager->persist($newReaction);
     $postOwnerId = $post->getAuthorId();
-$actorId = $this->getUser()->getId();
+    $actorId = (int)$user->getId();
 
 // ❌ Do not notify yourself
 if ($postOwnerId !== $actorId) {
@@ -732,9 +816,9 @@ if ($postOwnerId !== $actorId) {
     $notification = new Notifications();
     $notification->setRecipientId($postOwnerId);
     $notification->setActorId($actorId);
-    $notification->setPostId($post->getIdPost());
+    $notification->setPostId((int)$post->getIdPost());
     $notification->setType('reaction');
-    $notification->setMessage($this->getUser()->getFullName() . ' reacted to your post.');
+    $notification->setMessage(($user->getFullName() ?? '') . ' reacted to your post.');
     $notification->setIsRead(false);
     $notification->setCreatedAt(new \DateTime());
 
@@ -771,7 +855,8 @@ private function censorText(string $text): string
 
     foreach ($badWords as $word) {
         $pattern = '/\b' . preg_quote($word, '/') . '\b/i';
-        $text = preg_replace($pattern, str_repeat('*', strlen($word)), $text);
+        $replaced = preg_replace($pattern, str_repeat('*', strlen($word)), $text);
+        $text = $replaced ?? $text;
     }
 
     return $text;
@@ -1031,38 +1116,127 @@ private function createNotification(
     $entityManager->persist($notification);
 }
 #[Route('/notifications/json', name: 'app_notifications_json', methods: ['GET'])]
-public function getNotifications(NotificationsRepository $repo): Response
-{
+public function getNotifications(
+    NotificationsRepository $repo,
+    UserRepository $userRepository
+): Response {
     $user = $this->getUser();
 
-    if (!$user) {
+    if (!$user instanceof User) {
         return $this->json(['success' => false], 403);
     }
 
     $notifications = $repo->findBy(
         ['recipientId' => $user->getId()],
         ['createdAt' => 'DESC'],
-        10
+        30
     );
+
+    $grouped = [];
+
+    foreach ($notifications as $n) {
+        $key = $n->getType() . '_' . $n->getPostId();
+
+        $actor = $userRepository->find($n->getActorId());
+        $actorName = $actor ? $actor->getFullName() : 'Someone';
+
+        if (!isset($grouped[$key])) {
+            $grouped[$key] = [
+                'type' => $n->getType(),
+                'postId' => $n->getPostId(),
+                'actors' => [],
+                'ids' => [],
+                'createdAt' => $n->getCreatedAt(),
+                'isRead' => true,
+            ];
+        }
+
+        $grouped[$key]['actors'][] = $actorName;
+        $grouped[$key]['ids'][] = $n->getId();
+
+        if ($n->getCreatedAt() > $grouped[$key]['createdAt']) {
+            $grouped[$key]['createdAt'] = $n->getCreatedAt();
+        }
+
+        if (!$n->getIsRead()) {
+            $grouped[$key]['isRead'] = false;
+        }
+    }
 
     $data = [];
 
-    foreach ($notifications as $n) {
+    foreach ($grouped as $item) {
+        $actorsArr = is_array($item['actors']) ? $item['actors'] : [];
+        $actors = array_values(array_unique($actorsArr));
+        $count = count($actors);
+
+        if ($item['type'] === 'comment') {
+            if ($count === 1) {
+                $message = $actors[0] . ' commented on your post';
+            } elseif ($count === 2) {
+                $message = $actors[0] . ' and ' . $actors[1] . ' commented on your post';
+            } else {
+                $message = $actors[0] . ' and ' . ($count - 1) . ' others commented on your post';
+            }
+        } elseif ($item['type'] === 'reaction') {
+            if ($count === 1) {
+                $message = $actors[0] . ' reacted to your post';
+            } elseif ($count === 2) {
+                $message = $actors[0] . ' and ' . $actors[1] . ' reacted to your post';
+            } else {
+                $message = $actors[0] . ' and ' . ($count - 1) . ' others reacted to your post';
+            }
+        } else {
+            $message = 'New activity on your post';
+        }
+
         $data[] = [
-            'id' => $n->getId(),
-            'message' => $n->getMessage(),
-            'isRead' => $n->getIsRead(),
-            'postId' => $n->getPostId(),
-            'createdAt' => $n->getCreatedAt()->format('Y-m-d H:i')
+            'type' => $item['type'],
+            'postId' => $item['postId'],
+            'ids' => $item['ids'],
+            'message' => $message,
+            'isRead' => $item['isRead'],
+            'createdAt' => $item['createdAt'] instanceof \DateTimeInterface ? $item['createdAt']->format('Y-m-d H:i') : '',
         ];
     }
 
+    usort($data, static function (array $a, array $b): int {
+        return strtotime((string)($b['createdAt'] ?? '')) <=> strtotime((string)($a['createdAt'] ?? ''));
+    });
+
     return $this->json([
         'success' => true,
-        'notifications' => $data
+        'notifications' => array_slice($data, 0, 10)
     ]);
 }
+#[Route('/notifications/read-group', name: 'app_notifications_read_group', methods: ['POST'])]
+public function readNotificationGroup(
+    Request $request,
+    NotificationsRepository $repo,
+    EntityManagerInterface $entityManager
+): Response {
+    $user = $this->getUser();
 
+    if (!$user instanceof User) {
+        return $this->json(['success' => false], 403);
+    }
+
+    $decoded = json_decode($request->getContent(), true);
+    $payload = is_array($decoded) ? $decoded : [];
+    $ids = is_array($payload['ids'] ?? null) ? $payload['ids'] : [];
+
+    foreach ($ids as $id) {
+        $notification = $repo->find($id);
+
+        if ($notification && $notification->getRecipientId() === $user->getId()) {
+            $notification->setIsRead(true);
+        }
+    }
+
+    $entityManager->flush();
+
+    return $this->json(['success' => true]);
+}
 
 #[Route('/forum/suggest-title', name: 'app_forum_suggest_title', methods: ['POST'])]
 public function suggestTitle(Request $request, HttpClientInterface $httpClient): JsonResponse
@@ -1154,7 +1328,7 @@ public function fixGrammar(Request $request, HttpClientInterface $httpClient): J
         ]);
     }
 
-    $apiKey = $_ENV['GROQ_API_KEY'];
+    $apiKey = $_ENV['GROQ_API_KEY'] ?? $_SERVER['GROQ_API_KEY'] ?? null;
 
     $prompt = <<<PROMPT
 Correct the grammar, spelling, and clarity of this text.

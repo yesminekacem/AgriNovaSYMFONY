@@ -1,4 +1,13 @@
 {
+    "ahmed-bhs/doctrine-doctor": {
+        "version": "1.0",
+        "recipe": {
+            "repo": "github.com/symfony/recipes-contrib",
+            "branch": "main",
+            "version": "0.1",
+            "ref": "0a0c0e3972f784e628c4f759d2fb446e9eeb4959"
+        }
+    },
     "doctrine/deprecations": {
         "version": "1.1",
         "recipe": {
@@ -53,6 +62,7 @@
             "./config/packages/knp_snappy.yaml"
         ]
     },
+<<<<<<< HEAD
     "php-http/discovery": {
         "version": "1.20",
         "recipe": {
@@ -65,6 +75,8 @@
             "./config/packages/http_discovery.yaml"
         ]
     },
+=======
+>>>>>>> 39fd2583a4fc43063e212db22d3d24adcad82e56
     "phpstan/phpstan": {
         "version": "2.1",
         "recipe": {
@@ -184,6 +196,15 @@
         "files": [
             "./config/packages/mailer.yaml"
         ]
+    },
+    "symfony/mailer-send-mailer": {
+        "version": "7.4",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "6.3",
+            "ref": "a8120b79052d6ced86bae5025fd7b9e203fdccf8"
+        }
     },
     "symfony/maker-bundle": {
         "version": "1.67",

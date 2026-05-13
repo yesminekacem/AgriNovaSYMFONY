@@ -116,6 +116,9 @@ final class InventoryController extends AbstractController
 
         $response = new StreamedResponse(function () use ($items): void {
             $handle = fopen('php://output', 'wb');
+            if ($handle === false) {
+                return;
+            }
 
             fputcsv($handle, [
                 'ID',

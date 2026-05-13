@@ -1,0 +1,431 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Checkout - AgriNova{% endblock %}
+{% block page_title %}Checkout{% endblock %}
+
+{% block stylesheets %}
+    <script src="https://www.paypal.com/sdk/js?client-id={{ paypal_client_id }}&currency=USD"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <style>
+        #delivery-map { height: 300px; border-radius: 8px; border: 1px solid #d1d5db; z-index: 0; }
+        /* Fix: Tailwind preflight sets img { max-width:100%; height:auto } which breaks Leaflet tiles */
+        .leaflet-container img { max-width: none !important; height: auto; }
+        .leaflet-tile { width: 256px !important; height: 256px !important; }
+        #search-results { display:none; position:absolute; top:100%; left:0; right:0; background:#fff;
+            border:1px solid #d1d5db; border-radius:8px; z-index:9999;
+            max-height:200px; overflow-y:auto; box-shadow:0 4px 12px rgba(0,0,0,.12); }
+        #search-results .result-item { padding:10px 14px; cursor:pointer; font-size:13px; border-bottom:1px solid #f1f5f9; }
+        #search-results .result-item:last-child { border-bottom:none; }
+        #search-results .result-item:hover { background:#f0fdf4; color:#15803d; }
+        .map-btn { display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:7px;
+            font-size:12px;font-weight:600;cursor:pointer;border:1px solid #d1d5db;background:#fff;
+            color:#374151;transition:background .15s; }
+        .map-btn:hover { background:#f9fafb; }
+    </style>
+{% endblock %}
+
+{% block body %}
+<section class="mx-auto max-w-6xl p-6">
+    {% include 'product/_marketplace_nav.html.twig' %}
+
+    <div class="mb-8">
+        <h1 class="text-3xl font-semibold text-slate-900">Checkout</h1>
+        <p class="mt-2 text-sm text-slate-600">Complete your purchase</p>
+    </div>
+
+    {% for label, messages in app.flashes %}
+        {% for message in messages %}
+            <div class="mb-4 rounded-lg p-4 {% if label == 'success' %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endfor %}
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+        {# ── Order Summary ── #}
+        <div class="lg:col-span-2">
+            <div class="rounded-xl border border-slate-200 bg-white overflow-hidden shadow">
+                <div class="bg-slate-50 px-6 py-4 border-b border-slate-200">
+                    <h2 class="text-lg font-semibold text-slate-900">Order Summary</h2>
+                </div>
+
+                <table class="min-w-full divide-y divide-slate-200">
+                    <thead class="bg-slate-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Product</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Price</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Quantity</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-slate-200">
+                        {% set total = 0 %}
+                        {% for item in cart_items %}
+                            {% set product = item.product %}
+                            {% set subtotal = product.pricePerUnit * item.quantity %}
+                            {% set total = total + subtotal %}
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="h-10 w-10 flex-shrink-0 bg-slate-100 rounded flex items-center justify-center overflow-hidden">
+                                            {% if product.picture %}
+                                                <img class="h-10 w-10 object-cover" src="/uploads/products/{{ product.picture }}" alt="">
+                                            {% else %}
+                                                <span class="text-lg">🌾</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-slate-900">{{ product.productName }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">{{ product.pricePerUnit }} TND</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">{{ item.quantity }} kg</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">{{ subtotal }} TND</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <div class="bg-slate-50 px-6 py-4 border-t border-slate-200">
+                    <div class="flex justify-between items-center text-lg font-semibold text-slate-900">
+                        <span>Total:</span>
+                        <span>{{ total }} TND</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# ── Delivery & Payment ── #}
+        <div class="lg:col-span-1">
+            <div class="rounded-xl border border-slate-200 bg-white overflow-hidden shadow sticky top-6">
+                <div class="bg-slate-50 px-6 py-4 border-b border-slate-200">
+                    <h2 class="text-lg font-semibold text-slate-900">Delivery Details</h2>
+                </div>
+
+                <div class="p-6">
+                    {{ form_start(form, {'attr': {'class': 'space-y-4', 'id': 'checkout-form', 'novalidate': 'novalidate'}}) }}
+
+                    {# ── Map section ── #}
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Delivery Location</label>
+
+                        {# Search #}
+                        <div style="position:relative;margin-bottom:8px;">
+                            <input type="text" id="map-search"
+                                   placeholder="Search address..."
+                                   autocomplete="off"
+                                   class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-200">
+                            <div id="search-results"></div>
+                        </div>
+
+                        {# Map #}
+                        <div id="delivery-map" style="height:300px;"></div>
+
+                        {# Toolbar #}
+                        <div style="display:flex;gap:6px;margin-top:8px;margin-bottom:10px;">
+                            <button type="button" id="locate-me-btn" class="map-btn">
+                                <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2v3m0 14v3M2 12h3m14 0h3"/></svg>
+                                My Location
+                            </button>
+                            <button type="button" id="clear-pin-btn" class="map-btn" style="display:none;">
+                                <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                Clear
+                            </button>
+                        </div>
+
+                        {# Selected address display #}
+                        <div id="address-display"
+                             style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 12px;font-size:13px;color:#64748b;min-height:44px;word-break:break-word;margin-bottom:4px;">
+                            Click on the map or search to select a delivery location
+                        </div>
+
+                        {# Validation error from server #}
+                        {% if form.deliveryAddress.vars.errors|length %}
+                            <div class="mt-1 text-sm text-red-600">
+                                {% for error in form.deliveryAddress.vars.errors %}
+                                    {{ error.message }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        {# Client-side error placeholder #}
+                        <div id="map-error" style="display:none;color:#dc2626;font-size:13px;margin-top:4px;">
+                            Please select a delivery location on the map.
+                        </div>
+
+                        {# Hidden Symfony deliveryAddress field (filled by JS) #}
+                        {{ form_widget(form.deliveryAddress, {attr: {style: 'display:none;', id: 'checkout_deliveryAddress'}}) }}
+
+                        {# Hidden lat / lng inputs (read by controller) #}
+                        <input type="hidden" id="delivery_lat" name="delivery_lat" value="">
+                        <input type="hidden" id="delivery_lng" name="delivery_lng" value="">
+                    </div>
+
+                    {# ── Payment method ── #}
+                    <div>
+                        {{ form_label(form.paymentMethod, 'Payment Method', {'label_attr': {'class': 'block text-sm font-medium text-slate-700 mb-1'}}) }}
+                        {{ form_widget(form.paymentMethod) }}
+                        {% if form.paymentMethod.vars.errors|length %}
+                            <div class="mt-1 text-sm text-red-600">
+                                {% for error in form.paymentMethod.vars.errors %}
+                                    {{ error.message }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    {# ── Submit (shown for Cash on Delivery) ── #}
+                    <div class="pt-4" id="submit-btn-wrap">
+                        <button type="submit" class="w-full rounded-lg bg-green-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-green-700">
+                            Confirm Order
+                        </button>
+                    </div>
+
+                    {# ── PayPal button (shown when PayPal is selected) ── #}
+                    <div class="pt-4" id="paypal-btn-wrap" style="display:none;">
+                        <div id="paypal-button-container"></div>
+                        <div id="paypal-error" style="display:none;margin-top:8px;color:#dc2626;font-size:13px;text-align:center;"></div>
+                    </div>
+
+                    <div class="pt-2">
+                        <a href="{{ path('cart_index') }}" class="block w-full text-center rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-slate-50">
+                            Back to Cart
+                        </a>
+                    </div>
+
+                    {{ form_end(form) }}
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
+{% endblock %}
+
+{% block javascripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ── PayPal button ─────────────────────────────────────────────────────────────
+(function () {
+    const paymentSelect = document.getElementById('checkout_paymentMethod');
+    const submitWrap    = document.getElementById('submit-btn-wrap');
+    const paypalWrap    = document.getElementById('paypal-btn-wrap');
+    const paypalError   = document.getElementById('paypal-error');
+    let   buttonsRendered = false;
+
+    function togglePaypal() {
+        const isPayPal = paymentSelect.value === 'paypal';
+        submitWrap.style.display = isPayPal ? 'none'  : '';
+        paypalWrap.style.display = isPayPal ? ''      : 'none';
+
+        if (isPayPal && !buttonsRendered) {
+            buttonsRendered = true;
+            paypal.Buttons({
+                style: { layout: 'vertical', color: 'blue', shape: 'rect', label: 'pay' },
+
+                createOrder: function () {
+                    if (!document.getElementById('delivery_lat').value) {
+                        document.getElementById('map-error').style.display = 'block';
+                        document.getElementById('delivery-map').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        return Promise.reject(new Error('No delivery location selected'));
+                    }
+                    return fetch('{{ path('cart_paypal_create_order') }}', { method: 'POST' })
+                        .then(function (r) { return r.json(); })
+                        .then(function (data) {
+                            if (data.error) { throw new Error(data.error); }
+                            return data.id;
+                        });
+                },
+
+                onApprove: function (data) {
+                    return fetch('{{ path('cart_paypal_capture') }}', {
+                        method:  'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body:    JSON.stringify({
+                            orderID:         data.orderID,
+                            deliveryAddress: document.getElementById('checkout_deliveryAddress').value,
+                            deliveryLat:     document.getElementById('delivery_lat').value,
+                            deliveryLng:     document.getElementById('delivery_lng').value,
+                        }),
+                    })
+                    .then(function (r) { return r.json(); })
+                    .then(function (result) {
+                        if (result.success) {
+                            window.location.href = result.redirectUrl;
+                        } else {
+                            paypalError.textContent = result.error || 'Payment failed. Please try again.';
+                            paypalError.style.display = 'block';
+                        }
+                    });
+                },
+
+                onError: function (err) {
+                    console.error('PayPal error', err);
+                    paypalError.textContent = 'PayPal encountered an error. Please try again.';
+                    paypalError.style.display = 'block';
+                },
+
+                onCancel: function () {
+                    paypalError.textContent = 'Payment cancelled.';
+                    paypalError.style.display = 'block';
+                },
+            }).render('#paypal-button-container');
+        }
+    }
+
+    paymentSelect.addEventListener('change', togglePaypal);
+    togglePaypal(); // run once on load in case of server-side re-render with PayPal selected
+})();
+
+// ── Leaflet map ───────────────────────────────────────────────────────────────
+(function () {
+    // ── Map init (centered on Tunisia) ──
+    const map = L.map('delivery-map').setView([33.8869, 9.5375], 6);
+    setTimeout(function () { map.invalidateSize(); }, 200);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19,
+    }).addTo(map);
+
+    let marker = null;
+
+    // ── Fill form fields from lat/lng + address ──
+    function applyLocation(lat, lng, address) {
+        document.getElementById('delivery_lat').value = lat;
+        document.getElementById('delivery_lng').value = lng;
+        document.getElementById('checkout_deliveryAddress').value = address;
+        document.getElementById('address-display').style.color = '#1e293b';
+        document.getElementById('address-display').textContent = address;
+        document.getElementById('clear-pin-btn').style.display = 'inline-flex';
+        document.getElementById('map-error').style.display = 'none';
+    }
+
+    function clearLocation() {
+        document.getElementById('delivery_lat').value = '';
+        document.getElementById('delivery_lng').value = '';
+        document.getElementById('checkout_deliveryAddress').value = '';
+        document.getElementById('address-display').style.color = '#64748b';
+        document.getElementById('address-display').textContent = 'Click on the map or search to select a delivery location';
+        document.getElementById('clear-pin-btn').style.display = 'none';
+        if (marker) { map.removeLayer(marker); marker = null; }
+    }
+
+    // ── Nominatim reverse geocode ──
+    function reverseGeocode(lat, lng) {
+        fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`, {
+            headers: { 'Accept-Language': 'en' }
+        })
+        .then(r => r.json())
+        .then(data => {
+            const address = data.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+            applyLocation(lat, lng, address);
+        })
+        .catch(() => {
+            applyLocation(lat, lng, `${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+        });
+    }
+
+    // ── Map click ──
+    map.on('click', function (e) {
+        const { lat, lng } = e.latlng;
+        if (marker) { map.removeLayer(marker); }
+        marker = L.marker([lat, lng]).addTo(map);
+        document.getElementById('address-display').textContent = 'Loading address…';
+        reverseGeocode(lat, lng);
+    });
+
+    // ── Clear button ──
+    document.getElementById('clear-pin-btn').addEventListener('click', clearLocation);
+
+    // ── My Location ──
+    document.getElementById('locate-me-btn').addEventListener('click', function () {
+        if (!navigator.geolocation) {
+            alert('Geolocation is not supported by your browser.');
+            return;
+        }
+        this.textContent = 'Locating…';
+        const btn = this;
+        navigator.geolocation.getCurrentPosition(
+            function (pos) {
+                const lat = pos.coords.latitude;
+                const lng = pos.coords.longitude;
+                map.setView([lat, lng], 15);
+                if (marker) { map.removeLayer(marker); }
+                marker = L.marker([lat, lng]).addTo(map);
+                document.getElementById('address-display').textContent = 'Loading address…';
+                reverseGeocode(lat, lng);
+                btn.innerHTML = '<svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2v3m0 14v3M2 12h3m14 0h3"/></svg> My Location';
+            },
+            function () {
+                alert('Could not retrieve your location.');
+                btn.innerHTML = '<svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2v3m0 14v3M2 12h3m14 0h3"/></svg> My Location';
+            }
+        );
+    });
+
+    // ── Search with Nominatim ──
+    const searchInput   = document.getElementById('map-search');
+    const searchResults = document.getElementById('search-results');
+    let searchTimer = null;
+
+    searchInput.addEventListener('input', function () {
+        clearTimeout(searchTimer);
+        const q = this.value.trim();
+        if (q.length < 3) { searchResults.style.display = 'none'; return; }
+
+        searchTimer = setTimeout(function () {
+            fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&addressdetails=1`, {
+                headers: { 'Accept-Language': 'en' }
+            })
+            .then(r => r.json())
+            .then(function (results) {
+                searchResults.innerHTML = '';
+                if (!results.length) {
+                    searchResults.innerHTML = '<div class="result-item" style="color:#9ca3af;">No results found</div>';
+                    searchResults.style.display = 'block';
+                    return;
+                }
+                results.forEach(function (item) {
+                    const div = document.createElement('div');
+                    div.className = 'result-item';
+                    div.textContent = item.display_name;
+                    div.addEventListener('click', function () {
+                        const lat = parseFloat(item.lat);
+                        const lng = parseFloat(item.lon);
+                        map.setView([lat, lng], 15);
+                        if (marker) { map.removeLayer(marker); }
+                        marker = L.marker([lat, lng]).addTo(map);
+                        applyLocation(lat, lng, item.display_name);
+                        searchInput.value = '';
+                        searchResults.style.display = 'none';
+                    });
+                    searchResults.appendChild(div);
+                });
+                searchResults.style.display = 'block';
+            })
+            .catch(function () { searchResults.style.display = 'none'; });
+        }, 500);
+    });
+
+    // Close dropdown on outside click
+    document.addEventListener('click', function (e) {
+        if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+            searchResults.style.display = 'none';
+        }
+    });
+
+    // ── Form submit guard ──
+    document.getElementById('checkout-form').addEventListener('submit', function (e) {
+        if (!document.getElementById('delivery_lat').value) {
+            e.preventDefault();
+            document.getElementById('map-error').style.display = 'block';
+            document.getElementById('delivery-map').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    });
+
+})();
+</script>
+{% endblock %}

@@ -7,6 +7,11 @@ use Twig\TwigFilter;
 
 class TimeAgoExtension extends AbstractExtension
 {
+    /**
+     * Workshop PHPStan: typed return for static analysis.
+     *
+     * @return list<TwigFilter>
+     */
     public function getFilters(): array
     {
         return [

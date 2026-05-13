@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Users Export</title>
+    <style>
+        body { font-family: Arial, sans-serif; font-size: 12px; color: #111; }
+        h1 { margin: 0 0 8px; font-size: 20px; }
+        .meta { margin-bottom: 12px; color: #444; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #cfcfcf; padding: 6px 8px; text-align: left; }
+        th { background: #f2f2f2; }
+        .muted { color: #666; }
+    </style>
+</head>
+<body>
+    <h1>AGRINOVA - Users Export</h1>
+    <div class="meta">
+        <div>Generated at: {{ generatedAt|date('Y-m-d H:i:s') }}</div>
+        <div>
+            Filters:
+            search="{{ search ?: 'none' }}",
+            role="{{ role ?: 'all' }}",
+            blocked="{{ blocked ?: 'all' }}"
+        </div>
+        <div>Total users: {{ users|length }}</div>
+    </div>
+
+    <table>
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Full name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Verified</th>
+            <th>Blocked</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for u in users %}
+            <tr>
+                <td>{{ u.id }}</td>
+                <td>{{ u.fullName ?: '-' }}</td>
+                <td>{{ u.email }}</td>
+                <td>{{ u.getRole() is defined ? u.getRole() : 'USER' }}</td>
+                <td>{{ u.isVerified() ? 'Yes' : 'No' }}</td>
+                <td>{{ u.banned ? 'Yes' : 'No' }}</td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="6" class="muted">No users found for the selected filters.</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
+

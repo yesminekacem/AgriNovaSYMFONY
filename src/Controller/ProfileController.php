@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\User;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -20,7 +21,7 @@ class ProfileController extends AbstractController
     public function profile(Request $request, EntityManagerInterface $em, UserPasswordHasherInterface $passwordHasher, UserRepository $userRepository, \App\Service\FaceApiClient $faceClient): Response
     {
         $user = $this->getUser();
-        if (!$user) {
+        if (!$user instanceof User) {
             return $this->redirectToRoute('app_login');
         }
 
@@ -72,10 +73,10 @@ class ProfileController extends AbstractController
             }
 
             // Face enrollment (file upload or camera base64)
-            if ($formType === 'face') {
+            if ($formType === 'face_enroll') {
                 /** @var UploadedFile|null $face */
                 $face = $request->files->get('face_image');
-                $faceBase64 = trim((string) $request->request->get('face_image_base64', '')) ?: null;
+                $faceBase64 = trim((string) $request->request->get('face_image', '')) ?: null;
 
                 if ($face instanceof UploadedFile || $faceBase64) {
                     try {

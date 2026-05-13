@@ -55,6 +55,8 @@
                 stream = await navigator.mediaDevices.getUserMedia({video: { facingMode: 'user' }, audio: false});
                 video.srcObject = stream;
                 await video.play();
+                video.style.transform = 'scaleX(-1)';
+                video.style.webkitTransform = 'scaleX(-1)';
                 root.classList.add('camera-active');
                 isActive = true;
             }catch(e){
@@ -80,7 +82,11 @@
             canvas.width = w;
             canvas.height = h;
             const ctx = canvas.getContext('2d');
+            ctx.save();
+            ctx.translate(w, 0);
+            ctx.scale(-1, 1);
             ctx.drawImage(video, 0, 0, w, h);
+            ctx.restore();
             const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
             const stripped = dataUrl.replace(/^data:image\/(png|jpeg|jpg);base64,/, '');
             if(hidden) hidden.value = stripped;
@@ -118,73 +124,6 @@
                 return {ok:false, error: e && e.message ? e.message : 'network-error'};
             }finally{
                 requestInFlight = false;
-            }
-        }
-
-        function showAccountSelection(matches){
-            const existing = document.querySelector('.account-selection-overlay');
-            if(existing) existing.remove();
-            const overlay = document.createElement('div');
-            overlay.className = 'account-selection-overlay';
-            overlay.style.position = 'fixed';
-            overlay.style.inset = '0';
-            overlay.style.background = 'rgba(0,0,0,0.5)';
-            overlay.style.display = 'flex';
-            overlay.style.alignItems = 'center';
-            overlay.style.justifyContent = 'center';
-            overlay.style.zIndex = '12000';
-
-            const box = document.createElement('div');
-            box.style.background = '#fff';
-            box.style.padding = '16px';
-            box.style.borderRadius = '12px';
-            box.style.maxWidth = '420px';
-            box.style.width = '90%';
-
-            const title = document.createElement('h3');
-            title.textContent = 'Select an account';
-            title.style.marginTop = '0';
-            box.appendChild(title);
-
-            matches.forEach(match => {
-                const button = document.createElement('button');
-                button.type = 'button';
-                button.textContent = `${match.fullName || 'User'} (${Math.round(match.score)}%)`;
-                button.style.display = 'block';
-                button.style.width = '100%';
-                button.style.margin = '8px 0';
-                button.style.padding = '10px';
-                button.onclick = () => selectAccount(match.id);
-                box.appendChild(button);
-            });
-
-            overlay.appendChild(box);
-            overlay.onclick = (e) => { if(e.target===overlay) overlay.remove(); };
-            document.body.appendChild(overlay);
-        }
-
-        async function selectAccount(accountId){
-            const selectUrl = root.dataset.selectUrl;
-            if(!selectUrl) return;
-            const fd = new FormData();
-            fd.append('selected_user', accountId);
-            try{
-                const resp = await fetch(selectUrl, { method: 'POST', body: fd, credentials: 'same-origin' });
-                const data = await resp.json();
-                if(data.success && data.redirect){
-                    showStatus('Redirecting...', 1000);
-                    try{
-                        await fetch(data.redirect, { method: 'GET', credentials: 'same-origin', cache: 'no-store' });
-                    }catch(e){}
-                    if(data.debug){ console.info('Server debug:', data.debug); showStatus('Server session: ' + (data.debug.sessionId ? 'ok' : 'no'), 1500); }
-                    window.location.href = data.redirect;
-                } else {
-                    // show server message if present
-                    if(data && data.message) showStatus(data.message, 3000);
-                    else alert('Failed to log in.');
-                }
-            }catch(e){
-                console.error('Account selection failed', e);
             }
         }
 
@@ -259,14 +198,6 @@
                     showStatus('Redirecting...', 800);
                     const expectedUser = data.debug && data.debug.userId ? data.debug.userId : null;
                     await waitForAuthThenNavigate(data.redirect, expectedUser);
-                    return;
-                }
-
-                if(data.success && data.matches && data.matches.length > 0){
-                    // stop detection and show selection
-                    clearInterval(detectInterval);
-                    detectInterval = null;
-                    showAccountSelection(data.matches);
                     return;
                 }
 
@@ -389,11 +320,6 @@
                         return;
                     }
 
-                    if(data.success && data.matches && data.matches.length > 0){
-                        showAccountSelection(data.matches);
-                        return;
-                    }
-
                     if(!data.success && data.message){
                         showStatus(data.message, 2500);
                         if(data.code === 'no_match'){
@@ -403,6 +329,7 @@
                     }
 
                     showStatus('No matching accounts found.', 2500);
+                    try{ if(root.__faceControls) root.__faceControls.stop(); }catch(e){}
                     return;
                 }
 

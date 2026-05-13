@@ -4,12 +4,11 @@ parameters:
     profile_images_directory: '%kernel.project_dir%/public/uploads/profile_images'
     # Face API configuration (wrapped in a parameter so it can be replaced in env or services)
     face_api_options:
-        provider: '%env(FACE_API_PROVIDER)%'
-        api_key: '%env(FACEPP_API_KEY)%'
-        api_secret: '%env(FACEPP_API_SECRET)%'
-        url: '%env(FACE_API_URL)%'
-    groq_api_key: '%env(GROQ_API_KEY)%'
-    groq_model: '%env(GROQ_MODEL)%'
+        provider: '%env(FACE_API_PROVIDER_2)%'
+        api_key: '%env(FACEPP_API_KEY_2)%'
+        api_secret: '%env(FACEPP_API_SECRET_2)%'
+        url: '%env(FACE_API_URL_2)%'
+    paypal_client_id: '%env(PAYPAL_CLIENT_ID)%'
 
 services:
     _defaults:
@@ -30,19 +29,27 @@ services:
         autowire: true
         autoconfigure: true
 
+    App\Service\PayPalService:
+        arguments:
+            $clientId: '%env(PAYPAL_CLIENT_ID)%'
+            $secret:   '%env(PAYPAL_CLIENT_SECRET)%'
+            $baseUrl:  '%env(PAYPAL_BASE_URL)%'
+
     App\Service\GroqModerationService:
         arguments:
-            $groqApiKey: '%groq_api_key%'
-            $groqModel: '%groq_model%'
-    # Face API client service
+            $groqApiKey: '%env(GROQ_API_KEY)%'
+            $groqModel: '%env(GROQ_MODEL_MODERATION)%'
+
     App\Service\FaceApiClient:
         arguments:
             $client: '@http_client'
             $options: '%face_api_options%'
+            $faceLogger: '@monolog.logger.face_id'
         public: false
 
     App\Service\DiagnosisService:
         arguments:
             $apiUrl: '%env(string:DIAGNOSIS_API_URL)%'
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
