@@ -42,7 +42,7 @@ class ProductListing
     #[Assert\Regex(pattern: '/^[a-zA-Z\s]+$/', message: "Description must contain only letters and spaces")]
     private ?string $description = null;
 
-    #[ORM\Column(type: 'string', nullable: true, length: 255)]
+    #[ORM\Column(type: 'string', nullable: true, length: 500)]
     private ?string $picture = null;
 
     #[ORM\Column(type: 'string', nullable: true, length: 50)]
