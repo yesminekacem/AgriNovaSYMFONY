@@ -48,8 +48,8 @@
                 <td>{{ crop.status }}</td>
             </tr>
             <tr>
-                <th>Image_path</th>
-                <td>{{ crop.imagePath }}</td>
+                <th>Image</th>
+                <td>{% if crop.imagePath %}<img src="{{ path('app_crop_image', {'crop_id': crop.cropId}) }}" alt="{{ crop.name }}" style="max-width:200px;border-radius:6px;">{% else %}—{% endif %}</td>
             </tr>
         </tbody>
     </table>

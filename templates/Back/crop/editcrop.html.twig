@@ -70,7 +70,7 @@
                     {{ form_widget(form.imageFile, {'attr': {'class': 'w-full'}}) }}
                     {{ form_errors(form.imageFile) }}
                     {% if crop.imagePath %}
-                        <img src="{{ asset('cropsimages/' ~ crop.imagePath) }}"
+                        <img src="{{ path('app_crop_image', {'crop_id': crop.cropId}) }}"
                              class="mt-3 h-24 rounded-lg object-cover" alt="Current image">
                         <p class="text-xs text-gray-400 mt-1">Current image — upload a new one to replace it</p>
                     {% endif %}

@@ -112,11 +112,11 @@
                      data-expected-harvest="{{ crop.expectedHarvestDate ? crop.expectedHarvestDate|date('Y-m-d') : '' }}"
                      data-growth-stage="{{ crop.growthStage }}"
                      data-area-size="{{ crop.areaSize }}"
-                     data-image-path="{{ crop.imagePath }}">
+                     data-image-path="{{ crop.cropId }}">
 
                 <div class="card-image">
                     {% if crop.imagePath %}
-                        <img src="{{ asset('cropsimages/' ~ crop.imagePath) }}" alt="{{ crop.name }}">
+                        <img src="{{ path('app_crop_image', {'crop_id': crop.cropId}) }}" alt="{{ crop.name }}">
                     {% else %}
                         <div class="card-image-placeholder">🌱</div>
                     {% endif %}

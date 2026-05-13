@@ -10,6 +10,8 @@ use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\Routing\Attribute\Route;
 use Knp\Snappy\Pdf;
 use Symfony\Component\String\Slugger\SluggerInterface;
@@ -154,6 +156,41 @@ public function table(Request $request, CropRepository $cropRepository): Respons
         'crops' => $query->getQuery()->getResult(),
     ]);
 }
+
+    /**
+     * Serve a crop image from either an absolute filesystem path (e.g. C:\Users\...\file.jpg)
+     * or a plain filename stored in public/cropsimages/.
+     */
+    #[Route('/{crop_id}/image', name: 'app_crop_image', methods: ['GET'], requirements: ['crop_id' => '\d+'])]
+    public function image(#[MapEntity(expr: 'repository.find(crop_id)')] Crop $crop): Response
+    {
+        $imagePath = $crop->getImagePath();
+
+        if (!$imagePath) {
+            throw $this->createNotFoundException('No image for this crop.');
+        }
+
+        // Detect absolute Windows path (e.g. C:\...) or absolute Unix path (/...)
+        $isAbsolute = (bool) preg_match('/^[A-Za-z]:[\\\\\/]/', $imagePath)
+                   || str_starts_with($imagePath, '/');
+
+        $filePath = $isAbsolute
+            ? $imagePath
+            : $this->getParameter('kernel.project_dir') . '/public/cropsimages/' . $imagePath;
+
+        // Normalise Windows backslashes for PHP file functions
+        $filePath = str_replace('\\', '/', $filePath);
+
+        if (!is_file($filePath)) {
+            throw $this->createNotFoundException('Image file not found on disk.');
+        }
+
+        $response = new BinaryFileResponse($filePath);
+        $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_INLINE, basename($filePath));
+        $response->headers->set('Cache-Control', 'public, max-age=3600');
+
+        return $response;
+    }
 
     #[Route('/{crop_id}/pdf', name: 'app_crop_pdf', methods: ['GET'], requirements: ['crop_id' => '\\d+'])]
     public function pdf(#[MapEntity(expr: 'repository.find(crop_id)')] Crop $crop, Pdf $knpSnappy): Response

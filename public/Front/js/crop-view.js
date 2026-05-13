@@ -84,9 +84,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const expected = card.dataset.expectedHarvest || '';
       const stage = card.dataset.growthStage || '';
       const area = card.dataset.areaSize || '';
-      const image = card.dataset.imagePath || '';
+      const cropId = card.dataset.imagePath || '';
 
-      const imageUrl = image ? ('/cropsimages/' + image) : '';
+      const imageUrl = cropId ? ('/crops/' + cropId + '/image') : '';
 
       const html = `
         <div style="display:flex;gap:18px;align-items:flex-start;">
