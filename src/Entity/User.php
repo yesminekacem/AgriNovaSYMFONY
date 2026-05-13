@@ -177,6 +177,19 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    public function getProfileImageUrl(): ?string
+    {
+        if (!$this->profileImage) {
+            return null;
+        }
+
+        if (preg_match('#^(https?://)#i', $this->profileImage)) {
+            return $this->profileImage;
+        }
+
+        return '/profile/image?path=' . rawurlencode($this->profileImage);
+    }
+
     public function getFaceData(): ?string
     {
         return $this->faceData;

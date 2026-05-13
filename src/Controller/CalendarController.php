@@ -28,6 +28,14 @@ final class CalendarController extends AbstractController
         $events = [];
 
         foreach ($rentals as $rental) {
+            $startDate = $rental->getStartDate();
+            $endDate = $rental->getEndDate();
+
+            // Skip rentals with missing dates
+            if (!$startDate || !$endDate) {
+                continue;
+            }
+
             $color = match ($rental->getRentalStatus()) {
                 'PENDING' => '#f59e0b',
                 'APPROVED' => '#3b82f6',
@@ -42,8 +50,8 @@ final class CalendarController extends AbstractController
             $events[] = [
                 'id' => $rental->getId(),
                 'title' => sprintf('%s - %s', $rental->getRenterName(), $rental->getDisplayItemName()),
-                'start' => $rental->getStartDate()?->format('Y-m-d'),
-                'end' => $rental->getEndDate()?->modify('+1 day')?->format('Y-m-d'),
+                'start' => $startDate->format('Y-m-d'),
+                'end' => $endDate->modify('+1 day')->format('Y-m-d'),
                 'color' => $color,
                 'textColor' => '#ffffff',
                 'extendedProps' => [

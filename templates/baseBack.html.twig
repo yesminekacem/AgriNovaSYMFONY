@@ -85,7 +85,7 @@
             <div class="user-card">
                 <div class="user-avatar">
     {% if app.user and app.user.profileImage %}
-        <img src="{{ asset('uploads/profile_images/' ~ app.user.profileImage) }}" alt="Profile">
+        <img src="{{ app.user.profileImageUrl }}" alt="Profile">
     {% else %}
         {{ app.user ? app.user.username|first|upper : 'A' }}
     {% endif %}
@@ -129,7 +129,7 @@
                     <div class="header-avatar" title="{{ app.user.username }}">
     <a href="{{ path('app_profile') }}" style="display:block;">
         {% if app.user and app.user.profileImage %}
-            <img src="{{ asset('uploads/profile_images/' ~ app.user.profileImage) }}" alt="Profile">
+            <img src="{{ app.user.profileImageUrl }}" alt="Profile">
         {% else %}
             <span>{{ app.user.username|first|upper }}</span>
         {% endif %}

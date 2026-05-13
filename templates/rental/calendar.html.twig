@@ -84,12 +84,25 @@ document.addEventListener('DOMContentLoaded', function() {
             center: 'title',
             right: 'dayGridMonth,timeGridWeek,listWeek'
         },
-        events: '{{ path('calendar_events') }}',
+        events: {
+            url: '{{ path('calendar_events') }}',
+            method: 'GET',
+            failure: function() {
+                console.error('Failed to load calendar events');
+            }
+        },
         eventClick: function(info) {
             window.location.href = info.event.extendedProps.url;
         },
         eventMouseEnter: function(info) {
             info.el.title = info.event.extendedProps.item + ' - ' + info.event.extendedProps.status;
+        },
+        loading: function(isLoading) {
+            if (isLoading) {
+                console.log('Loading events...');
+            } else {
+                console.log('Events loaded');
+            }
         }
     });
     calendar.render();

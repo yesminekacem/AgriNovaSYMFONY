@@ -12,6 +12,8 @@ use App\Service\FaceApiClient;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
 
@@ -175,18 +177,21 @@ class ProfileController extends AbstractController
                 $filename = $safe . '.' . $ext;
 
                 try {
-                    $uploaded->move($uploadsDir, $filename);
+                    $moved = $uploaded->move($uploadsDir, $filename);
 
                     // remove old file if present
                     $old = $user->getProfileImage();
                     if ($old) {
-                        $oldPath = $uploadsDir . DIRECTORY_SEPARATOR . $old;
+                        $oldPath = $old;
+                        if (!is_file($oldPath)) {
+                            $oldPath = $uploadsDir . DIRECTORY_SEPARATOR . basename($old);
+                        }
                         if (is_file($oldPath)) {
                             @unlink($oldPath);
                         }
                     }
 
-                    $user->setProfileImage($filename);
+                    $user->setProfileImage($moved->getPathname());
 
                 } catch (\Exception $e) {
                     $this->addFlash('error', 'Failed to upload image.');
@@ -204,5 +209,26 @@ class ProfileController extends AbstractController
         return $this->render('Front/profile.html.twig', [
             'user' => $user,
         ]);
+    }
+
+    #[Route('/profile/image', name: 'app_profile_image', methods: ['GET'])]
+    public function profileImage(Request $request, UserRepository $userRepository): Response
+    {
+        $path = $request->query->get('path');
+        if (!is_string($path) || $path === '') {
+            throw new NotFoundHttpException();
+        }
+
+        $allowedUser = $userRepository->findOneBy(['profileImage' => $path]);
+        if (!$allowedUser || !is_file($path)) {
+            throw new NotFoundHttpException();
+        }
+
+        $mime = mime_content_type($path) ?: 'application/octet-stream';
+        $response = new BinaryFileResponse($path);
+        $response->headers->set('Content-Type', $mime);
+        $response->trustXSendfileTypeHeader(false);
+
+        return $response;
     }
 }

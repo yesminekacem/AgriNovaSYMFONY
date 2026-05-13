@@ -51,7 +51,7 @@ $posts = $paginator->paginate(
 
         $postProfileImages[$post->getIdPost()] =
             $postUser && $postUser->getProfileImage()
-                ? 'uploads/profile_images/' . $postUser->getProfileImage()
+                ? $postUser->getProfileImageUrl()
                 : null;
 
         $comments = $commentRepository->findByPost($post->getIdPost());
@@ -69,7 +69,7 @@ $posts = $paginator->paginate(
                 'content' => $comment->getContent(),
                 'createdAt' => $this->timeAgo($comment->getCreatedAt()),
                 'profileImage' => $commentUser && $commentUser->getProfileImage()
-                    ? 'uploads/profile_images/' . $commentUser->getProfileImage()
+                    ? $commentUser->getProfileImageUrl()
                     : null,
                 'hasBadWordMask' => preg_match('/\*{3,}/', $comment->getContent() ?? '') === 1,
             ];
@@ -106,7 +106,7 @@ $totalReactions = $postReactionRepository->countByPost($post);
                 ? 'Front/images/Forum/' . $post->getImagePath()
                 : null,
             'profileImage' => $postUser && $postUser->getProfileImage()
-                ? 'uploads/profile_images/' . $postUser->getProfileImage()
+                ? $postUser->getProfileImageUrl()
                 : null,
             'commentsCount' => count($comments),
             'hasMaskedComment' => $hasMaskedComment,
@@ -490,7 +490,7 @@ public function getPostReactionsBack(
                 'userId' => $user ? $user->getId() : null,
                 'author' => $author,
                 'profileImage' => ($user && $user->getProfileImage())
-                    ? 'uploads/profile_images/' . $user->getProfileImage()
+                    ? $user->getProfileImageUrl()
                     : null,
                 'reaction' => $reaction->getReaction(),
             ];

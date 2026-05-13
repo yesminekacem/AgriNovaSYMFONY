@@ -72,7 +72,7 @@
         <div class="profile-card">
             <div class="avatar-large">
                 {% if user.profileImage %}
-                    <img id="avatarPreview" src="{{ asset('uploads/profile_images/' ~ user.profileImage) }}" alt="Profile image">
+                    <img id="avatarPreview" src="{{ user.profileImageUrl }}" alt="Profile image">
                 {% else %}
                     {# Generate an SVG placeholder with the user's first initial and use it as an image data URI so preview behaves like an <img> #}
                     {% set initial = (user.fullName ? user.fullName|first : user.email|first)|upper %}

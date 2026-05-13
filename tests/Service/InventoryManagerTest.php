@@ -94,5 +94,5 @@ final class InventoryManagerTest extends TestCase
         $item = $this->makeInventory(20, 5.00);
 
         self::assertFalse($this->manager->needsRestock($item, 5));
-    }
+     }
 }

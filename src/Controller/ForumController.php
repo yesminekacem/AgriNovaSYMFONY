@@ -61,7 +61,7 @@ public function index(
 
         $postProfileImages[$post->getIdPost()] =
             $postUser && $postUser->getProfileImage()
-                ? 'uploads/profile_images/' . $postUser->getProfileImage()
+                ? $postUser->getProfileImageUrl()
                 : null;
 
         $comments = $commentRepository->findByPost($post->getIdPost());
@@ -77,7 +77,7 @@ public function index(
                 'content' => $comment->getContent(),
                 'createdAt' => $this->timeAgo($comment->getCreatedAt()),
                 'profileImage' => $commentUser && $commentUser->getProfileImage()
-                    ? 'uploads/profile_images/' . $commentUser->getProfileImage()
+                    ? $commentUser->getProfileImageUrl()
                     : null,
             ];
         }
@@ -104,7 +104,7 @@ public function index(
                 ? 'Front/images/Forum/' . $post->getImagePath()
                 : null,
             'profileImage' => $postUser && $postUser->getProfileImage()
-                ? 'uploads/profile_images/' . $postUser->getProfileImage()
+                ? $postUser->getProfileImageUrl()
                 : null,
             'comments' => $commentsData,
             'commentsCount' => count($comments),
@@ -200,7 +200,7 @@ public function new(
             'createdAt' => $this->timeAgo($post->getCreatedAt()),
             'image' => $post->getImagePath(),
             'profileImage' => $postUser && $postUser->getProfileImage()
-                ? 'uploads/profile_images/' . $postUser->getProfileImage()
+                ? $postUser->getProfileImageUrl()
                 : null,
             'comments' => [],
             'commentsCount' => 0,
@@ -345,7 +345,7 @@ public function update(
         'createdAt' => $this->timeAgo($post->getCreatedAt()),
         'imagePath' => $imagePath,
         'profileImage' => $postUser && $postUser->getProfileImage()
-            ? 'uploads/profile_images/' . $postUser->getProfileImage()
+            ? $postUser->getProfileImageUrl()
             : null,
         'commentsCount' => count($comments),
         'totalReactions' => $totalReactions,
@@ -543,7 +543,7 @@ $entityManager->flush();
             'content' => $comment->getContent(),
             'createdAt' => $this->timeAgo($comment->getCreatedAt()),
             'profileImage' => $user->getProfileImage()
-                ? 'uploads/profile_images/' . $user->getProfileImage()
+                ? $user->getProfileImageUrl()
                 : null,
         ],
         'commentsCount' => $commentsCount,
@@ -896,7 +896,7 @@ public function getPostReactions(
                 'userId' => $user ? $user->getId() : null,
                 'author' => $author,
                 'profileImage' => ($user && $user->getProfileImage())
-                    ? 'uploads/profile_images/' . $user->getProfileImage()
+                    ? $user->getProfileImageUrl()
                     : null,
                 'reaction' => $reaction->getReaction(),
             ];

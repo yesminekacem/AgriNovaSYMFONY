@@ -78,7 +78,7 @@
 
                 <div class="post-avatar" onclick="openViewModal({{ post.idPost }})">
     {% if postProfileImages[post.idPost] is defined and postProfileImages[post.idPost] %}
-        <img src="{{ asset(postProfileImages[post.idPost]) }}" alt="{{ post.author }}">
+        <img src="{{ postProfileImages[post.idPost] }}" alt="{{ post.author }}">
     {% else %}
         {{ post.author|slice(0, 2)|upper }}
     {% endif %}

@@ -64,7 +64,7 @@
                 <td style="padding:10px 12px;border-bottom:1px solid #eef;">{{ u.id }}</td>
                 <td class="avatar-cell" style="padding:10px 12px;border-bottom:1px solid #eef;">
                     {% if u.profileImage %}
-                        <img class="avatar" src="{{ asset('uploads/profile_images/' ~ u.profileImage) }}" alt="{{ u.email }} avatar" style="width:40px;height:40px;border-radius:8px;object-fit:cover;">
+                        <img class="avatar" src="{{ u.profileImageUrl }}" alt="{{ u.email }} avatar" style="width:40px;height:40px;border-radius:8px;object-fit:cover;">
                     {% else %}
                         <div class="avatar placeholder" style="width:40px;height:40px;border-radius:8px;background:#f3f7f3;display:inline-flex;align-items:center;justify-content:center;color:#567;">{{ u.email|first|upper }}</div>
                     {% endif %}
