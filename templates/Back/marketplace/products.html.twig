@@ -100,7 +100,7 @@
                 <td style="padding:10px 12px;border-bottom:1px solid #eef;">{{ product.listingId }}</td>
                 <td style="padding:10px 12px;border-bottom:1px solid #eef;">
                     {% if product.picture %}
-                        <img src="/uploads/products/{{ product.picture }}"
+                        <img src="/uploads/products/{{ product.picture|replace({'\\': '/'})|split('/')|last }}"
                              alt="{{ product.productName }}"
                              style="width:48px;height:48px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;">
                     {% else %}

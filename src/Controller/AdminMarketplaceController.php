@@ -230,6 +230,19 @@ class AdminMarketplaceController extends AbstractController
 
         $file->move($uploadDir, $filename);
 
-        return $filename;
+        // Store the ABSOLUTE path so Java (and Symfony) can locate the file
+        // without any additional path construction. Symfony extracts the
+        // filename from this path when building the web-accessible URL.
+        return realpath($uploadDir . '/' . $filename);
+    }
+
+    /**
+     * Extracts just the filename from an absolute path stored in the database.
+     * Used by Twig templates to build the /uploads/products/<filename> web URL.
+     */
+    public static function pictureFilename(?string $absolutePath): string
+    {
+        if (!$absolutePath) return '';
+        return basename($absolutePath);
     }
 }

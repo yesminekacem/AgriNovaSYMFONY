@@ -88,7 +88,7 @@
         {{ form_label(form.picture) }}
         {% if is_edit and product.picture %}
             <div class="pf-current-img">
-                <img src="/uploads/products/{{ product.picture }}" alt="{{ product.productName }}">
+                <img src="/uploads/products/{{ product.picture|replace({'\\': '/'})|split('/')|last }}" alt="{{ product.productName }}">
                 <span>Current image — upload a new one to replace it</span>
             </div>
         {% endif %}

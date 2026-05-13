@@ -70,7 +70,7 @@
                                     <div class="flex items-center">
                                         <div class="h-10 w-10 flex-shrink-0 bg-slate-100 rounded flex items-center justify-center overflow-hidden">
                                             {% if product.picture %}
-                                                <img class="h-10 w-10 object-cover" src="/uploads/products/{{ product.picture }}" alt="">
+                                                <img class="h-10 w-10 object-cover" src="/uploads/products/{{ product.picture|replace({'\\': '/'})|split('/')|last }}" alt="">
                                             {% else %}
                                                 <span class="text-lg">🌾</span>
                                             {% endif %}
